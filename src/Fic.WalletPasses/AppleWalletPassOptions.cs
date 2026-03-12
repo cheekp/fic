@@ -18,5 +18,5 @@ public sealed class AppleWalletPassOptions
 
     public string WwdrCertificatePath { get; set; } = string.Empty;
 
-    public string DefaultIconPath { get; set; } = string.Empty;
+    public string DefaultAssetDirectory { get; set; } = string.Empty;
 }

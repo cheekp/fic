@@ -18,6 +18,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>fic-platform-web-4f520d9f-2c77-4d81-a701-328649f3bc5f</UserSecretsId>
   </PropertyGroup>
 
 </Project>

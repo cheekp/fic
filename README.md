@@ -17,6 +17,7 @@ Founding repository for the FIC startup.
 - `docs/business/` source business material
 - `docs/ENGINEERING_HARNESS.md` repo-level operating harness for entropy control and delivery discipline
 - `docs/architecture/` system architecture and technical notes
+- `docs/runbooks/` operator-focused setup guides for local demos and support workflows
 - `docs/rfcs/` proposals under review
 - `docs/plans/` active, planned, and completed delivery records
 - `docs/specs/` implementation-ready requirements and acceptance
@@ -24,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Review the architecture draft, extract the key decisions into an RFC, and turn the first thin slice into a spec.
+Complete the Apple Wallet demo-readiness slice so a signed loyalty pass can be added from an iPhone during local founder demos.

@@ -58,8 +58,8 @@
             <div class="field field--full">
                 <span>Your logo</span>
                 <label class="upload-control">
-                    <InputFile OnChange="HandleLogoSelectedAsync" accept=".png,.jpg,.jpeg,.svg,.webp" />
-                    <span>Upload your logo, or let the preview generate a simple initials mark for now.</span>
+                    <InputFile OnChange="HandleLogoSelectedAsync" accept=".png" />
+                    <span>Upload a PNG logo for the cleanest Apple Wallet result, or let the preview generate a simple initials mark for now.</span>
                 </label>
                 @if (!string.IsNullOrWhiteSpace(_logoUploadMessage))
                 {

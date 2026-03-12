@@ -14,3 +14,8 @@ bin/
 obj/
 *.log
 ~$*.docx
+*.p12
+*.pfx
+*.cer
+*.p7b
+*.pem
