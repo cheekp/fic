@@ -31,14 +31,17 @@ require_file "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
 require_file "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
 require_file "src/Fic.Platform.Web/Components/Pages/WalletCard.razor"
 require_file "src/Fic.WalletPasses/AppleWalletPassService.cs"
+require_file "src/Fic.Platform.Web/wwwroot/branding/palette.js"
 
 require_text "MerchantBrandThemeCompiler" "src/Fic.MerchantAccounts/BrandThemes.cs"
 require_text "LogoWidth" "src/Fic.Contracts/Snapshots.cs"
 require_text "MerchantBrandPresentationService" "src/Fic.Platform.Web/Program.cs"
 require_text "CurrentTheme.ThemeClass" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
 require_text "signup-preview--studio" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
+require_text "extractPaletteFromDataUrl" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
 require_text "walletTheme" "src/Fic.Platform.Web/Components/Pages/WalletCard.razor"
 require_text "MerchantBrandThemeCompiler.Compile" "src/Fic.WalletPasses/AppleWalletPassService.cs"
+require_text "window.ficBranding.extractPaletteFromDataUrl" "src/Fic.Platform.Web/wwwroot/branding/palette.js"
 
 env DOTNET_CLI_HOME="${DOTNET_CLI_HOME}" \
     NUGET_PACKAGES="${NUGET_PACKAGES}" \

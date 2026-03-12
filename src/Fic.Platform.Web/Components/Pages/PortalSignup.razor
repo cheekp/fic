@@ -3,6 +3,7 @@
 @using System.Text
 @using Fic.MerchantAccounts
 @inject DemoPlatformState PlatformState
+@inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject MerchantBrandPresentationService BrandPresentation
 
@@ -48,12 +49,12 @@
             </label>
 
             <label class="field">
-                <span>Primary brand colour</span>
+                <span>Site primary colour</span>
                 <InputText @bind-Value="_form.PrimaryColor" class="input" />
             </label>
 
             <label class="field">
-                <span>Accent colour</span>
+                <span>Site accent colour</span>
                 <InputText @bind-Value="_form.AccentColor" class="input" />
             </label>
 
@@ -67,6 +68,11 @@
                 {
                     <p class="field-hint">@_logoUploadMessage</p>
                 }
+            </div>
+
+            <div class="field field--full">
+                <span>Wallet card branding</span>
+                <p class="field-hint">The wallet card inherits your site logo and colours by default. We can add card-level overrides later without changing the merchant setup model.</p>
             </div>
         </div>
 
@@ -158,7 +164,8 @@
         _logoMetadata = MerchantBrandAssetInspector.ReadLogoMetadata(_logoUploadBytes);
         _logoFileName = file.Name;
         _logoPreviewUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(_logoUploadBytes)}";
-        _logoUploadMessage = $"{file.Name} loaded into your card preview.";
+        await SuggestPaletteFromLogoAsync(_logoPreviewUri);
+        _logoUploadMessage = $"{file.Name} loaded into your site preview. Suggested colours have been matched from the logo and you can still tweak them below.";
     }
 
     private async Task HandleSubmitAsync()
@@ -200,6 +207,23 @@
             NormalizeColor(_form.AccentColor),
             _logoMetadata.Width,
             _logoMetadata.Height);
+
+    private async Task SuggestPaletteFromLogoAsync(string logoPreviewUri)
+    {
+        try
+        {
+            var palette = await JS.InvokeAsync<string[]>("ficBranding.extractPaletteFromDataUrl", logoPreviewUri);
+            if (palette.Length >= 2)
+            {
+                _form.PrimaryColor = NormalizeColor(palette[0]);
+                _form.AccentColor = NormalizeColor(palette[1]);
+            }
+        }
+        catch (JSException)
+        {
+            // Keep manual colours if local JS palette extraction is unavailable.
+        }
+    }
 
     private static string GetInitials(string name)
     {

@@ -4,9 +4,9 @@
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
     background:
-        radial-gradient(circle at top right, var(--brand-glow), transparent 30%),
-        linear-gradient(180deg, var(--brand-canvas-start) 0%, var(--brand-canvas-end) 100%);
-    color: var(--brand-ink);
+        radial-gradient(circle at top right, rgba(244, 193, 93, 0.16), transparent 24%),
+        linear-gradient(180deg, #f3ecdd 0%, #efe5d3 52%, #ebe0cf 100%);
+    color: #14211d;
     overflow: clip;
 }
 
@@ -30,14 +30,19 @@
 .shell__sidebar {
     min-height: 100vh;
     padding: 1.5rem;
-    backdrop-filter: blur(18px);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
-    border-right: 1px solid var(--brand-line);
+    color: rgba(252, 247, 236, 0.95);
+    background:
+        radial-gradient(circle at top left, rgba(245, 191, 91, 0.32), transparent 32%),
+        linear-gradient(180deg, #1f3731 0%, #142522 48%, #0d1816 100%);
+    border-right: 1px solid rgba(239, 234, 222, 0.12);
 }
 
 .shell__body {
     min-width: 0;
     padding: 1.5rem;
+    background:
+        radial-gradient(circle at top right, var(--brand-glow), transparent 30%),
+        linear-gradient(180deg, color-mix(in srgb, var(--brand-canvas-start) 90%, #f7f1e4 10%) 0%, color-mix(in srgb, var(--brand-canvas-end) 88%, #efe5d3 12%) 100%);
 }
 
 .shell__header {

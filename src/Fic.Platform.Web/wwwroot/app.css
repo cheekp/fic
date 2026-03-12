@@ -269,6 +269,7 @@ textarea {
 
 .metrics-grid,
 .merchant-grid,
+.resume-grid,
 .workspace-grid,
 .wallet-view {
     display: grid;
@@ -276,7 +277,8 @@ textarea {
 }
 
 .metrics-grid,
-.merchant-grid {
+.merchant-grid,
+.resume-grid {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
@@ -323,6 +325,7 @@ textarea {
 }
 
 .merchant-card__head,
+.resume-card__head,
 .workspace-header,
 .workspace-brand,
 .panel__header,
@@ -334,10 +337,19 @@ textarea {
 }
 
 .merchant-card__brand,
+.resume-card__brand,
 .workspace-brand {
     display: flex;
     gap: 1rem;
     align-items: center;
+}
+
+.merchant-card__kicker {
+    margin: 0 0 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: var(--brand-muted);
 }
 
 .merchant-card__metrics {
@@ -362,6 +374,7 @@ textarea {
 }
 
 .merchant-card__actions,
+.resume-card__actions,
 .form-actions,
 .card-row__meta,
 .workspace-actions,
@@ -528,6 +541,11 @@ textarea {
 .brand-lockup--merchant {
     width: 124px;
     height: 92px;
+}
+
+.brand-lockup--resume {
+    width: 84px;
+    height: 64px;
 }
 
 .signup-preview__logo img,
@@ -722,6 +740,38 @@ textarea {
     padding-block: 2.4rem;
 }
 
+.resume-card {
+    display: grid;
+    gap: 1rem;
+    padding: 1.2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.resume-card__metrics {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.resume-card__metrics div {
+    display: grid;
+    gap: 0.18rem;
+}
+
+.resume-card__metrics dt {
+    color: var(--brand-muted);
+    font-size: 0.82rem;
+}
+
+.resume-card__metrics dd {
+    margin: 0;
+    font-weight: 600;
+}
+
 .empty-state p {
     margin: 0 auto 1rem;
     max-width: 34rem;
@@ -771,6 +821,8 @@ textarea {
     .qr-panel,
     .merchant-card__head,
     .merchant-card__brand,
+    .resume-card__head,
+    .resume-card__brand,
     .workspace-header,
     .workspace-brand,
     .panel__header,
@@ -791,5 +843,9 @@ textarea {
     .join-hero__logo {
         width: 100%;
         max-width: 220px;
+    }
+
+    .resume-card__metrics {
+        grid-template-columns: 1fr;
     }
 }

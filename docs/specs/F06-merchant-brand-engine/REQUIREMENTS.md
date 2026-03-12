@@ -8,7 +8,7 @@ Upgrade the current logo-and-colour treatment into a merchant brand engine that 
 
 - Keep the product self-serve and white-label.
 - Treat uploaded merchant branding as a source for derived presentation tokens, not a pasted decoration.
-- Rebrand the merchant-facing shell, join experience, and wallet preview from the same compiled theme.
+- Keep the global FIC navigation chrome stable while rebranding the merchant content area, join experience, and wallet preview from the same compiled theme.
 - Avoid naive logo tiling, stretched art, or layout choices that fight the uploaded mark.
 
 ## Functional Requirements
@@ -25,17 +25,25 @@ Upgrade the current logo-and-colour treatment into a merchant brand engine that 
   - primary colour
   - accent colour
   - logo dimensions
+- The signup flow should suggest site colours from the uploaded logo so merchants are not forced to hand-tune the first draft of their brand theme.
 - The compiler must choose a layout variant automatically for at least three visual modes.
 - The compiler must return a readable ink colour, surface treatment, accent treatment, and stamp styling that work on both lighter and darker merchant palettes.
 
 ### Merchant Shell Theming
 
-- The main merchant shell must adopt the active merchant brand on:
+- The main merchant content shell must adopt the active merchant brand on:
   - merchant workspace routes
   - customer join routes
   - wallet preview routes
-- Shell copy and chrome should shift from platform-generic framing to route-aware merchant framing.
+- The left navigation rail should remain recognisably FIC-branded so the product frame stays stable.
+- Shell copy and content chrome should shift from platform-generic framing to route-aware merchant framing.
 - The uploaded logo should sit in a deliberate logo plate rather than being stretched or tiled into the background.
+
+### Brand Inheritance
+
+- Merchant site branding is the top-level brand source.
+- Wallet card styling should inherit merchant site branding by default.
+- Future card-level overrides must remain optional and must not force merchants to configure duplicate branding just to launch a card.
 
 ### Signup Preview
 

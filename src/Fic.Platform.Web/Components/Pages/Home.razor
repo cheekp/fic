@@ -1,7 +1,6 @@
 ﻿@page "/"
 @implements IDisposable
 @inject DemoPlatformState PlatformState
-@inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>FIC Loyalty</PageTitle>
 
@@ -38,8 +37,8 @@
 
 <section class="section-header">
     <div>
-        <p class="eyebrow">Your local setups</p>
-        <h3>Cards created in this preview</h3>
+        <p class="eyebrow">Recent demo workspaces</p>
+        <h3>Jump back into a merchant setup</h3>
     </div>
     <a class="button button--secondary" href="/portal/signup">Create Another Card</a>
 </section>
@@ -54,25 +53,23 @@
 }
 else
 {
-    <section class="merchant-grid">
-        @foreach (var merchant in _merchants)
+    <section class="resume-grid">
+        @foreach (var merchant in _merchants.Take(3))
         {
-            var theme = BrandPresentation.Build(merchant);
-
-            <article class="merchant-card @theme.ThemeClass" style="@theme.CssVariables">
-                <div class="merchant-card__head">
-                    <div class="merchant-card__brand">
-                        <div class="brand-lockup">
+            <article class="resume-card">
+                <div class="resume-card__head">
+                    <div class="resume-card__brand">
+                        <div class="brand-lockup brand-lockup--resume">
                             <img src="@merchant.LogoUrl" alt="@merchant.DisplayName logo" />
                         </div>
                         <div>
-                        <p class="merchant-card__kicker">Branded card</p>
-                        <h4>@merchant.DisplayName</h4>
+                            <p class="merchant-card__kicker">Merchant site</p>
+                            <h4>@merchant.DisplayName</h4>
+                            <p class="field-hint">@merchant.RewardHeadline</p>
                         </div>
                     </div>
-                    <span class="chip chip--accent">@merchant.RewardHeadline</span>
                 </div>
-                <dl class="merchant-card__metrics">
+                <dl class="resume-card__metrics">
                     <div>
                         <dt>Active cards</dt>
                         <dd>@merchant.ActiveCards</dd>
@@ -86,13 +83,18 @@ else
                         <dd>@merchant.JoinCode</dd>
                     </div>
                 </dl>
-                <div class="merchant-card__actions">
+                <div class="resume-card__actions">
                     <a class="button button--secondary" href="/portal/merchant/@merchant.MerchantId">Open My Workspace</a>
                     <a class="button button--ghost" href="/join/@merchant.JoinCode" target="_blank">Preview Customer Join</a>
                 </div>
             </article>
         }
     </section>
+
+    @if (_merchants.Count > 3)
+    {
+        <p class="field-hint">Showing the three most recent local demo workspaces.</p>
+    }
 }
 
 @code {

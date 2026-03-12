@@ -5,12 +5,12 @@
 @inject DemoPlatformState PlatformState
 @inject MerchantBrandPresentationService BrandPresentation
 
-<div class="shell @CurrentTheme.ThemeClass" style="@CurrentTheme.CssVariables">
+<div class="shell">
     <aside class="shell__sidebar">
         <NavMenu ShellContext="_shellContext" />
     </aside>
 
-    <div class="shell__body">
+    <div class="shell__body @CurrentTheme.ThemeClass" style="@CurrentTheme.CssVariables">
         <header class="shell__header">
             <div class="shell__headline">
                 <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
