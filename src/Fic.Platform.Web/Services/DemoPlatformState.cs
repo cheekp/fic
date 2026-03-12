@@ -6,7 +6,9 @@ using Fic.WalletPasses;
 
 namespace Fic.Platform.Web.Services;
 
-public sealed class DemoPlatformState(ILogger<DemoPlatformState> logger)
+public sealed class DemoPlatformState(
+    ILogger<DemoPlatformState> logger,
+    IMerchantBrandAssetStore brandAssetStore)
 {
     private readonly Lock _gate = new();
     private readonly ConcurrentDictionary<Guid, MerchantAccount> _merchants = new();
@@ -43,32 +45,37 @@ public sealed class DemoPlatformState(ILogger<DemoPlatformState> logger)
         }
     }
 
-    public MerchantWorkspaceSnapshot CreateMerchant(
+    public async Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(
         string displayName,
         string contactEmail,
         string rewardItemLabel,
         int rewardThreshold,
         string rewardCopy,
-        string logoUrl,
+        MerchantLogoUpload? logoUpload,
+        string fallbackLogoUrl,
         string primaryColor,
         string accentColor,
-        string baseUri)
+        string baseUri,
+        CancellationToken cancellationToken = default)
     {
+        var now = DateTimeOffset.UtcNow;
+        var merchant = new MerchantAccount(Guid.NewGuid(), displayName.Trim(), contactEmail.Trim(), now);
+        var logoUrl = logoUpload is null
+            ? fallbackLogoUrl.Trim()
+            : await brandAssetStore.SaveLogoAsync(merchant.MerchantId, logoUpload, cancellationToken);
+        var brand = new BrandProfile(logoUrl, NormalizeColor(primaryColor), NormalizeColor(accentColor));
+        var joinCode = $"join-{Guid.NewGuid():N}"[..13];
+        var programme = new LoyaltyProgramme(
+            Guid.NewGuid(),
+            merchant.MerchantId,
+            rewardItemLabel.Trim(),
+            rewardThreshold,
+            rewardCopy.Trim(),
+            joinCode,
+            now);
+
         lock (_gate)
         {
-            var now = DateTimeOffset.UtcNow;
-            var merchant = new MerchantAccount(Guid.NewGuid(), displayName.Trim(), contactEmail.Trim(), now);
-            var brand = new BrandProfile(logoUrl.Trim(), NormalizeColor(primaryColor), NormalizeColor(accentColor));
-            var joinCode = $"join-{Guid.NewGuid():N}"[..13];
-            var programme = new LoyaltyProgramme(
-                Guid.NewGuid(),
-                merchant.MerchantId,
-                rewardItemLabel.Trim(),
-                rewardThreshold,
-                rewardCopy.Trim(),
-                joinCode,
-                now);
-
             _merchants[merchant.MerchantId] = merchant;
             _brands[merchant.MerchantId] = brand;
             _programmes[programme.ProgrammeId] = programme;
@@ -90,10 +97,11 @@ public sealed class DemoPlatformState(ILogger<DemoPlatformState> logger)
                 $"Configured loyalty card: buy {programme.RewardThreshold} {programme.RewardItemLabel}, get 1 free.");
 
             logger.LogInformation(
-                "merchant_created merchant_id={MerchantId} programme_id={ProgrammeId} threshold={RewardThreshold}",
+                "merchant_created merchant_id={MerchantId} programme_id={ProgrammeId} threshold={RewardThreshold} logo_source={LogoSource}",
                 merchant.MerchantId,
                 programme.ProgrammeId,
-                programme.RewardThreshold);
+                programme.RewardThreshold,
+                logoUpload is null ? "fallback" : "stored");
 
             return BuildWorkspaceSnapshot(merchant.MerchantId, baseUri);
         }

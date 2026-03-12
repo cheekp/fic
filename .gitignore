@@ -19,3 +19,4 @@ obj/
 *.cer
 *.p7b
 *.pem
+App_Data/
