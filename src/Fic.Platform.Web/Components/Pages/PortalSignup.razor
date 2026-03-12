@@ -4,13 +4,13 @@
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
 
-<PageTitle>Create Vendor</PageTitle>
+<PageTitle>Create Your Loyalty Card</PageTitle>
 
 <section class="section-header">
     <div>
-        <p class="eyebrow">Merchant onboarding</p>
-        <h2>Create an internal vendor workspace</h2>
-        <p class="lede">No billing, one programme per vendor, and enough brand input to drive both the workspace and the wallet pass.</p>
+        <p class="eyebrow">Set up your programme</p>
+        <h2>Create the loyalty card your customers will join</h2>
+        <p class="lede">This is the self-serve setup flow: add your business name, reward offer, and brand assets, then publish the join QR and start stamping visits.</p>
     </div>
 </section>
 
@@ -21,27 +21,27 @@
 
         <div class="form-grid">
             <label class="field">
-                <span>Retailer display name</span>
+                <span>Business name</span>
                 <InputText @bind-Value="_form.DisplayName" class="input" />
             </label>
 
             <label class="field">
-                <span>Contact email</span>
+                <span>Owner email</span>
                 <InputText @bind-Value="_form.ContactEmail" class="input" />
             </label>
 
             <label class="field">
-                <span>Reward item label</span>
+                <span>What are customers collecting?</span>
                 <InputText @bind-Value="_form.RewardItemLabel" class="input" />
             </label>
 
             <label class="field">
-                <span>Reward threshold</span>
+                <span>How many before the reward?</span>
                 <InputNumber @bind-Value="_form.RewardThreshold" class="input" />
             </label>
 
             <label class="field field--full">
-                <span>Reward copy</span>
+                <span>Offer text shown to customers</span>
                 <InputText @bind-Value="_form.RewardCopy" class="input" />
             </label>
 
@@ -56,10 +56,10 @@
             </label>
 
             <div class="field field--full">
-                <span>Logo asset</span>
+                <span>Your logo</span>
                 <label class="upload-control">
                     <InputFile OnChange="HandleLogoSelectedAsync" accept=".png,.jpg,.jpeg,.svg,.webp" />
-                    <span>Upload a logo or let the demo generate an initials mark.</span>
+                    <span>Upload your logo, or let the preview generate a simple initials mark for now.</span>
                 </label>
                 @if (!string.IsNullOrWhiteSpace(_logoUploadMessage))
                 {
@@ -80,16 +80,16 @@
                 }
             </div>
             <div>
-                <p class="eyebrow">Live preview</p>
+                <p class="eyebrow">Card preview</p>
                 <h3>@_form.DisplayName</h3>
                 <p>@BuildRewardHeadline()</p>
-                <p class="field-hint">This preview drives the vendor shell and the wallet card branding.</p>
+                <p class="field-hint">This is how your workspace and wallet card will pick up your brand from the same configuration.</p>
             </div>
         </div>
 
         <div class="form-actions">
-            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create vendor workspace</button>
-            <a class="button button--ghost" href="/">Back to overview</a>
+            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create My Loyalty Card</button>
+            <a class="button button--ghost" href="/">Back to start</a>
         </div>
     </EditForm>
 </section>
@@ -113,7 +113,7 @@
         await stream.CopyToAsync(buffer);
 
         _logoPreviewUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer.ToArray())}";
-        _logoUploadMessage = $"{file.Name} loaded for the internal demo.";
+        _logoUploadMessage = $"{file.Name} loaded into your card preview.";
     }
 
     private Task HandleSubmitAsync()

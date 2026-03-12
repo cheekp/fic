@@ -1,7 +1,7 @@
 @page "/join/{JoinCode}"
 @inject DemoPlatformState PlatformState
 
-<PageTitle>Join Loyalty Programme</PageTitle>
+<PageTitle>Join Loyalty Card</PageTitle>
 
 @if (_experience is null)
 {
@@ -12,12 +12,12 @@
 }
 else
 {
-    <section class="join-hero" style="@BuildHeroStyle()">
-        <div class="join-hero__content">
-            <p class="eyebrow">Wallet join flow</p>
+        <section class="join-hero" style="@BuildHeroStyle()">
+            <div class="join-hero__content">
+            <p class="eyebrow">Join this loyalty card</p>
             <h2>@_experience.Merchant.DisplayName</h2>
             <p class="lede">@_experience.Programme.RewardCopy</p>
-            <p class="field-hint">No customer app required. This browser step hands off to the wallet card only.</p>
+            <p class="field-hint">No app to install. Join here once, then keep the card in Apple Wallet.</p>
         </div>
         <div class="join-hero__logo">
             <img src="@_experience.BrandProfile.LogoUrl" alt="@_experience.Merchant.DisplayName logo" />
@@ -29,8 +29,8 @@ else
         <section class="panel">
             <div class="panel__header">
                 <div>
-                    <p class="eyebrow">Join summary</p>
-                    <h3>Issue the wallet card</h3>
+                    <p class="eyebrow">Save your card</p>
+                    <h3>Add this loyalty card to Apple Wallet</h3>
                 </div>
                 <span class="chip chip--accent">Apple Wallet first</span>
             </div>
@@ -45,11 +45,11 @@ else
                 </div>
                 <div>
                     <dt>Channel</dt>
-                    <dd>Browser join, then wallet-only customer experience</dd>
+                    <dd>Quick web join, then wallet-only customer experience</dd>
                 </div>
             </dl>
             <div class="form-actions">
-                <button class="button button--primary" type="button" @onclick="IssueWalletCardAsync">Add to Wallet (demo)</button>
+                <button class="button button--primary" type="button" @onclick="IssueWalletCardAsync">Add to Wallet</button>
             </div>
         </section>
     }
@@ -58,15 +58,15 @@ else
         <section class="panel">
             <div class="panel__header">
                 <div>
-                    <p class="eyebrow">Wallet issued</p>
-                    <h3>Pass created for the demo</h3>
+                    <p class="eyebrow">Your card is ready</p>
+                    <h3>Your loyalty card has been created</h3>
                 </div>
                 <span class="chip chip--success">@_walletCard.ProgressDisplayText</span>
             </div>
-            <p>The production path will return a signed <code>.pkpass</code>. This internal MVP opens a live wallet preview that updates when the vendor awards visits.</p>
+            <p>This preview stands in for the final signed Apple Wallet pass and updates as the business stamps your visits.</p>
             <div class="form-actions">
-                <a class="button button--primary" href="/wallet/card/@_walletCard.CardId">Open wallet preview</a>
-                <span class="field-hint">Scan code: <code>@_walletCard.CardCode</code></span>
+                <a class="button button--primary" href="/wallet/card/@_walletCard.CardId">Open Card Preview</a>
+                <span class="field-hint">Pass code: <code>@_walletCard.CardCode</code></span>
             </div>
         </section>
     }

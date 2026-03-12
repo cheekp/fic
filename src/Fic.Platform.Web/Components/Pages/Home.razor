@@ -1,55 +1,54 @@
 ﻿@page "/"
 @implements IDisposable
 @inject DemoPlatformState PlatformState
-@inject IConfiguration Configuration
 
-<PageTitle>FIC Internal MVP</PageTitle>
+<PageTitle>FIC Loyalty</PageTitle>
 
 <section class="hero-panel">
     <div>
-        <p class="eyebrow">Internal demo slice</p>
-        <h2>Merchant onboarding, QR join, and wallet progress in one C# surface.</h2>
-        <p class="lede">This slice keeps the customer journey to browser plus Apple Wallet while the vendor runs everything from a web workspace.</p>
+        <p class="eyebrow">Self-serve loyalty</p>
+        <h2>Set up a branded loyalty card your customers keep in Apple Wallet.</h2>
+        <p class="lede">Choose the reward, upload your brand assets, share a join QR, and stamp visits from your own browser-based workspace.</p>
     </div>
     <div class="hero-panel__actions">
-        <a class="button button--primary" href="/portal/signup">Create a Vendor</a>
-        <span class="chip">Aspire local orchestration</span>
-        <span class="chip">Wallet-first customer journey</span>
+        <a class="button button--primary" href="/portal/signup">Create Your Loyalty Card</a>
+        <span class="chip">No customer app required</span>
+        <span class="chip">Apple Wallet first</span>
     </div>
 </section>
 
 <section class="metrics-grid">
     <article class="metric-card">
-        <span class="metric-card__label">Demo Vendors</span>
-        <strong class="metric-card__value">@_merchants.Count</strong>
-        <p class="metric-card__copy">MerchantAccounts owns onboarding before loyalty configuration starts.</p>
+        <span class="metric-card__label">Step 1</span>
+        <strong class="metric-card__value">Brand It</strong>
+        <p class="metric-card__copy">Add your name, colours, logo, and reward rule so the card feels like your business.</p>
     </article>
     <article class="metric-card">
-        <span class="metric-card__label">Redis</span>
-        <strong class="metric-card__value">@(_useRedis ? "Enabled" : "Optional")</strong>
-        <p class="metric-card__copy">Cache stays behind an adapter seam and is off by default for F01.</p>
+        <span class="metric-card__label">Step 2</span>
+        <strong class="metric-card__value">Share It</strong>
+        <p class="metric-card__copy">Put one QR code on the counter or receipt so customers can join from their phone in seconds.</p>
     </article>
     <article class="metric-card">
-        <span class="metric-card__label">External Events</span>
-        <strong class="metric-card__value">@(_useExternalEvents ? "Enabled" : "Deferred")</strong>
-        <p class="metric-card__copy">Core business events still exist even when broker-backed transport is disabled.</p>
+        <span class="metric-card__label">Step 3</span>
+        <strong class="metric-card__value">Stamp It</strong>
+        <p class="metric-card__copy">Scan the customer’s wallet pass from your own device and let the card update with the new count.</p>
     </article>
 </section>
 
 <section class="section-header">
     <div>
-        <p class="eyebrow">Merchant workspaces</p>
-        <h3>Configured demo vendors</h3>
+        <p class="eyebrow">Your local setups</p>
+        <h3>Cards created in this preview</h3>
     </div>
-    <a class="button button--secondary" href="/portal/signup">Start another workspace</a>
+    <a class="button button--secondary" href="/portal/signup">Create Another Card</a>
 </section>
 
 @if (_merchants.Count == 0)
 {
     <section class="empty-state">
-        <h4>No vendors configured yet.</h4>
-        <p>Create the first internal merchant account, define the reward rule, and generate the customer join QR.</p>
-        <a class="button button--primary" href="/portal/signup">Set up the first vendor</a>
+        <h4>No loyalty card created yet.</h4>
+        <p>Start by setting your reward, colours, and logo. The next screen will generate the customer join QR for you.</p>
+        <a class="button button--primary" href="/portal/signup">Create Your First Card</a>
     </section>
 }
 else
@@ -60,7 +59,7 @@ else
             <article class="merchant-card">
                 <div class="merchant-card__head">
                     <div>
-                        <p class="merchant-card__kicker">White-label vendor</p>
+                        <p class="merchant-card__kicker">Branded card</p>
                         <h4>@merchant.DisplayName</h4>
                     </div>
                     <span class="chip chip--accent">@merchant.RewardHeadline</span>
@@ -80,8 +79,8 @@ else
                     </div>
                 </dl>
                 <div class="merchant-card__actions">
-                    <a class="button button--secondary" href="/portal/merchant/@merchant.MerchantId">Open workspace</a>
-                    <a class="button button--ghost" href="/join/@merchant.JoinCode" target="_blank">Open join flow</a>
+                    <a class="button button--secondary" href="/portal/merchant/@merchant.MerchantId">Open My Workspace</a>
+                    <a class="button button--ghost" href="/join/@merchant.JoinCode" target="_blank">Preview Customer Join</a>
                 </div>
             </article>
         }
@@ -90,8 +89,6 @@ else
 
 @code {
     private IReadOnlyList<MerchantSummarySnapshot> _merchants = [];
-    private bool _useRedis;
-    private bool _useExternalEvents;
 
     protected override void OnInitialized()
     {
@@ -102,8 +99,6 @@ else
     private void LoadState()
     {
         _merchants = PlatformState.GetMerchantSummaries();
-        _useRedis = Configuration.GetValue("Features:UseRedis", false);
-        _useExternalEvents = Configuration.GetValue("Features:UseExternalEvents", false);
     }
 
     private void HandleStateChanged() =>
