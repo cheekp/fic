@@ -1,5 +1,6 @@
 @page "/join/{JoinCode}"
 @inject DemoPlatformState PlatformState
+@inject NavigationManager Navigation
 
 <PageTitle>Join Loyalty Card</PageTitle>
 
@@ -87,6 +88,10 @@ else
     private Task IssueWalletCardAsync()
     {
         _walletCard = PlatformState.JoinCustomer(JoinCode);
+        if (_walletCard is not null)
+        {
+            Navigation.NavigateTo($"/wallet/card/{_walletCard.CardId}");
+        }
         return Task.CompletedTask;
     }
 
