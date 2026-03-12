@@ -1,0 +1,39 @@
+# AGENTS.md
+
+Repository-specific instructions for agents working in this repo.
+
+## Scope
+- Applies only to this repository.
+
+## Project Frame
+- FIC is an inception-stage startup project.
+- Current authoritative inputs are:
+  - `docs/ENGINEERING_HARNESS.md`
+  - `docs/business/fic-business-plan-v1.docx`
+  - `docs/architecture/FIC_PLATFORM_ARCHITECTURE_DRAFT.md`
+
+## Working Method
+- Use lightweight spec-driven delivery.
+- Sequence work in this order:
+  1. Capture architecture in `docs/architecture/`
+  2. Write or update the relevant RFC in `docs/rfcs/`
+  3. Track the current delivery slice in `docs/plans/active/`
+  4. Create implementation specs in `docs/specs/`
+  5. Implement and prove behavior with tests
+
+## Minimal Context Load Order
+- `AGENTS.md`
+- `README.md`
+- `docs/ENGINEERING_HARNESS.md`
+- the active architecture note in `docs/architecture/`
+- the active RFC in `docs/rfcs/`
+- the active plan in `docs/plans/active/`
+- the relevant spec in `docs/specs/`
+
+## Conventions
+- Keep business inputs separate from derived technical artifacts.
+- Treat the engineering harness as the repo-level system of record for workflow, layering, and entropy control.
+- Prefer short, reviewable slices over large speculative plans.
+- Each spec should define explicit requirements and acceptance criteria.
+- If behavior or architecture changes, update the corresponding RFC or spec in the same change.
+- Use branch names like `rfc/<slug>`, `feature/<slug>`, `bug/<slug>`, and `chore/<slug>`.
