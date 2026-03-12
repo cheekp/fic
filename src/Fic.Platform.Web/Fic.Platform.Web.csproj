@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fic.ServiceDefaults\Fic.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Fic.BuildingBlocks\Fic.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Fic.Contracts\Fic.Contracts.csproj" />
+    <ProjectReference Include="..\Fic.MerchantAccounts\Fic.MerchantAccounts.csproj" />
+    <ProjectReference Include="..\Fic.LoyaltyCore\Fic.LoyaltyCore.csproj" />
+    <ProjectReference Include="..\Fic.WalletPasses\Fic.WalletPasses.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+</Project>

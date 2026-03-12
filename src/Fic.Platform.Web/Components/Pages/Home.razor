@@ -1,0 +1,120 @@
+﻿@page "/"
+@implements IDisposable
+@inject DemoPlatformState PlatformState
+@inject IConfiguration Configuration
+
+<PageTitle>FIC Internal MVP</PageTitle>
+
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow">Internal demo slice</p>
+        <h2>Merchant onboarding, QR join, and wallet progress in one C# surface.</h2>
+        <p class="lede">This slice keeps the customer journey to browser plus Apple Wallet while the vendor runs everything from a web workspace.</p>
+    </div>
+    <div class="hero-panel__actions">
+        <a class="button button--primary" href="/portal/signup">Create a Vendor</a>
+        <span class="chip">Aspire local orchestration</span>
+        <span class="chip">Wallet-first customer journey</span>
+    </div>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card">
+        <span class="metric-card__label">Demo Vendors</span>
+        <strong class="metric-card__value">@_merchants.Count</strong>
+        <p class="metric-card__copy">MerchantAccounts owns onboarding before loyalty configuration starts.</p>
+    </article>
+    <article class="metric-card">
+        <span class="metric-card__label">Redis</span>
+        <strong class="metric-card__value">@(_useRedis ? "Enabled" : "Optional")</strong>
+        <p class="metric-card__copy">Cache stays behind an adapter seam and is off by default for F01.</p>
+    </article>
+    <article class="metric-card">
+        <span class="metric-card__label">External Events</span>
+        <strong class="metric-card__value">@(_useExternalEvents ? "Enabled" : "Deferred")</strong>
+        <p class="metric-card__copy">Core business events still exist even when broker-backed transport is disabled.</p>
+    </article>
+</section>
+
+<section class="section-header">
+    <div>
+        <p class="eyebrow">Merchant workspaces</p>
+        <h3>Configured demo vendors</h3>
+    </div>
+    <a class="button button--secondary" href="/portal/signup">Start another workspace</a>
+</section>
+
+@if (_merchants.Count == 0)
+{
+    <section class="empty-state">
+        <h4>No vendors configured yet.</h4>
+        <p>Create the first internal merchant account, define the reward rule, and generate the customer join QR.</p>
+        <a class="button button--primary" href="/portal/signup">Set up the first vendor</a>
+    </section>
+}
+else
+{
+    <section class="merchant-grid">
+        @foreach (var merchant in _merchants)
+        {
+            <article class="merchant-card">
+                <div class="merchant-card__head">
+                    <div>
+                        <p class="merchant-card__kicker">White-label vendor</p>
+                        <h4>@merchant.DisplayName</h4>
+                    </div>
+                    <span class="chip chip--accent">@merchant.RewardHeadline</span>
+                </div>
+                <dl class="merchant-card__metrics">
+                    <div>
+                        <dt>Active cards</dt>
+                        <dd>@merchant.ActiveCards</dd>
+                    </div>
+                    <div>
+                        <dt>Rewards unlocked</dt>
+                        <dd>@merchant.RewardsUnlocked</dd>
+                    </div>
+                    <div>
+                        <dt>Join code</dt>
+                        <dd>@merchant.JoinCode</dd>
+                    </div>
+                </dl>
+                <div class="merchant-card__actions">
+                    <a class="button button--secondary" href="/portal/merchant/@merchant.MerchantId">Open workspace</a>
+                    <a class="button button--ghost" href="/join/@merchant.JoinCode" target="_blank">Open join flow</a>
+                </div>
+            </article>
+        }
+    </section>
+}
+
+@code {
+    private IReadOnlyList<MerchantSummarySnapshot> _merchants = [];
+    private bool _useRedis;
+    private bool _useExternalEvents;
+
+    protected override void OnInitialized()
+    {
+        LoadState();
+        PlatformState.Changed += HandleStateChanged;
+    }
+
+    private void LoadState()
+    {
+        _merchants = PlatformState.GetMerchantSummaries();
+        _useRedis = Configuration.GetValue("Features:UseRedis", false);
+        _useExternalEvents = Configuration.GetValue("Features:UseExternalEvents", false);
+    }
+
+    private void HandleStateChanged() =>
+        _ = InvokeAsync(() =>
+        {
+            LoadState();
+            StateHasChanged();
+        });
+
+    public void Dispose()
+    {
+        PlatformState.Changed -= HandleStateChanged;
+    }
+}

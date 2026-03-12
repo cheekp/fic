@@ -1,0 +1,201 @@
+@page "/portal/signup"
+@using System.ComponentModel.DataAnnotations
+@using System.Text
+@inject DemoPlatformState PlatformState
+@inject NavigationManager Navigation
+
+<PageTitle>Create Vendor</PageTitle>
+
+<section class="section-header">
+    <div>
+        <p class="eyebrow">Merchant onboarding</p>
+        <h2>Create an internal vendor workspace</h2>
+        <p class="lede">No billing, one programme per vendor, and enough brand input to drive both the workspace and the wallet pass.</p>
+    </div>
+</section>
+
+<section class="panel">
+    <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" class="form-stack">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="validation-summary" />
+
+        <div class="form-grid">
+            <label class="field">
+                <span>Retailer display name</span>
+                <InputText @bind-Value="_form.DisplayName" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Contact email</span>
+                <InputText @bind-Value="_form.ContactEmail" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Reward item label</span>
+                <InputText @bind-Value="_form.RewardItemLabel" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Reward threshold</span>
+                <InputNumber @bind-Value="_form.RewardThreshold" class="input" />
+            </label>
+
+            <label class="field field--full">
+                <span>Reward copy</span>
+                <InputText @bind-Value="_form.RewardCopy" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Primary brand colour</span>
+                <InputText @bind-Value="_form.PrimaryColor" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Accent colour</span>
+                <InputText @bind-Value="_form.AccentColor" class="input" />
+            </label>
+
+            <div class="field field--full">
+                <span>Logo asset</span>
+                <label class="upload-control">
+                    <InputFile OnChange="HandleLogoSelectedAsync" accept=".png,.jpg,.jpeg,.svg,.webp" />
+                    <span>Upload a logo or let the demo generate an initials mark.</span>
+                </label>
+                @if (!string.IsNullOrWhiteSpace(_logoUploadMessage))
+                {
+                    <p class="field-hint">@_logoUploadMessage</p>
+                }
+            </div>
+        </div>
+
+        <div class="signup-preview">
+            <div class="signup-preview__logo" style="@BuildBrandStyle()">
+                @if (!string.IsNullOrWhiteSpace(_logoPreviewUri))
+                {
+                    <img src="@_logoPreviewUri" alt="@_form.DisplayName logo preview" />
+                }
+                else
+                {
+                    <span>@GetInitials(_form.DisplayName)</span>
+                }
+            </div>
+            <div>
+                <p class="eyebrow">Live preview</p>
+                <h3>@_form.DisplayName</h3>
+                <p>@BuildRewardHeadline()</p>
+                <p class="field-hint">This preview drives the vendor shell and the wallet card branding.</p>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create vendor workspace</button>
+            <a class="button button--ghost" href="/">Back to overview</a>
+        </div>
+    </EditForm>
+</section>
+
+@code {
+    private readonly SignupFormModel _form = new();
+    private bool _isSubmitting;
+    private string? _logoPreviewUri;
+    private string? _logoUploadMessage;
+
+    private async Task HandleLogoSelectedAsync(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        await using var stream = file.OpenReadStream(2 * 1024 * 1024);
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer);
+
+        _logoPreviewUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer.ToArray())}";
+        _logoUploadMessage = $"{file.Name} loaded for the internal demo.";
+    }
+
+    private Task HandleSubmitAsync()
+    {
+        _isSubmitting = true;
+
+        var workspace = PlatformState.CreateMerchant(
+            _form.DisplayName,
+            _form.ContactEmail,
+            _form.RewardItemLabel,
+            _form.RewardThreshold,
+            _form.RewardCopy,
+            _logoPreviewUri ?? BuildFallbackLogo(_form.DisplayName, _form.PrimaryColor, _form.AccentColor),
+            _form.PrimaryColor,
+            _form.AccentColor,
+            Navigation.BaseUri);
+
+        Navigation.NavigateTo($"/portal/merchant/{workspace.Merchant.MerchantId}");
+        return Task.CompletedTask;
+    }
+
+    private string BuildRewardHeadline() =>
+        $"Buy {_form.RewardThreshold} {_form.RewardItemLabel.ToLowerInvariant()}, get one free";
+
+    private string BuildBrandStyle() =>
+        $"--preview-primary: {NormalizeColor(_form.PrimaryColor)}; --preview-accent: {NormalizeColor(_form.AccentColor)};";
+
+    private static string GetInitials(string name)
+    {
+        var initials = name
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2)
+            .Select(part => char.ToUpperInvariant(part[0]))
+            .ToArray();
+
+        return initials.Length == 0 ? "F" : new string(initials);
+    }
+
+    private static string BuildFallbackLogo(string displayName, string primaryColor, string accentColor)
+    {
+        var initials = GetInitials(displayName);
+        var svg =
+            $"""
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="{displayName}">
+              <defs>
+                <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="{NormalizeColor(primaryColor)}" />
+                  <stop offset="100%" stop-color="{NormalizeColor(accentColor)}" />
+                </linearGradient>
+              </defs>
+              <rect width="160" height="160" rx="34" fill="url(#g)" />
+              <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-size="58" font-family="Trebuchet MS, sans-serif" fill="#fff8e3">{initials}</text>
+            </svg>
+            """;
+
+        return $"data:image/svg+xml;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(svg))}";
+    }
+
+    private static string NormalizeColor(string value) =>
+        value.StartsWith('#') ? value : $"#{value}";
+
+    private sealed class SignupFormModel
+    {
+        [Required, StringLength(80)]
+        public string DisplayName { get; set; } = "Jo's Coffee";
+
+        [Required, EmailAddress]
+        public string ContactEmail { get; set; } = "owner@joscoffee.test";
+
+        [Required, StringLength(40)]
+        public string RewardItemLabel { get; set; } = "coffees";
+
+        [Range(2, 20)]
+        public int RewardThreshold { get; set; } = 5;
+
+        [Required, StringLength(120)]
+        public string RewardCopy { get; set; } = "Your next cuppa is free once you reach the full stamp count.";
+
+        [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
+        public string PrimaryColor { get; set; } = "#1f3731";
+
+        [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
+        public string AccentColor { get; set; } = "#f4c15d";
+    }
+}
