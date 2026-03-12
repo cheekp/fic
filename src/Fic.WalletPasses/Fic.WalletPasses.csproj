@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Fic.BuildingBlocks\Fic.BuildingBlocks.csproj" />
     <ProjectReference Include="..\Fic.Contracts\Fic.Contracts.csproj" />
     <ProjectReference Include="..\Fic.LoyaltyCore\Fic.LoyaltyCore.csproj" />
+    <ProjectReference Include="..\Fic.MerchantAccounts\Fic.MerchantAccounts.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(MSBuildSDKsPath)/../System.Security.Cryptography.Pkcs.dll')">

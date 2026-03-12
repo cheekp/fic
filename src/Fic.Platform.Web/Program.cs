@@ -3,6 +3,7 @@ using Fic.Platform.Web.Services;
 using Fic.WalletPasses;
 using Fic.MerchantAccounts;
 using Microsoft.Extensions.FileProviders;
+using Azure.Storage.Blobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,10 +16,23 @@ builder.AddServiceDefaults();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddSingleton<IMerchantBrandAssetStore, LocalMerchantBrandAssetStore>();
+
+var useBlobBrandAssets = builder.Configuration.GetValue("Features:UseBlobBrandAssets", false);
+var brandAssetsConnectionString = builder.Configuration.GetConnectionString("brandassets");
+
+if (useBlobBrandAssets && !string.IsNullOrWhiteSpace(brandAssetsConnectionString))
+{
+    builder.Services.AddSingleton(new BlobServiceClient(brandAssetsConnectionString));
+    builder.Services.AddSingleton<IMerchantBrandAssetStore, BlobMerchantBrandAssetStore>();
+}
+else
+{
+    builder.Services.AddSingleton<IMerchantBrandAssetStore, LocalMerchantBrandAssetStore>();
+}
+
 builder.Services.AddSingleton<DemoPlatformState>();
 builder.Services.AddSingleton<JoinQrCodeService>();
-builder.Services.AddSingleton<IAppleWalletPassService>(_ =>
+builder.Services.AddSingleton<IAppleWalletPassService>(sp =>
 {
     var options = new AppleWalletPassOptions();
     builder.Configuration.GetSection("Wallet:AppleWallet").Bind(options);
@@ -26,14 +40,10 @@ builder.Services.AddSingleton<IAppleWalletPassService>(_ =>
     options.DefaultAssetDirectory = Path.Combine(
         builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"),
         "wallet-assets");
-    options.StoredMerchantAssetDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "merchant-brand-assets");
-    options.StoredMerchantAssetRequestPath = "/merchant-brand-assets";
-    return new AppleWalletPassService(options);
+    return new AppleWalletPassService(options, sp.GetRequiredService<IMerchantBrandAssetStore>());
 });
 
 var app = builder.Build();
-var merchantBrandAssetDirectory = Path.Combine(app.Environment.ContentRootPath, "App_Data", "merchant-brand-assets");
-Directory.CreateDirectory(merchantBrandAssetDirectory);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -44,13 +54,22 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(merchantBrandAssetDirectory),
-    RequestPath = "/merchant-brand-assets"
-});
 
 app.UseAntiforgery();
+
+app.MapGet("/merchant-brand-assets/{**assetPath}", async (
+    string assetPath,
+    IMerchantBrandAssetStore brandAssetStore,
+    CancellationToken cancellationToken) =>
+{
+    var asset = await brandAssetStore.GetAssetAsync(
+        $"{MerchantBrandAssetDefaults.PublicRequestPath}/{assetPath}",
+        cancellationToken);
+
+    return asset is null
+        ? Results.NotFound()
+        : Results.File(asset.Bytes, asset.ContentType);
+});
 
 app.MapGet("/wallet/passes/{cardId:guid}.pkpass", async (
     Guid cardId,
