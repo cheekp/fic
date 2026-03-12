@@ -23,10 +23,7 @@ public sealed class BlobMerchantBrandAssetStore(
             throw new InvalidOperationException("Merchant logo uploads must be PNG files.");
         }
 
-        if (!LooksLikePng(upload.Bytes))
-        {
-            throw new InvalidOperationException("Merchant logo upload does not contain a valid PNG signature.");
-        }
+        MerchantBrandAssetInspector.EnsureValidPng(upload.Bytes);
 
         await _container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
 
@@ -100,11 +97,5 @@ public sealed class BlobMerchantBrandAssetStore(
 
         blobName = string.Join('/', relativeSegments);
         return blobName.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool LooksLikePng(byte[] bytes)
-    {
-        byte[] pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-        return bytes.Length >= pngSignature.Length && pngSignature.SequenceEqual(bytes.Take(pngSignature.Length));
     }
 }

@@ -3,10 +3,16 @@
     flex-direction: column;
     gap: 1.5rem;
     color: rgba(252, 247, 236, 0.95);
+    min-height: 100%;
+}
+
+.nav-brand {
+    display: grid;
+    gap: 0.6rem;
 }
 
 .nav-brand__kicker {
-    margin: 0 0 0.5rem;
+    margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     font-size: 0.72rem;
@@ -15,7 +21,6 @@
 
 .nav-brand__name {
     display: inline-block;
-    margin-bottom: 0.5rem;
     color: #fff7e0;
     font-size: 1.6rem;
     line-height: 1;
@@ -25,7 +30,7 @@
 .nav-brand__copy {
     margin: 0;
     color: rgba(232, 238, 228, 0.74);
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .nav-links {
@@ -72,5 +77,5 @@
     margin: 0;
     padding-left: 1.1rem;
     color: rgba(232, 238, 228, 0.78);
-    line-height: 1.55;
+    line-height: 1.6;
 }

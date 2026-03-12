@@ -32,6 +32,7 @@ else
 
 builder.Services.AddSingleton<DemoPlatformState>();
 builder.Services.AddSingleton<JoinQrCodeService>();
+builder.Services.AddSingleton<MerchantBrandPresentationService>();
 builder.Services.AddSingleton<IAppleWalletPassService>(sp =>
 {
     var options = new AppleWalletPassOptions();
