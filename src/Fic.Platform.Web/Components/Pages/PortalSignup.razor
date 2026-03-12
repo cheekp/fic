@@ -4,6 +4,7 @@
 @using Fic.MerchantAccounts
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
+@inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>Create Your Loyalty Card</PageTitle>
 
@@ -69,22 +70,50 @@
             </div>
         </div>
 
-        <div class="signup-preview">
-            <div class="signup-preview__logo" style="@BuildBrandStyle()">
-                @if (!string.IsNullOrWhiteSpace(_logoPreviewUri))
-                {
-                    <img src="@_logoPreviewUri" alt="@_form.DisplayName logo preview" />
-                }
-                else
-                {
-                    <span>@GetInitials(_form.DisplayName)</span>
-                }
+        @{
+            var previewTheme = BuildPreviewTheme();
+        }
+        <div class="signup-preview signup-preview--studio @previewTheme.ThemeClass" style="@previewTheme.CssVariables">
+            <div class="signup-preview__shell">
+                <div class="signup-preview__chrome">
+                    <div class="signup-preview__logo">
+                        @if (!string.IsNullOrWhiteSpace(_logoPreviewUri))
+                        {
+                            <img src="@_logoPreviewUri" alt="@_form.DisplayName logo preview" />
+                        }
+                        else
+                        {
+                            <span>@GetInitials(_form.DisplayName)</span>
+                        }
+                    </div>
+                    <div>
+                        <p class="eyebrow">Merchant workspace feel</p>
+                        <h3>@_form.DisplayName</h3>
+                        <p>@BuildRewardHeadline()</p>
+                        <p class="field-hint">The shell, panels, and pass all inherit the same derived brand tokens.</p>
+                    </div>
+                </div>
+
+                <div class="signup-preview__surface">
+                    <span class="chip chip--accent">Brand system compiled</span>
+                    <div class="signup-preview__actions">
+                        <span class="signup-preview__action">Customer join QR</span>
+                        <span class="signup-preview__action">Till-side stamping</span>
+                    </div>
+                </div>
             </div>
-            <div>
-                <p class="eyebrow">Card preview</p>
+
+            <div class="signup-preview__wallet @previewTheme.ThemeClass" style="@previewTheme.CssVariables">
+                <p class="wallet-pass__label">Wallet card direction</p>
                 <h3>@_form.DisplayName</h3>
-                <p>@BuildRewardHeadline()</p>
-                <p class="field-hint">This is how your workspace and wallet card will pick up your brand from the same configuration.</p>
+                <p class="signup-preview__wallet-copy">@_form.RewardCopy</p>
+                <p class="wallet-pass__progress">2/@_form.RewardThreshold</p>
+                <div class="stamp-track" aria-label="preview stamps">
+                    @for (var i = 0; i < _form.RewardThreshold; i++)
+                    {
+                        <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
+                    }
+                </div>
             </div>
         </div>
 
@@ -102,6 +131,7 @@
     private string? _logoUploadMessage;
     private byte[]? _logoUploadBytes;
     private string _logoFileName = "logo.png";
+    private MerchantLogoMetadata _logoMetadata = new(160, 160);
 
     private async Task HandleLogoSelectedAsync(InputFileChangeEventArgs args)
     {
@@ -115,6 +145,7 @@
         {
             _logoUploadBytes = null;
             _logoPreviewUri = null;
+            _logoMetadata = new MerchantLogoMetadata(160, 160);
             _logoUploadMessage = "Please upload a PNG logo for the merchant brand asset flow.";
             return;
         }
@@ -124,6 +155,7 @@
         await stream.CopyToAsync(buffer);
 
         _logoUploadBytes = buffer.ToArray();
+        _logoMetadata = MerchantBrandAssetInspector.ReadLogoMetadata(_logoUploadBytes);
         _logoFileName = file.Name;
         _logoPreviewUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(_logoUploadBytes)}";
         _logoUploadMessage = $"{file.Name} loaded into your card preview.";
@@ -162,8 +194,12 @@
     private string BuildRewardHeadline() =>
         $"Buy {_form.RewardThreshold} {_form.RewardItemLabel.ToLowerInvariant()}, get one free";
 
-    private string BuildBrandStyle() =>
-        $"--preview-primary: {NormalizeColor(_form.PrimaryColor)}; --preview-accent: {NormalizeColor(_form.AccentColor)};";
+    private MerchantThemeView BuildPreviewTheme() =>
+        BrandPresentation.BuildPreview(
+            NormalizeColor(_form.PrimaryColor),
+            NormalizeColor(_form.AccentColor),
+            _logoMetadata.Width,
+            _logoMetadata.Height);
 
     private static string GetInitials(string name)
     {

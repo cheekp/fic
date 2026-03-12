@@ -1,6 +1,7 @@
 ﻿@page "/"
 @implements IDisposable
 @inject DemoPlatformState PlatformState
+@inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>FIC Loyalty</PageTitle>
 
@@ -56,11 +57,18 @@ else
     <section class="merchant-grid">
         @foreach (var merchant in _merchants)
         {
-            <article class="merchant-card">
+            var theme = BrandPresentation.Build(merchant);
+
+            <article class="merchant-card @theme.ThemeClass" style="@theme.CssVariables">
                 <div class="merchant-card__head">
-                    <div>
+                    <div class="merchant-card__brand">
+                        <div class="brand-lockup">
+                            <img src="@merchant.LogoUrl" alt="@merchant.DisplayName logo" />
+                        </div>
+                        <div>
                         <p class="merchant-card__kicker">Branded card</p>
                         <h4>@merchant.DisplayName</h4>
+                        </div>
                     </div>
                     <span class="chip chip--accent">@merchant.RewardHeadline</span>
                 </div>

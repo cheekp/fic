@@ -9,7 +9,9 @@ public sealed record MerchantAccountSnapshot(
 public sealed record BrandProfileSnapshot(
     string LogoUrl,
     string PrimaryColor,
-    string AccentColor);
+    string AccentColor,
+    int LogoWidth,
+    int LogoHeight);
 
 public sealed record LoyaltyProgrammeSnapshot(
     Guid ProgrammeId,
@@ -30,6 +32,8 @@ public sealed record WalletCardSnapshot(
     string RewardCopy,
     string PrimaryColor,
     string AccentColor,
+    int LogoWidth,
+    int LogoHeight,
     int CurrentCount,
     int TargetCount,
     string ProgressDisplayText,
@@ -47,7 +51,12 @@ public sealed record MerchantSummarySnapshot(
     string RewardHeadline,
     int ActiveCards,
     int RewardsUnlocked,
-    string JoinCode);
+    string JoinCode,
+    string LogoUrl,
+    string PrimaryColor,
+    string AccentColor,
+    int LogoWidth,
+    int LogoHeight);
 
 public sealed record TimelineEventSnapshot(
     Guid EventId,

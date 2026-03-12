@@ -2,6 +2,7 @@
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
 @inject IAppleWalletPassService WalletPasses
+@inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>Join Loyalty Card</PageTitle>
 
@@ -14,21 +15,23 @@
 }
 else
 {
-        <section class="join-hero" style="@BuildHeroStyle()">
+    var joinTheme = BrandPresentation.Build(_experience.BrandProfile);
+
+        <section class="join-hero @joinTheme.ThemeClass" style="@joinTheme.CssVariables">
             <div class="join-hero__content">
             <p class="eyebrow">Join this loyalty card</p>
             <h2>@_experience.Merchant.DisplayName</h2>
             <p class="lede">@_experience.Programme.RewardCopy</p>
             <p class="field-hint">No app to install. Join here once, then keep the card in Apple Wallet.</p>
         </div>
-        <div class="join-hero__logo">
-            <img src="@_experience.BrandProfile.LogoUrl" alt="@_experience.Merchant.DisplayName logo" />
-        </div>
+            <div class="join-hero__logo">
+                <img src="@_experience.BrandProfile.LogoUrl" alt="@_experience.Merchant.DisplayName logo" />
+            </div>
     </section>
 
     @if (_walletCard is null)
     {
-        <section class="panel">
+        <section class="panel join-panel @joinTheme.ThemeClass" style="@joinTheme.CssVariables">
             <div class="panel__header">
                 <div>
                     <p class="eyebrow">Save your card</p>
@@ -58,7 +61,7 @@ else
     }
     else
     {
-        <section class="panel">
+        <section class="panel join-panel @joinTheme.ThemeClass" style="@joinTheme.CssVariables">
             <div class="panel__header">
                 <div>
                     <p class="eyebrow">Your card is ready</p>
@@ -104,8 +107,4 @@ else
         return Task.CompletedTask;
     }
 
-    private string BuildHeroStyle() =>
-        _experience is null
-            ? string.Empty
-            : $"--join-primary: {_experience.BrandProfile.PrimaryColor}; --join-accent: {_experience.BrandProfile.AccentColor};";
 }

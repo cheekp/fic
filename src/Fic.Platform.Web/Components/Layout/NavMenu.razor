@@ -1,8 +1,16 @@
-﻿<div class="nav-shell">
+@using Fic.Platform.Web.Components.Layout
+
+<div class="nav-shell">
     <div class="nav-brand">
-        <p class="nav-brand__kicker">Self-Serve Setup</p>
-        <a class="nav-brand__name" href="">FIC Loyalty</a>
-        <p class="nav-brand__copy">Create your card, brand it, share the join QR, and stamp visits from your phone or till-side device.</p>
+        @if (!string.IsNullOrWhiteSpace(ShellContext.LogoUrl))
+        {
+            <div class="nav-brand__mark">
+                <img src="@ShellContext.LogoUrl" alt="@ShellContext.SidebarName logo" />
+            </div>
+        }
+        <p class="nav-brand__kicker">@ShellContext.SidebarKicker</p>
+        <a class="nav-brand__name" href="">@ShellContext.SidebarName</a>
+        <p class="nav-brand__copy">@ShellContext.SidebarCopy</p>
     </div>
 
     <nav class="nav-links">
@@ -11,11 +19,17 @@
     </nav>
 
     <div class="nav-panel">
-        <p class="nav-panel__title">What this setup gives you</p>
+        <p class="nav-panel__title">@ShellContext.PanelTitle</p>
         <ul class="nav-panel__list">
-            <li>Your customers do not need an app.</li>
-            <li>Your staff can scan and stamp from the web.</li>
-            <li>Your branding carries through to the wallet card.</li>
+            @foreach (var point in ShellContext.PanelPoints)
+            {
+                <li>@point</li>
+            }
         </ul>
     </div>
 </div>
+
+@code {
+    [Parameter]
+    public MainLayout.ShellContext ShellContext { get; set; } = MainLayout.ShellContext.Default;
+}

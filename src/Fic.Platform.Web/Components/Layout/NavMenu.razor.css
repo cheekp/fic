@@ -2,21 +2,46 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    color: rgba(252, 247, 236, 0.95);
+    color: var(--brand-ink);
+    min-height: 100%;
+}
+
+.nav-brand {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.nav-brand__mark {
+    width: 92px;
+    height: 92px;
+    border-radius: 1.6rem;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: var(--brand-logo-plate);
+    border: 1px solid var(--brand-logo-border);
+    box-shadow: 0 18px 36px var(--brand-shadow);
+}
+
+.nav-brand__mark img {
+    width: 100%;
+    height: 100%;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    object-fit: contain;
 }
 
 .nav-brand__kicker {
-    margin: 0 0 0.5rem;
+    margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     font-size: 0.72rem;
-    color: rgba(247, 230, 184, 0.88);
+    color: var(--brand-muted);
 }
 
 .nav-brand__name {
     display: inline-block;
-    margin-bottom: 0.5rem;
-    color: #fff7e0;
+    color: var(--brand-ink);
     font-size: 1.6rem;
     line-height: 1;
     text-decoration: none;
@@ -24,8 +49,8 @@
 
 .nav-brand__copy {
     margin: 0;
-    color: rgba(232, 238, 228, 0.74);
-    line-height: 1.5;
+    color: var(--brand-muted);
+    line-height: 1.6;
 }
 
 .nav-links {
@@ -36,41 +61,42 @@
 .nav-links ::deep .nav-links__item {
     display: block;
     padding: 0.9rem 1rem;
-    border: 1px solid rgba(255, 247, 224, 0.14);
+    border: 1px solid var(--brand-line);
     border-radius: 1rem;
-    color: #fff7e0;
+    color: var(--brand-ink);
     text-decoration: none;
-    background: rgba(255, 247, 224, 0.04);
+    background: var(--brand-surface);
     transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
 }
 
 .nav-links ::deep .nav-links__item.active {
-    background: rgba(244, 193, 93, 0.18);
-    border-color: rgba(244, 193, 93, 0.38);
+    background: var(--brand-accent-soft);
+    border-color: var(--brand-logo-border);
     transform: translateX(4px);
 }
 
 .nav-links ::deep .nav-links__item:hover {
-    background: rgba(255, 247, 224, 0.1);
+    background: var(--brand-surface-strong);
 }
 
 .nav-panel {
     margin-top: auto;
     padding: 1rem;
     border-radius: 1.2rem;
-    background: rgba(255, 247, 224, 0.06);
-    border: 1px solid rgba(255, 247, 224, 0.1);
+    background: var(--brand-surface);
+    border: 1px solid var(--brand-line);
+    box-shadow: 0 16px 30px var(--brand-shadow);
 }
 
 .nav-panel__title {
     margin: 0 0 0.75rem;
-    color: #fff7e0;
+    color: var(--brand-ink);
     font-weight: 600;
 }
 
 .nav-panel__list {
     margin: 0;
     padding-left: 1.1rem;
-    color: rgba(232, 238, 228, 0.78);
-    line-height: 1.55;
+    color: var(--brand-muted);
+    line-height: 1.6;
 }

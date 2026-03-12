@@ -120,8 +120,12 @@ public sealed class AppleWalletPassService(
 
     private AppleWalletPassDocument BuildPassDocument(WalletCardSnapshot card)
     {
-        var background = ToAppleRgb(card.PrimaryColor);
-        var foreground = PickReadableForeground(card.PrimaryColor);
+        var theme = MerchantBrandThemeCompiler.Compile(
+            card.PrimaryColor,
+            card.AccentColor,
+            new MerchantLogoMetadata(card.LogoWidth, card.LogoHeight));
+        var background = ToAppleRgb(theme.CanvasEndColor);
+        var foreground = ToAppleRgb(theme.InkColor);
         var rewardHeadline = $"Buy {card.TargetCount} {card.RewardItemLabel}, get one free";
 
         return new AppleWalletPassDocument
@@ -139,7 +143,7 @@ public sealed class AppleWalletPassService(
             LogoText = card.VendorDisplayName,
             BackgroundColor = background,
             ForegroundColor = foreground,
-            LabelColor = foreground,
+            LabelColor = ToAppleRgb(theme.AccentInkColor),
             Barcode = new AppleWalletBarcode
             {
                 Format = "PKBarcodeFormatQR",
@@ -292,21 +296,6 @@ public sealed class AppleWalletPassService(
         var green = int.Parse(normalized[2..4], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         var blue = int.Parse(normalized[4..6], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         return $"rgb({red}, {green}, {blue})";
-    }
-
-    private static string PickReadableForeground(string hexColor)
-    {
-        var normalized = hexColor.Trim().TrimStart('#');
-        if (normalized.Length != 6)
-        {
-            return "rgb(255, 255, 255)";
-        }
-
-        var red = int.Parse(normalized[..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-        var green = int.Parse(normalized[2..4], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-        var blue = int.Parse(normalized[4..6], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-        var luminance = (0.299 * red) + (0.587 * green) + (0.114 * blue);
-        return luminance >= 160 ? "rgb(17, 24, 39)" : "rgb(255, 248, 227)";
     }
 
     private static bool TryDecodePngDataUri(string value, out byte[] bytes)

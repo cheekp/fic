@@ -4,6 +4,7 @@
 @inject JoinQrCodeService QrCodes
 @inject NavigationManager Navigation
 @inject IAppleWalletPassService WalletPasses
+@inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>Your Loyalty Workspace</PageTitle>
 
@@ -17,135 +18,139 @@
 }
 else
 {
-    <section class="workspace-header">
-        <div class="workspace-brand">
-            <div class="brand-lockup" style="@BuildBrandStyle()">
-                <img src="@_workspace.BrandProfile.LogoUrl" alt="@_workspace.Merchant.DisplayName logo" />
-            </div>
-            <div>
-                <p class="eyebrow">Your loyalty workspace</p>
-                <h2>@_workspace.Merchant.DisplayName</h2>
-                <p class="lede">Buy @_workspace.Programme.RewardThreshold @_workspace.Programme.RewardItemLabel, get one free.</p>
-            </div>
-        </div>
-        <div class="workspace-actions">
-            <span class="chip chip--accent">Join code: @_workspace.Programme.JoinCode</span>
-            <span class="chip @(WalletCapability.SupportsAppleWalletPass ? "chip--success" : string.Empty)">
-                @(WalletCapability.SupportsAppleWalletPass ? "Signed Apple Wallet ready" : "Preview fallback")
-            </span>
-            <a class="button button--secondary" href="@_workspace.JoinUrl" target="_blank">Open Customer Join</a>
-        </div>
-    </section>
+    var workspaceTheme = BrandPresentation.Build(_workspace.BrandProfile);
 
-    <section class="workspace-grid">
-        <article class="panel">
+    <div class="workspace-stage @workspaceTheme.ThemeClass" style="@workspaceTheme.CssVariables">
+        <section class="workspace-header">
+            <div class="workspace-brand">
+                <div class="brand-lockup brand-lockup--merchant">
+                    <img src="@_workspace.BrandProfile.LogoUrl" alt="@_workspace.Merchant.DisplayName logo" />
+                </div>
+                <div class="workspace-brand__copy">
+                    <p class="eyebrow">Your loyalty workspace</p>
+                    <h2>@_workspace.Merchant.DisplayName</h2>
+                    <p class="lede">Buy @_workspace.Programme.RewardThreshold @_workspace.Programme.RewardItemLabel, get one free.</p>
+                </div>
+            </div>
+            <div class="workspace-actions">
+                <span class="chip chip--accent">Join code: @_workspace.Programme.JoinCode</span>
+                <span class="chip @(WalletCapability.SupportsAppleWalletPass ? "chip--success" : string.Empty)">
+                    @(WalletCapability.SupportsAppleWalletPass ? "Signed Apple Wallet ready" : "Preview fallback")
+                </span>
+                <a class="button button--secondary" href="@_workspace.JoinUrl" target="_blank">Open Customer Join</a>
+            </div>
+        </section>
+
+        <section class="workspace-grid">
+            <article class="panel">
+                <div class="panel__header">
+                    <div>
+                        <p class="eyebrow">Customer signup</p>
+                        <h3>Your join QR</h3>
+                    </div>
+                    <span class="chip">Poster or counter card</span>
+                </div>
+                <div class="qr-panel">
+                    <div class="qr-panel__graphic">
+                        @((MarkupString)_joinQrSvg)
+                    </div>
+                    <div class="qr-panel__meta">
+                        <p>Customers scan this from their own phone, complete the short web join, and save the card to Apple Wallet.</p>
+                        <p class="field-hint">@WalletCapability.HelperText</p>
+                        <code>@_workspace.JoinUrl</code>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel__header">
+                    <div>
+                        <p class="eyebrow">Till-side stamping</p>
+                        <h3>Scan a customer pass</h3>
+                    </div>
+                    <span class="chip">Phone, scanner, or paste</span>
+                </div>
+                <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
+                    <label class="field">
+                        <span>Customer pass code</span>
+                        <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
+                    </label>
+                    <div class="form-actions">
+                        <button class="button button--primary" type="submit" disabled="@string.IsNullOrWhiteSpace(_scanCode)">Award visit</button>
+                        <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
+                    </div>
+                </EditForm>
+                @if (!string.IsNullOrWhiteSpace(_scanMessage))
+                {
+                    <p class="field-hint">@_scanMessage</p>
+                }
+            </article>
+        </section>
+
+        <section class="section-header">
+            <div>
+                <p class="eyebrow">Joined customers</p>
+                <h3>Cards in your programme</h3>
+            </div>
+            <span class="chip">@_workspace.Cards.Count active cards</span>
+        </section>
+
+        @if (_workspace.Cards.Count == 0)
+        {
+            <section class="empty-state">
+                <h4>No customers joined yet.</h4>
+                <p>Share the QR code first. Once someone joins and saves the card, their progress will appear here.</p>
+            </section>
+        }
+        else
+        {
+            <section class="card-list">
+                @foreach (var card in _workspace.Cards)
+                {
+                    <article class="card-row">
+                        <div>
+                            <p class="eyebrow">Customer card</p>
+                            <h4>@card.ProgressDisplayText</h4>
+                            <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
+                        </div>
+                        <div class="card-row__meta">
+                            <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
+                            <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Open Preview</a>
+                            @if (WalletCapability.SupportsAppleWalletPass)
+                            {
+                                <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Download Wallet Pass</a>
+                            }
+                            <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Pass Code</button>
+                            <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Mark Reward Redeemed</button>
+                        </div>
+                    </article>
+                }
+            </section>
+        }
+
+        <section class="panel">
             <div class="panel__header">
                 <div>
-                    <p class="eyebrow">Customer signup</p>
-                    <h3>Your join QR</h3>
+                    <p class="eyebrow">Recent activity</p>
+                    <h3>What changed on your card</h3>
                 </div>
-                <span class="chip">Poster or counter card</span>
+                <span class="chip">Shared card state</span>
             </div>
-            <div class="qr-panel">
-                <div class="qr-panel__graphic">
-                    @((MarkupString)_joinQrSvg)
-                </div>
-                <div class="qr-panel__meta">
-                    <p>Customers scan this from their own phone, complete the short web join, and save the card to Apple Wallet.</p>
-                    <p class="field-hint">@WalletCapability.HelperText</p>
-                    <code>@_workspace.JoinUrl</code>
-                </div>
+            <div class="timeline">
+                @foreach (var entry in _workspace.Timeline)
+                {
+                    <article class="timeline__entry">
+                        <div class="timeline__dot"></div>
+                        <div>
+                            <p class="timeline__event">@entry.EventType</p>
+                            <p>@entry.Summary</p>
+                            <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                        </div>
+                    </article>
+                }
             </div>
-        </article>
-
-        <article class="panel">
-            <div class="panel__header">
-                <div>
-                    <p class="eyebrow">Till-side stamping</p>
-                    <h3>Scan a customer pass</h3>
-                </div>
-                <span class="chip">Phone, scanner, or paste</span>
-            </div>
-            <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
-                <label class="field">
-                    <span>Customer pass code</span>
-                    <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
-                </label>
-                <div class="form-actions">
-                    <button class="button button--primary" type="submit" disabled="@string.IsNullOrWhiteSpace(_scanCode)">Award visit</button>
-                    <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
-                </div>
-            </EditForm>
-            @if (!string.IsNullOrWhiteSpace(_scanMessage))
-            {
-                <p class="field-hint">@_scanMessage</p>
-            }
-        </article>
-    </section>
-
-    <section class="section-header">
-        <div>
-            <p class="eyebrow">Joined customers</p>
-            <h3>Cards in your programme</h3>
-        </div>
-        <span class="chip">@_workspace.Cards.Count active cards</span>
-    </section>
-
-    @if (_workspace.Cards.Count == 0)
-    {
-        <section class="empty-state">
-            <h4>No customers joined yet.</h4>
-            <p>Share the QR code first. Once someone joins and saves the card, their progress will appear here.</p>
         </section>
-    }
-    else
-    {
-        <section class="card-list">
-            @foreach (var card in _workspace.Cards)
-            {
-                <article class="card-row">
-                    <div>
-                        <p class="eyebrow">Customer card</p>
-                        <h4>@card.ProgressDisplayText</h4>
-                        <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
-                    </div>
-                    <div class="card-row__meta">
-                        <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
-                        <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Open Preview</a>
-                        @if (WalletCapability.SupportsAppleWalletPass)
-                        {
-                            <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Download Wallet Pass</a>
-                        }
-                        <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Pass Code</button>
-                        <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Mark Reward Redeemed</button>
-                    </div>
-                </article>
-            }
-        </section>
-    }
-
-    <section class="panel">
-        <div class="panel__header">
-            <div>
-                <p class="eyebrow">Recent activity</p>
-                <h3>What changed on your card</h3>
-            </div>
-            <span class="chip">Shared card state</span>
-        </div>
-        <div class="timeline">
-            @foreach (var entry in _workspace.Timeline)
-            {
-                <article class="timeline__entry">
-                    <div class="timeline__dot"></div>
-                    <div>
-                        <p class="timeline__event">@entry.EventType</p>
-                        <p>@entry.Summary</p>
-                        <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
-                    </div>
-                </article>
-            }
-        </div>
-    </section>
+    </div>
 }
 
 @code {
@@ -205,12 +210,6 @@ else
         _scanCode = string.Empty;
         _scanMessage = null;
     }
-
-    private string BuildBrandStyle() =>
-        _workspace is null
-            ? string.Empty
-            : $"--preview-primary: {_workspace.BrandProfile.PrimaryColor}; --preview-accent: {_workspace.BrandProfile.AccentColor};";
-
     private void HandleStateChanged() =>
         _ = InvokeAsync(() =>
         {

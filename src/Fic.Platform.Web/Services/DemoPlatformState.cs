@@ -31,6 +31,7 @@ public sealed class DemoPlatformState(
                 .Select(merchant =>
                 {
                     var programme = _programmes.Values.Single(x => x.MerchantId == merchant.MerchantId);
+                    var brand = _brands[merchant.MerchantId];
                     var cards = _cards.Values.Where(x => x.MerchantId == merchant.MerchantId).ToArray();
                     var unlocked = cards.Count(card => _progress[card.CardId].RewardState == RewardState.Unlocked);
                     return new MerchantSummarySnapshot(
@@ -39,7 +40,12 @@ public sealed class DemoPlatformState(
                         $"Buy {programme.RewardThreshold} {programme.RewardItemLabel}, get 1 free",
                         cards.Length,
                         unlocked,
-                        programme.JoinCode);
+                        programme.JoinCode,
+                        brand.LogoUrl,
+                        brand.PrimaryColor,
+                        brand.AccentColor,
+                        brand.LogoWidth,
+                        brand.LogoHeight);
                 })
                 .ToArray();
         }
@@ -60,10 +66,18 @@ public sealed class DemoPlatformState(
     {
         var now = DateTimeOffset.UtcNow;
         var merchant = new MerchantAccount(Guid.NewGuid(), displayName.Trim(), contactEmail.Trim(), now);
+        var logoMetadata = logoUpload is null
+            ? new MerchantLogoMetadata(160, 160)
+            : MerchantBrandAssetInspector.ReadLogoMetadata(logoUpload.Bytes);
         var logoUrl = logoUpload is null
             ? fallbackLogoUrl.Trim()
             : await brandAssetStore.SaveLogoAsync(merchant.MerchantId, logoUpload, cancellationToken);
-        var brand = new BrandProfile(logoUrl, NormalizeColor(primaryColor), NormalizeColor(accentColor));
+        var brand = new BrandProfile(
+            logoUrl,
+            NormalizeColor(primaryColor),
+            NormalizeColor(accentColor),
+            logoMetadata.Width,
+            logoMetadata.Height);
         var joinCode = $"join-{Guid.NewGuid():N}"[..13];
         var programme = new LoyaltyProgramme(
             Guid.NewGuid(),
@@ -347,6 +361,8 @@ public sealed class DemoPlatformState(
             programme.RewardCopy,
             brand.PrimaryColor,
             brand.AccentColor,
+            brand.LogoWidth,
+            brand.LogoHeight,
             progress.CurrentCount,
             progress.TargetCount,
             progress.ProgressDisplayText,
@@ -367,7 +383,7 @@ public sealed class DemoPlatformState(
         new(merchant.MerchantId, merchant.DisplayName, merchant.ContactEmail, merchant.CreatedAtUtc);
 
     private BrandProfileSnapshot ToBrandSnapshot(BrandProfile brand) =>
-        new(brand.LogoUrl, brand.PrimaryColor, brand.AccentColor);
+        new(brand.LogoUrl, brand.PrimaryColor, brand.AccentColor, brand.LogoWidth, brand.LogoHeight);
 
     private LoyaltyProgrammeSnapshot ToProgrammeSnapshot(LoyaltyProgramme programme) =>
         new(programme.ProgrammeId, programme.RewardItemLabel, programme.RewardThreshold, programme.RewardCopy, programme.JoinCode);

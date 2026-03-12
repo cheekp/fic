@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject DemoPlatformState PlatformState
 @inject JoinQrCodeService QrCodes
+@inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>Wallet Card</PageTitle>
 
@@ -15,13 +16,18 @@
 else
 {
     <section class="wallet-view">
-        <div class="wallet-pass" style="@BuildPassStyle()">
+        @{
+            var walletTheme = BrandPresentation.Build(_card);
+        }
+        <div class="wallet-pass @walletTheme.ThemeClass" style="@walletTheme.CssVariables">
             <header class="wallet-pass__header">
                 <div>
                     <p class="wallet-pass__label">Apple Wallet Preview</p>
                     <h2>@_card.VendorDisplayName</h2>
                 </div>
-                <img src="@_card.LogoUrl" alt="@_card.VendorDisplayName logo" />
+                <div class="wallet-pass__mark">
+                    <img src="@_card.LogoUrl" alt="@_card.VendorDisplayName logo" />
+                </div>
             </header>
 
             <div class="wallet-pass__body">
@@ -50,7 +56,7 @@ else
             </footer>
         </div>
 
-        <article class="panel">
+        <article class="panel wallet-panel @walletTheme.ThemeClass" style="@walletTheme.CssVariables">
             <div class="panel__header">
                 <div>
                     <p class="eyebrow">Pass state</p>
@@ -98,11 +104,6 @@ else
         _card = PlatformState.GetWalletCard(CardId);
         _cardQrSvg = _card is null ? string.Empty : QrCodes.RenderSvg(_card.CardCode);
     }
-
-    private string BuildPassStyle() =>
-        _card is null
-            ? string.Empty
-            : $"--wallet-primary: {_card.PrimaryColor}; --wallet-accent: {_card.AccentColor};";
 
     private string BuildStatusText() => _card?.RewardState switch
     {

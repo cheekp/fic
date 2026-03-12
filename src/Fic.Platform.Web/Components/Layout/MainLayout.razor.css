@@ -1,18 +1,38 @@
 .shell {
+    position: relative;
     min-height: 100vh;
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
+    background:
+        radial-gradient(circle at top right, var(--brand-glow), transparent 30%),
+        linear-gradient(180deg, var(--brand-canvas-start) 0%, var(--brand-canvas-end) 100%);
+    color: var(--brand-ink);
+    overflow: clip;
+}
+
+.shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.08), transparent 26%),
+        radial-gradient(circle at 82% 16%, var(--brand-accent-soft), transparent 20%);
+    opacity: 0.9;
+}
+
+.shell__sidebar,
+.shell__body {
+    position: relative;
+    z-index: 1;
 }
 
 .shell__sidebar {
-    position: sticky;
-    top: 0;
     min-height: 100vh;
     padding: 1.5rem;
-    background:
-        radial-gradient(circle at top left, rgba(245, 191, 91, 0.32), transparent 32%),
-        linear-gradient(180deg, #1f3731 0%, #142522 48%, #0d1816 100%);
-    border-right: 1px solid rgba(239, 234, 222, 0.12);
+    backdrop-filter: blur(18px);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    border-right: 1px solid var(--brand-line);
 }
 
 .shell__body {
@@ -21,12 +41,59 @@
 }
 
 .shell__header {
+    position: relative;
     display: flex;
     justify-content: space-between;
     gap: 1.5rem;
     align-items: end;
     padding: 1.5rem 0 2rem;
-    border-bottom: 1px solid rgba(37, 56, 52, 0.12);
+    border-bottom: 1px solid var(--brand-line);
+}
+
+.shell__header::after {
+    content: "";
+    position: absolute;
+    inset: auto -6% -2.5rem 52%;
+    height: 8rem;
+    border-radius: 999px;
+    pointer-events: none;
+    opacity: 0.72;
+    background: linear-gradient(110deg, transparent 0%, var(--brand-accent-soft) 44%, transparent 88%);
+    filter: blur(22px);
+}
+
+.shell__headline {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.shell__header-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: end;
+    max-width: 34rem;
+}
+
+.shell__mark {
+    width: 78px;
+    height: 78px;
+    flex: none;
+    border-radius: 1.4rem;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: var(--brand-logo-plate);
+    border: 1px solid var(--brand-logo-border);
+    box-shadow: 0 18px 36px var(--brand-shadow);
+}
+
+.shell__mark img {
+    width: 100%;
+    height: 100%;
+    padding: 0.7rem;
+    box-sizing: border-box;
+    object-fit: contain;
 }
 
 .shell__eyebrow {
@@ -34,7 +101,7 @@
     text-transform: uppercase;
     letter-spacing: 0.14em;
     font-size: 0.72rem;
-    color: var(--color-muted);
+    color: var(--brand-muted);
 }
 
 .shell__title {
@@ -45,13 +112,37 @@
 
 .shell__subtitle {
     margin: 0;
-    max-width: 30rem;
-    color: var(--color-muted);
+    color: var(--brand-muted);
     font-size: 1rem;
+    line-height: 1.6;
 }
 
 .shell__content {
     padding: 2rem 0 3rem;
+}
+
+.merchant-theme--glow .shell::before {
+    background:
+        radial-gradient(circle at 12% 14%, rgba(255, 255, 255, 0.16), transparent 16%),
+        radial-gradient(circle at 22% 24%, rgba(255, 255, 255, 0.1), transparent 10%),
+        radial-gradient(circle at 80% 16%, var(--brand-glow), transparent 20%),
+        radial-gradient(circle at 74% 32%, rgba(255, 255, 255, 0.08), transparent 12%);
+}
+
+.merchant-theme--ribbon .shell__header::after {
+    inset: auto -10% -1.4rem 40%;
+    height: 6rem;
+    border-radius: 1.4rem;
+    background: linear-gradient(116deg, transparent 10%, var(--brand-accent-soft) 28%, transparent 48%);
+    transform: rotate(-5deg);
+    filter: none;
+}
+
+.merchant-theme--bloom .shell::before {
+    background:
+        radial-gradient(circle at 16% 12%, var(--brand-glow), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.2), transparent 16%),
+        radial-gradient(circle at 76% 74%, rgba(255, 255, 255, 0.12), transparent 18%);
 }
 
 @media (max-width: 980px) {
@@ -60,7 +151,6 @@
     }
 
     .shell__sidebar {
-        position: static;
         min-height: auto;
     }
 
@@ -69,6 +159,22 @@
     }
 
     .shell__header {
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .shell__header::after {
+        inset: auto 0 -1.4rem 0;
+        height: 5rem;
+    }
+
+    .shell__header-meta {
+        justify-content: start;
+    }
+}
+
+@media (max-width: 760px) {
+    .shell__header-meta {
         flex-direction: column;
         align-items: start;
     }
@@ -88,9 +194,9 @@
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

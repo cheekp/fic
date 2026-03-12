@@ -6,7 +6,9 @@ namespace Fic.LoyaltyCore;
 public sealed record BrandProfile(
     string LogoUrl,
     string PrimaryColor,
-    string AccentColor);
+    string AccentColor,
+    int LogoWidth,
+    int LogoHeight);
 
 public sealed record LoyaltyProgramme(
     Guid ProgrammeId,
