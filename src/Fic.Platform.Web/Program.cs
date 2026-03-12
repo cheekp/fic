@@ -3,6 +3,11 @@ using Fic.Platform.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseStaticWebAssets();
+}
+
 builder.AddServiceDefaults();
 
 builder.Services.AddRazorComponents()
