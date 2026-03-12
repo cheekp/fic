@@ -1,10 +1,15 @@
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Fic.MerchantAccounts;
 
 namespace Fic.Platform.Web.Services;
 
-public sealed class LocalMerchantBrandAssetStore(IWebHostEnvironment environment) : IMerchantBrandAssetStore
+public sealed class BlobMerchantBrandAssetStore(
+    BlobServiceClient blobServiceClient,
+    IConfiguration configuration) : IMerchantBrandAssetStore
 {
-    private readonly string _rootPath = Path.Combine(environment.ContentRootPath, "App_Data", "merchant-brand-assets");
+    private readonly BlobContainerClient _container = blobServiceClient.GetBlobContainerClient(
+        configuration.GetValue("BrandAssets:BlobContainerName", MerchantBrandAssetDefaults.BlobContainerName));
 
     public async Task<string> SaveLogoAsync(
         Guid merchantId,
@@ -23,13 +28,24 @@ public sealed class LocalMerchantBrandAssetStore(IWebHostEnvironment environment
             throw new InvalidOperationException("Merchant logo upload does not contain a valid PNG signature.");
         }
 
-        var merchantDirectory = Path.Combine(_rootPath, merchantId.ToString("N"));
-        Directory.CreateDirectory(merchantDirectory);
+        await _container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
 
-        var filePath = Path.Combine(merchantDirectory, "logo.png");
-        await File.WriteAllBytesAsync(filePath, upload.Bytes, cancellationToken);
+        var blobName = $"{merchantId:N}/logo.png";
+        var blobClient = _container.GetBlobClient(blobName);
 
-        return $"{MerchantBrandAssetDefaults.PublicRequestPath}/{merchantId:N}/logo.png";
+        await using var stream = new MemoryStream(upload.Bytes);
+        await blobClient.UploadAsync(
+            stream,
+            new BlobUploadOptions
+            {
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = "image/png"
+                }
+            },
+            cancellationToken);
+
+        return $"{MerchantBrandAssetDefaults.PublicRequestPath}/{blobName}";
     }
 
     public async Task<MerchantBrandAsset?> GetAssetAsync(
@@ -38,18 +54,24 @@ public sealed class LocalMerchantBrandAssetStore(IWebHostEnvironment environment
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!TryMapToFilePath(publicPath, out var filePath) || !File.Exists(filePath))
+        if (!TryMapToBlobName(publicPath, out var blobName))
         {
             return null;
         }
 
-        var bytes = await File.ReadAllBytesAsync(filePath, cancellationToken);
-        return new MerchantBrandAsset(bytes, "image/png");
+        var blobClient = _container.GetBlobClient(blobName);
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var download = await blobClient.DownloadContentAsync(cancellationToken);
+        return new MerchantBrandAsset(download.Value.Content.ToArray(), download.Value.Details.ContentType ?? "image/png");
     }
 
-    private bool TryMapToFilePath(string publicPath, out string filePath)
+    private static bool TryMapToBlobName(string publicPath, out string blobName)
     {
-        filePath = string.Empty;
+        blobName = string.Empty;
 
         var assetPath = publicPath;
         if (Uri.TryCreate(publicPath, UriKind.Absolute, out var absoluteUri))
@@ -76,21 +98,8 @@ public sealed class LocalMerchantBrandAssetStore(IWebHostEnvironment environment
             return false;
         }
 
-        var candidatePath = Path.GetFullPath(Path.Combine(_rootPath, Path.Combine(relativeSegments)));
-        var rootPath = Path.GetFullPath(_rootPath);
-
-        if (!candidatePath.StartsWith(rootPath, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        if (!candidatePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        filePath = candidatePath;
-        return true;
+        blobName = string.Join('/', relativeSegments);
+        return blobName.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool LooksLikePng(byte[] bytes)

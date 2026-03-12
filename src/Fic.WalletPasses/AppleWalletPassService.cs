@@ -6,10 +6,13 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Fic.Contracts;
+using Fic.MerchantAccounts;
 
 namespace Fic.WalletPasses;
 
-public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAppleWalletPassService
+public sealed class AppleWalletPassService(
+    AppleWalletPassOptions options,
+    IMerchantBrandAssetStore? brandAssetStore = null) : IAppleWalletPassService
 {
     private const string PassContentType = "application/vnd.apple.pkpass";
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -32,7 +35,7 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
                 reason ?? "Apple Wallet signing is not configured in this environment.");
     }
 
-    public Task<WalletPassPackage> CreatePackageAsync(WalletCardSnapshot card, CancellationToken cancellationToken = default)
+    public async Task<WalletPassPackage> CreatePackageAsync(WalletCardSnapshot card, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -41,17 +44,17 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
             throw new InvalidOperationException(reason);
         }
 
-        var packageFiles = BuildUnsignedPackageFiles(card);
+        var packageFiles = await BuildUnsignedPackageFilesAsync(card, cancellationToken);
         var manifestBytes = BuildManifest(packageFiles);
         var signatureBytes = BuildSignature(manifestBytes);
 
         packageFiles["manifest.json"] = manifestBytes;
         packageFiles["signature"] = signatureBytes;
 
-        return Task.FromResult(new WalletPassPackage(
+        return new WalletPassPackage(
             BuildFileName(card),
             PassContentType,
-            BuildZipArchive(packageFiles)));
+            BuildZipArchive(packageFiles));
     }
 
     private bool CanIssueSignedPass(out string? reason)
@@ -85,7 +88,7 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
         return true;
     }
 
-    private Dictionary<string, byte[]> BuildUnsignedPackageFiles(WalletCardSnapshot card)
+    private async Task<Dictionary<string, byte[]>> BuildUnsignedPackageFilesAsync(WalletCardSnapshot card, CancellationToken cancellationToken)
     {
         var files = new Dictionary<string, byte[]>(StringComparer.Ordinal)
         {
@@ -101,11 +104,15 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
             files["logo@2x.png"] = logoBytes;
             files["logo@3x.png"] = logoBytes;
         }
-        else if (TryLoadStoredPng(card.LogoUrl, out logoBytes))
+        else if (brandAssetStore is not null)
         {
-            files["logo.png"] = logoBytes;
-            files["logo@2x.png"] = logoBytes;
-            files["logo@3x.png"] = logoBytes;
+            var asset = await brandAssetStore.GetAssetAsync(card.LogoUrl, cancellationToken);
+            if (asset is not null && string.Equals(asset.ContentType, "image/png", StringComparison.OrdinalIgnoreCase))
+            {
+                files["logo.png"] = asset.Bytes;
+                files["logo@2x.png"] = asset.Bytes;
+                files["logo@3x.png"] = asset.Bytes;
+            }
         }
 
         return files;
@@ -322,69 +329,6 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
             bytes = [];
             return false;
         }
-    }
-
-    private bool TryLoadStoredPng(string value, out byte[] bytes)
-    {
-        bytes = [];
-
-        if (string.IsNullOrWhiteSpace(value)
-            || string.IsNullOrWhiteSpace(options.StoredMerchantAssetDirectory)
-            || string.IsNullOrWhiteSpace(options.StoredMerchantAssetRequestPath))
-        {
-            return false;
-        }
-
-        var assetPath = value;
-        if (Uri.TryCreate(value, UriKind.Absolute, out var absoluteUri))
-        {
-            assetPath = absoluteUri.AbsolutePath;
-        }
-        else
-        {
-            var delimiterIndex = assetPath.IndexOfAny(['?', '#']);
-            if (delimiterIndex >= 0)
-            {
-                assetPath = assetPath[..delimiterIndex];
-            }
-        }
-
-        if (!assetPath.StartsWith(options.StoredMerchantAssetRequestPath, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        var relativePath = assetPath[options.StoredMerchantAssetRequestPath.Length..].TrimStart('/');
-        if (string.IsNullOrWhiteSpace(relativePath))
-        {
-            return false;
-        }
-
-        var relativeSegments = relativePath
-            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (relativeSegments.Length == 0 || relativeSegments.Any(segment => segment == ".."))
-        {
-            return false;
-        }
-
-        var candidatePath = Path.GetFullPath(Path.Combine(
-            options.StoredMerchantAssetDirectory,
-            Path.Combine(relativeSegments)));
-        var rootPath = Path.GetFullPath(options.StoredMerchantAssetDirectory);
-
-        if (!candidatePath.StartsWith(rootPath, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        if (!File.Exists(candidatePath) || !candidatePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        bytes = File.ReadAllBytes(candidatePath);
-        return true;
     }
 
     private sealed class AppleWalletPassDocument
