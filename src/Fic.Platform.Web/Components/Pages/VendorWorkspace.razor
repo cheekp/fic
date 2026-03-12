@@ -61,7 +61,7 @@ else
                 </div>
                 <span class="chip">Phone, scanner, or paste</span>
             </div>
-            <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" class="form-stack">
+            <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
                 <label class="field">
                     <span>Customer pass code</span>
                     <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
