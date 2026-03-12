@@ -101,6 +101,12 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
             files["logo@2x.png"] = logoBytes;
             files["logo@3x.png"] = logoBytes;
         }
+        else if (TryLoadStoredPng(card.LogoUrl, out logoBytes))
+        {
+            files["logo.png"] = logoBytes;
+            files["logo@2x.png"] = logoBytes;
+            files["logo@3x.png"] = logoBytes;
+        }
 
         return files;
     }
@@ -316,6 +322,69 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
             bytes = [];
             return false;
         }
+    }
+
+    private bool TryLoadStoredPng(string value, out byte[] bytes)
+    {
+        bytes = [];
+
+        if (string.IsNullOrWhiteSpace(value)
+            || string.IsNullOrWhiteSpace(options.StoredMerchantAssetDirectory)
+            || string.IsNullOrWhiteSpace(options.StoredMerchantAssetRequestPath))
+        {
+            return false;
+        }
+
+        var assetPath = value;
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absoluteUri))
+        {
+            assetPath = absoluteUri.AbsolutePath;
+        }
+        else
+        {
+            var delimiterIndex = assetPath.IndexOfAny(['?', '#']);
+            if (delimiterIndex >= 0)
+            {
+                assetPath = assetPath[..delimiterIndex];
+            }
+        }
+
+        if (!assetPath.StartsWith(options.StoredMerchantAssetRequestPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var relativePath = assetPath[options.StoredMerchantAssetRequestPath.Length..].TrimStart('/');
+        if (string.IsNullOrWhiteSpace(relativePath))
+        {
+            return false;
+        }
+
+        var relativeSegments = relativePath
+            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (relativeSegments.Length == 0 || relativeSegments.Any(segment => segment == ".."))
+        {
+            return false;
+        }
+
+        var candidatePath = Path.GetFullPath(Path.Combine(
+            options.StoredMerchantAssetDirectory,
+            Path.Combine(relativeSegments)));
+        var rootPath = Path.GetFullPath(options.StoredMerchantAssetDirectory);
+
+        if (!candidatePath.StartsWith(rootPath, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (!File.Exists(candidatePath) || !candidatePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        bytes = File.ReadAllBytes(candidatePath);
+        return true;
     }
 
     private sealed class AppleWalletPassDocument
