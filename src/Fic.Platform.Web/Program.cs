@@ -20,9 +20,9 @@ builder.Services.AddSingleton<IAppleWalletPassService>(_ =>
     var options = new AppleWalletPassOptions();
     builder.Configuration.GetSection("Wallet:AppleWallet").Bind(options);
     options.SigningConfigured = builder.Configuration.GetValue("Wallet:AppleWalletSigningConfigured", false);
-    options.DefaultIconPath = Path.Combine(
+    options.DefaultAssetDirectory = Path.Combine(
         builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"),
-        "favicon.png");
+        "wallet-assets");
     return new AppleWalletPassService(options);
 });
 

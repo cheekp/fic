@@ -16,7 +16,7 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
-    private static readonly byte[] FallbackIconBytes = Convert.FromBase64String(
+    private static readonly byte[] FallbackImageBytes = Convert.FromBase64String(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y1koXUAAAAASUVORK5CYII=");
 
     public WalletPassCapability GetCapability()
@@ -90,14 +90,16 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
         var files = new Dictionary<string, byte[]>(StringComparer.Ordinal)
         {
             ["pass.json"] = JsonSerializer.SerializeToUtf8Bytes(BuildPassDocument(card), JsonOptions),
-            ["icon.png"] = LoadDefaultIconBytes(),
-            ["icon@2x.png"] = LoadDefaultIconBytes()
+            ["icon.png"] = LoadDefaultAssetBytes("icon.png"),
+            ["icon@2x.png"] = LoadDefaultAssetBytes("icon@2x.png"),
+            ["icon@3x.png"] = LoadDefaultAssetBytes("icon@3x.png")
         };
 
         if (TryDecodePngDataUri(card.LogoUrl, out var logoBytes))
         {
             files["logo.png"] = logoBytes;
             files["logo@2x.png"] = logoBytes;
+            files["logo@3x.png"] = logoBytes;
         }
 
         return files;
@@ -132,6 +134,16 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
                 MessageEncoding = "iso-8859-1",
                 AltText = card.CardCode
             },
+            Barcodes =
+            [
+                new AppleWalletBarcode
+                {
+                    Format = "PKBarcodeFormatQR",
+                    Message = card.CardCode,
+                    MessageEncoding = "iso-8859-1",
+                    AltText = card.CardCode
+                }
+            ],
             StoreCard = new AppleWalletFieldSet
             {
                 PrimaryFields =
@@ -186,11 +198,18 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
         };
     }
 
-    private byte[] LoadDefaultIconBytes()
+    private byte[] LoadDefaultAssetBytes(string fileName)
     {
-        return !string.IsNullOrWhiteSpace(options.DefaultIconPath) && File.Exists(options.DefaultIconPath)
-            ? File.ReadAllBytes(options.DefaultIconPath)
-            : FallbackIconBytes;
+        if (!string.IsNullOrWhiteSpace(options.DefaultAssetDirectory))
+        {
+            var candidatePath = Path.Combine(options.DefaultAssetDirectory, fileName);
+            if (File.Exists(candidatePath))
+            {
+                return File.ReadAllBytes(candidatePath);
+            }
+        }
+
+        return FallbackImageBytes;
     }
 
     private byte[] BuildManifest(IReadOnlyDictionary<string, byte[]> files)
@@ -333,6 +352,9 @@ public sealed class AppleWalletPassService(AppleWalletPassOptions options) : IAp
 
         [JsonPropertyName("barcode")]
         public AppleWalletBarcode Barcode { get; init; } = new();
+
+        [JsonPropertyName("barcodes")]
+        public AppleWalletBarcode[]? Barcodes { get; init; }
 
         [JsonPropertyName("storeCard")]
         public AppleWalletFieldSet StoreCard { get; init; } = new();
