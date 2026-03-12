@@ -14,6 +14,8 @@
 - `F01-ACC-004` The spec explicitly requires the vendor PWA and wallet pass to share the same progress truth.
 - `F01-ACC-005` The spec explicitly defines validation for the slice.
 - `F01-ACC-006` The architecture draft identifies SignalR, Apple Wallet update flow, KPI separation, and Aspire-based local orchestration.
+- `F01-ACC-007` The first visit-capture path is explicitly customer-presents-pass and vendor-scans-pass.
+- `F01-ACC-008` The spec keeps the customer journey to browser plus Wallet, without requiring a customer app or customer PWA.
 
 ## Evidence To Capture Once Code Exists
 

@@ -30,8 +30,9 @@ require_file "docs/specs/F01-internal-mvp-demo/contracts/INTERNAL_MVP_DEMO_CONTR
 require_text "SignalR" "docs/architecture/FIC_PLATFORM_ARCHITECTURE_DRAFT.md"
 require_text "Aspire" "docs/architecture/FIC_PLATFORM_ARCHITECTURE_DRAFT.md"
 require_text "2/5 coffees" "docs/architecture/FIC_PLATFORM_ARCHITECTURE_DRAFT.md"
+require_text "Merchant Accounts" "docs/architecture/FIC_PLATFORM_ARCHITECTURE_DRAFT.md"
 require_text "Apple Wallet" "docs/specs/F01-internal-mvp-demo/REQUIREMENTS.md"
 require_text "2/5 coffees" "docs/specs/F01-internal-mvp-demo/REQUIREMENTS.md"
-require_text "vendor PWA and wallet pass" "docs/specs/F01-internal-mvp-demo/ACCEPTANCE.md"
+require_text "vendor-scans-pass" "docs/specs/F01-internal-mvp-demo/ACCEPTANCE.md"
 
 echo "F01 internal MVP/demo validation passed."

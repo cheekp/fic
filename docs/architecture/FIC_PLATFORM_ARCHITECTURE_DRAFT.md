@@ -12,12 +12,14 @@ It intentionally mixes architecture and delivery-planning material while the pro
 - Local development and test environments must run in Docker.
 - Stage and production hosting target Azure.
 - The application is a PWA, not a native mobile app.
+- The vendor experience should be a website/PWA and must not require App Store distribution.
 - Apple Wallet support comes first.
 - The core platform should be event-driven from the first meaningful slice.
 - Document-oriented storage is preferred.
 - Azure Cosmos DB is the current preferred primary datastore, subject to local-development validation.
 - Wallet cards and the retailer-facing product must be white-label and configurable per retailer.
 - The wallet card must show current customer progress state such as `2/5 coffees`.
+- Redis and external event transport should be optional infrastructure, enabled only when justified.
 
 ## 1. Purpose
 
@@ -61,8 +63,10 @@ The first slice should be an internal demo that proves the end-to-end product lo
 - configure a loyalty card such as `buy 5 coffees get 1 free`
 - generate a QR code for customer join
 - scan that QR code on another device and add the pass to Apple Wallet
+- have the customer present the wallet pass at point of sale
+- scan the customer pass from the vendor website/PWA
 - show customer progress on the wallet pass and in the vendor PWA
-- award a visit internally and refresh wallet state from `0/5` to `1/5`, `2/5`, and so on
+- refresh wallet state from `0/5` to `1/5`, `2/5`, and so on
 
 ### Explicitly out of scope for MVP
 
@@ -126,6 +130,7 @@ That conflicts with the lean operating model and the desire to keep ongoing effo
 - Handles wallet update jobs
 - Handles scheduled summaries / housekeeping
 - SignalR-backed live dashboard fan-out can also be triggered from worker-side projection updates when needed
+- External event transport can remain disabled initially if in-process domain events plus persisted projections are sufficient
 
 ### Data
 - **Azure Cosmos DB**
@@ -140,6 +145,7 @@ That conflicts with the lean operating model and the desire to keep ongoing effo
 - idempotency keys
 - cooldowns / rate limiting
 - optional hot cache for customer progress and programme config
+- should be feature-flagged and removable from the launch topology
 
 ### Object storage
 - **Azure Storage Account**
@@ -159,6 +165,7 @@ That conflicts with the lean operating model and the desire to keep ongoing effo
 - **Service Bus** (optional but recommended)
 - decouples wallet update and other async work from the hot path
 - can be introduced from MVP if clean separation is desired
+- any external broker or queue should be treated as optional infrastructure, not a day-one dependency
 
 ### Observability
 - **Application Insights + Log Analytics**
@@ -192,8 +199,9 @@ Recommended local topology:
 - Blazor web app
 - background worker
 - Cosmos DB emulator container
-- Redis container
+- Redis container when cache features are enabled
 - Azurite when object storage behavior is needed
+- optional event-broker container only when external event transport is being exercised
 - Aspire dashboard for traces, logs, and metrics during development
 
 ---
@@ -202,7 +210,26 @@ Recommended local topology:
 
 The domain should be separated into the following bounded contexts.
 
-## 5.1 Loyalty Core
+## 5.1 Merchant Accounts
+
+Owns:
+
+- vendor sign-up and authentication
+- tenant creation
+- onboarding state
+- brand-input collection
+- course and lead-source attribution when needed
+
+Core domain concepts:
+
+- `MerchantAccount`
+- `Tenant`
+- `OnboardingProfile`
+- `LeadSource`
+
+This context owns merchant identity and onboarding. It should not be buried inside loyalty configuration.
+
+## 5.2 Loyalty Core
 
 Owns the business rules for:
 
@@ -228,7 +255,7 @@ Core domain concepts:
 
 This is the strategic core.
 
-## 5.2 Wallet Passes
+## 5.3 Wallet Passes
 
 Owns:
 
@@ -242,7 +269,7 @@ Owns:
 
 This context consumes projections from Loyalty Core. It does not own loyalty truth.
 
-## 5.2.1 White-label card configuration
+## 5.3.1 White-label card configuration
 
 Wallet cards and retailer-facing product surfaces must be configurable per retailer.
 
@@ -257,7 +284,7 @@ Minimum configurable elements for MVP:
 
 The same retailer configuration should drive both the operator-facing PWA and the wallet pass presentation so branding and programme rules stay aligned.
 
-## 5.2.2 Wallet card state
+## 5.3.2 Wallet card state
 
 The wallet pass must display live customer progress state derived from the loyalty projection.
 
@@ -270,7 +297,7 @@ Minimum state shown on the pass for MVP:
 
 The vendor PWA and the wallet pass should read the same progress projection so a vendor never sees different state than the customer.
 
-## 5.3 Billing and Plans
+## 5.4 Billing and Plans
 
 Owns:
 
@@ -280,7 +307,7 @@ Owns:
 - billing webhook handling
 - grace periods and upgrade prompts
 
-## 5.4 Identity and Consent
+## 5.5 Identity and Consent
 
 Default mode is anonymous. However, the architecture should support an optional future identity-enabled tier.
 
@@ -293,7 +320,7 @@ Owns:
 
 PII must be isolated from behavioural data.
 
-## 5.5 Reporting and Insights
+## 5.6 Reporting and Insights
 
 Owns:
 
@@ -301,10 +328,13 @@ Owns:
 - reward completion metrics
 - customer activity summaries
 - simple AI-generated insight summaries
+- future framework-tagged insights based on Value, Recognition, Experience, and Connection
 
 This context is projection-first and must never query the event stream for live dashboard reads.
 
-## 5.6 Admin / Support
+The Loyalty Foundations Framework should shape insight language and product education later, but it does not need to become a transactional domain model in the first slice.
+
+## 5.7 Admin / Support
 
 Internal operational tooling only, kept minimal.
 
@@ -506,6 +536,8 @@ The platform should work with:
 - retailer and programme context
 - behavioural analytics only
 
+Even in anonymous mode, privacy and ICO review should be treated as a release gate before moving beyond internal MVP.
+
 ## 9.2 Optional identity-enabled mode
 
 If later introduced, it must:
@@ -573,10 +605,11 @@ Alternative receipt QR flow can be supported later if needed, because it is refe
 1. Vendor creates a programme with branding and threshold
 2. Customer joins from a separate device via QR
 3. Wallet pass is issued showing initial state such as `0/5 coffees`
-4. Vendor awards a visit from the internal demo interface
-5. `VisitAwarded` event is written
-6. progress projection updates to `1/5 coffees`, then `2/5 coffees`, and so on
-7. wallet update is triggered so the pass reflects the same state
+4. Customer presents the wallet pass QR on their device
+5. Vendor scans the pass QR from the vendor website/PWA
+6. `VisitAwarded` event is written
+7. progress projection updates to `1/5 coffees`, then `2/5 coffees`, and so on
+8. wallet update is triggered so the pass reflects the same state
 
 ---
 
@@ -618,12 +651,12 @@ This is cloud native, low maintenance and appropriate for the cost assumptions i
 
 ## 12.1 PWA / web approach
 
-The customer-facing and retailer-facing product should be web-first.
+The product should be web-first.
 
 Recommended stack:
 
 - ASP.NET Core
-- a PWA shell for retailer and customer-facing web experiences
+- a vendor-facing website/PWA shell
 - Blazor for retailer portal where helpful
 - Razor Pages or lightweight web pages for public QR join and wallet add flow
 
@@ -635,6 +668,8 @@ Reasoning:
 - PWA delivery keeps install friction low while preserving a mobile-friendly experience
 
 The retailer-facing PWA should expose configuration of programme rules and branded wallet-card presentation as a first-class capability, not an afterthought.
+
+The customer should not need to install a PWA. Customer-facing interaction for MVP is mobile web join plus Wallet usage.
 
 ## 12.2 Wallet priority
 
@@ -672,6 +707,8 @@ Apple Wallet pass updates should use the standard pass-update lifecycle:
 - device requests the updated pass from the platform
 
 Browser push notifications for the PWA are optional later work, not part of the first internal MVP/demo.
+
+If external event transport is added later, it should remain behind a feature flag so the launch topology can stay minimal.
 
 ---
 
@@ -829,16 +866,19 @@ Rules:
 - configure CI/CD
 - define OpenAPI and message contracts
 - define the validation harness for per-slice scripts and acceptance checks
+- keep Redis and any external broker optional until load or operational evidence requires them
 
 ## Phase 1 - Core MVP
 
 - retailer sign-up
+- merchant account onboarding
 - create programme
 - configure white-label branding and reward rules
 - customer join QR flow
 - wallet pass generation
 - visible wallet progress state such as `2/5 coffees`
-- visit award and reward redeem
+- vendor-scan visit award flow
+- reward redeem
 - event store and projections
 - basic dashboard
 
@@ -899,19 +939,21 @@ Rules:
 2. **Start event-driven from the first meaningful slice**
 3. **Use Cosmos DB as event and projection store**
 4. **Use projections for all operational reads**
-5. **Use Redis narrowly for latency, idempotency and RU protection**
+5. **Use Redis narrowly for latency, idempotency and RU protection when enabled**
 6. **Serve API and web product from one primary deployable initially**
 7. **Build the product as a PWA**
 8. **Support Apple Wallet first**
 9. **Treat white-label configuration as a core domain capability**
 10. **Keep wallet progress state explicit and projection-backed**
-11. **Keep customer mode anonymous by default**
-12. **Keep identity isolated in a separate container if introduced later**
-13. **Treat WordPress and course tooling as external to the core platform**
-14. **Use contract-first design for APIs and integration events**
-15. **Use Aspire for local orchestration and observability**
-16. **Require validation at every delivery slice**
-17. **Optimise for low operations and gradual scale**
+11. **Keep the vendor experience web-first and the customer experience wallet-first**
+12. **Keep customer mode anonymous by default**
+13. **Keep identity isolated in a separate container if introduced later**
+14. **Treat WordPress and course tooling as external to the core platform**
+15. **Use contract-first design for APIs and integration events**
+16. **Use Aspire for local orchestration and observability**
+17. **Keep optional infrastructure behind adapter seams and feature flags**
+18. **Require validation at every delivery slice**
+19. **Optimise for low operations and gradual scale**
 
 ---
 

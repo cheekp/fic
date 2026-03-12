@@ -14,8 +14,9 @@ In scope:
 - QR code generation for customer join
 - customer join from a second device
 - Apple Wallet pass issuance
+- vendor website/PWA scan flow for in-store visit capture
 - vendor-visible and customer-visible progress state such as `2/5 coffees`
-- internal visit-award path that updates the wallet pass and vendor PWA state
+- visit-award path that updates the wallet pass and vendor PWA state
 
 Out of scope:
 
@@ -28,6 +29,7 @@ Out of scope:
 ## Functional Requirements
 
 - `F01-REQ-001` A vendor can create an account and access the internal demo without billing.
+- `F01-REQ-001A` Vendor onboarding is owned by a merchant-account flow, not buried inside loyalty-programme setup.
 - `F01-REQ-002` A vendor can configure one loyalty programme with:
   - reward item label
   - reward threshold such as `5`
@@ -43,21 +45,25 @@ Out of scope:
 - `F01-REQ-007` The wallet pass must display vendor branding and current customer progress state.
 - `F01-REQ-008` Progress state must be represented explicitly as numerator and denominator, for example `2/5 coffees`.
 - `F01-REQ-009` The vendor PWA must display the same progress state as the wallet pass for the same customer.
-- `F01-REQ-010` The system provides an internal operator or vendor action to award a visit.
+- `F01-REQ-010` The system provides a vendor scan flow where the customer presents the wallet pass and the vendor scans it from the vendor website/PWA.
 - `F01-REQ-011` Awarding a visit writes a business event and updates the customer progress projection.
 - `F01-REQ-012` After a visit is awarded, the wallet pass can be refreshed to show the updated progress state.
 - `F01-REQ-013` The platform must preserve one source of truth for programme configuration so wallet rendering and vendor views do not drift.
 - `F01-REQ-014` The slice must expose basic operational telemetry for join, wallet issuance, visit award, and projection update paths.
+- `F01-REQ-015` The customer-facing join flow must remain browser-based and must not require an installed app.
+- `F01-REQ-016` Redis and external event transport are not mandatory for F01 and should remain optional implementation choices.
 
 ## Domain Requirements
 
 - `F01-DOM-001` `ProgrammeConfigured`, `CustomerJoined`, and `VisitAwarded` are minimum business events for this slice.
+- `F01-DOM-001A` `MerchantAccountCreated` is the minimum merchant-onboarding event for this slice.
 - `F01-DOM-002` Customer progress is projection-backed and must include:
   - current count
   - target count
   - reward state
   - wallet-pass display fields
 - `F01-DOM-003` White-label configuration is part of domain configuration, not a separate front-end theme object.
+- `F01-DOM-004` Merchant onboarding belongs to a distinct merchant-account boundary even if implemented inside the same deployable.
 
 ## Validation Requirements
 

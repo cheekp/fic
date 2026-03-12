@@ -13,6 +13,8 @@ FIC needs an architecture that can start small, stay low-operations, and preserv
 - generate a customer join QR code
 - scan that QR code on another device
 - add the card to Apple Wallet
+- have the customer present the wallet pass back at point of sale
+- scan the customer pass from the vendor website/PWA
 - see progress state such as `2/5 coffees` on the wallet pass and in the vendor PWA
 
 The repo also needs a stable operating model for spec-driven delivery, validation, and entropy control.
@@ -34,6 +36,7 @@ Adopt the following baseline architecture.
 - .NET Aspire AppHost for local orchestration, service wiring, and observability
 - Azure App Service for the primary web deployable in stage and production
 - Azure Functions or a worker deployable for asynchronous workloads
+- Redis and any external event broker stay optional behind feature flags
 
 ### Data and messaging
 
@@ -41,11 +44,13 @@ Adopt the following baseline architecture.
 - event-driven domain model from the first meaningful slice
 - projection-backed reads for wallet state, vendor views, and dashboard KPIs
 - Redis for narrow concerns only: idempotency, cache, and hot-path protection
+- start without a mandatory external broker if in-process events plus persisted projections are enough
 
 ### Product surfaces
 
 - vendor-facing PWA
-- public join flow served from the same web application
+- public customer join flow served from the same web application
+- customer experience is mobile web plus Wallet, not an installed app
 - Apple Wallet first
 - Google Wallet later, after Apple Wallet lifecycle is proven
 
@@ -60,6 +65,7 @@ Adopt the following baseline architecture.
 - white-label configuration is a core domain capability
 - retailer branding and programme configuration drive both the vendor PWA and wallet pass rendering
 - wallet progress state such as `2/5 coffees` is projection-backed domain state, not display-only text
+- `MerchantAccounts` is a distinct bounded context for vendor onboarding and tenant setup
 
 ### Delivery discipline
 
@@ -82,9 +88,10 @@ Adopt the following baseline architecture.
 - Cosmos DB local emulation must be proven early because emulator limitations could affect inner-loop productivity
 - Blazor plus Wallet integration will still require selective JavaScript interop for browser and platform-specific capabilities
 - event-driven design adds some complexity even when kept intentionally small
+- privacy review remains required before moving beyond internal MVP, even if the product is anonymous by design
 
 ## Open Questions
 
 - Is the Cosmos DB emulator good enough for day-to-day development, or is a shared Azure dev environment needed?
-- Should the first visit-award flow be vendor-manual only, or include a dedicated scan mode immediately?
+- Should the first visit-award flow be vendor scan only, or should receipt QR be included immediately?
 - What is the minimum acceptable brand-input model for the first vendor onboarding flow?
