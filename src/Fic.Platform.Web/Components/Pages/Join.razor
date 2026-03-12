@@ -1,6 +1,7 @@
 @page "/join/{JoinCode}"
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
+@inject IAppleWalletPassService WalletPasses
 
 <PageTitle>Join Loyalty Card</PageTitle>
 
@@ -49,8 +50,9 @@ else
                     <dd>Quick web join, then wallet-only customer experience</dd>
                 </div>
             </dl>
+            <p class="field-hint">@WalletPasses.GetCapability().HelperText</p>
             <div class="form-actions">
-                <button class="button button--primary" type="button" @onclick="IssueWalletCardAsync">Add to Wallet</button>
+                <button class="button button--primary" type="button" @onclick="IssueWalletCardAsync">@WalletPasses.GetCapability().ActionLabel</button>
             </div>
         </section>
     }
@@ -90,7 +92,14 @@ else
         _walletCard = PlatformState.JoinCustomer(JoinCode);
         if (_walletCard is not null)
         {
-            Navigation.NavigateTo($"/wallet/card/{_walletCard.CardId}");
+            if (WalletPasses.GetCapability().SupportsAppleWalletPass)
+            {
+                Navigation.NavigateTo($"/wallet/passes/{_walletCard.CardId}.pkpass", forceLoad: true);
+            }
+            else
+            {
+                Navigation.NavigateTo($"/wallet/card/{_walletCard.CardId}");
+            }
         }
         return Task.CompletedTask;
     }
