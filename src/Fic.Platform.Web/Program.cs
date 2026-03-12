@@ -1,5 +1,6 @@
 using Fic.Platform.Web.Components;
 using Fic.Platform.Web.Services;
+using Fic.WalletPasses;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,16 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddSingleton<DemoPlatformState>();
 builder.Services.AddSingleton<JoinQrCodeService>();
+builder.Services.AddSingleton<IAppleWalletPassService>(_ =>
+{
+    var options = new AppleWalletPassOptions();
+    builder.Configuration.GetSection("Wallet:AppleWallet").Bind(options);
+    options.SigningConfigured = builder.Configuration.GetValue("Wallet:AppleWalletSigningConfigured", false);
+    options.DefaultIconPath = Path.Combine(
+        builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"),
+        "favicon.png");
+    return new AppleWalletPassService(options);
+});
 
 var app = builder.Build();
 
@@ -28,6 +39,27 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 
 app.UseAntiforgery();
+
+app.MapGet("/wallet/passes/{cardId:guid}.pkpass", async (
+    Guid cardId,
+    DemoPlatformState platformState,
+    IAppleWalletPassService walletPasses,
+    CancellationToken cancellationToken) =>
+{
+    var card = platformState.GetWalletCard(cardId);
+    if (card is null)
+    {
+        return Results.NotFound();
+    }
+
+    if (!walletPasses.GetCapability().SupportsAppleWalletPass)
+    {
+        return Results.Redirect($"/wallet/card/{cardId}");
+    }
+
+    var package = await walletPasses.CreatePackageAsync(card, cancellationToken);
+    return Results.File(package.Bytes, package.ContentType, package.FileName);
+});
 
 app.MapStaticAssets();
 app.MapDefaultEndpoints();
