@@ -1,0 +1,125 @@
+@page "/wallet/card/{CardId:guid}"
+@implements IDisposable
+@inject DemoPlatformState PlatformState
+@inject JoinQrCodeService QrCodes
+
+<PageTitle>Wallet Card</PageTitle>
+
+@if (_card is null)
+{
+    <section class="empty-state">
+        <h2>Wallet card not found.</h2>
+        <p>This demo pass may have been issued in a previous app instance.</p>
+    </section>
+}
+else
+{
+    <section class="wallet-view">
+        <div class="wallet-pass" style="@BuildPassStyle()">
+            <header class="wallet-pass__header">
+                <div>
+                    <p class="wallet-pass__label">Apple Wallet Preview</p>
+                    <h2>@_card.VendorDisplayName</h2>
+                </div>
+                <img src="@_card.LogoUrl" alt="@_card.VendorDisplayName logo" />
+            </header>
+
+            <div class="wallet-pass__body">
+                <div>
+                    <p class="wallet-pass__copy">@_card.RewardCopy</p>
+                    <p class="wallet-pass__progress">@_card.ProgressDisplayText</p>
+                </div>
+                <div class="stamp-track" aria-label="stamp progress">
+                    @for (var i = 0; i < _card.TargetCount; i++)
+                    {
+                        <span class="stamp @(i < _card.CurrentCount ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
+                    }
+                </div>
+                <p class="wallet-pass__status">@BuildStatusText()</p>
+            </div>
+
+            <footer class="wallet-pass__footer">
+                <div class="wallet-pass__qr">
+                    @((MarkupString)_cardQrSvg)
+                </div>
+                <div>
+                    <p class="wallet-pass__label">Vendor scan code</p>
+                    <code>@_card.CardCode</code>
+                    <p class="field-hint">When the vendor awards a visit, this preview refreshes to mirror the pass-update lifecycle.</p>
+                </div>
+            </footer>
+        </div>
+
+        <article class="panel">
+            <div class="panel__header">
+                <div>
+                    <p class="eyebrow">Pass state</p>
+                    <h3>Shared projection</h3>
+                </div>
+                <span class="chip">@_card.RewardState</span>
+            </div>
+            <dl class="merchant-card__metrics">
+                <div>
+                    <dt>Wallet pass id</dt>
+                    <dd><code>@_card.WalletPassId</code></dd>
+                </div>
+                <div>
+                    <dt>Current progress</dt>
+                    <dd>@_card.CurrentCount / @_card.TargetCount</dd>
+                </div>
+                <div>
+                    <dt>Last updated</dt>
+                    <dd>@_card.LastUpdatedUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</dd>
+                </div>
+            </dl>
+        </article>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public Guid CardId { get; set; }
+
+    private WalletCardSnapshot? _card;
+    private string _cardQrSvg = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        PlatformState.Changed += HandleStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadCard();
+    }
+
+    private void LoadCard()
+    {
+        _card = PlatformState.GetWalletCard(CardId);
+        _cardQrSvg = _card is null ? string.Empty : QrCodes.RenderSvg(_card.CardCode);
+    }
+
+    private string BuildPassStyle() =>
+        _card is null
+            ? string.Empty
+            : $"--wallet-primary: {_card.PrimaryColor}; --wallet-accent: {_card.AccentColor};";
+
+    private string BuildStatusText() => _card?.RewardState switch
+    {
+        RewardState.Unlocked => "Reward unlocked. Offer the free item on the next vendor redemption.",
+        RewardState.Redeemed => "Reward redeemed. The card is ready to start a new cycle.",
+        _ => "Keep scanning the pass at each visit to advance the count."
+    };
+
+    private void HandleStateChanged() =>
+        _ = InvokeAsync(() =>
+        {
+            LoadCard();
+            StateHasChanged();
+        });
+
+    public void Dispose()
+    {
+        PlatformState.Changed -= HandleStateChanged;
+    }
+}

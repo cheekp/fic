@@ -1,0 +1,102 @@
+@page "/join/{JoinCode}"
+@inject DemoPlatformState PlatformState
+@inject NavigationManager Navigation
+
+<PageTitle>Join Loyalty Card</PageTitle>
+
+@if (_experience is null)
+{
+    <section class="empty-state">
+        <h2>Join link not found.</h2>
+        <p>The QR code may be stale or this demo instance has been restarted.</p>
+    </section>
+}
+else
+{
+        <section class="join-hero" style="@BuildHeroStyle()">
+            <div class="join-hero__content">
+            <p class="eyebrow">Join this loyalty card</p>
+            <h2>@_experience.Merchant.DisplayName</h2>
+            <p class="lede">@_experience.Programme.RewardCopy</p>
+            <p class="field-hint">No app to install. Join here once, then keep the card in Apple Wallet.</p>
+        </div>
+        <div class="join-hero__logo">
+            <img src="@_experience.BrandProfile.LogoUrl" alt="@_experience.Merchant.DisplayName logo" />
+        </div>
+    </section>
+
+    @if (_walletCard is null)
+    {
+        <section class="panel">
+            <div class="panel__header">
+                <div>
+                    <p class="eyebrow">Save your card</p>
+                    <h3>Add this loyalty card to Apple Wallet</h3>
+                </div>
+                <span class="chip chip--accent">Apple Wallet first</span>
+            </div>
+            <dl class="merchant-card__metrics">
+                <div>
+                    <dt>Offer</dt>
+                    <dd>Buy @_experience.Programme.RewardThreshold @_experience.Programme.RewardItemLabel, get one free</dd>
+                </div>
+                <div>
+                    <dt>Initial state</dt>
+                    <dd>0/@_experience.Programme.RewardThreshold @_experience.Programme.RewardItemLabel.ToLowerInvariant()</dd>
+                </div>
+                <div>
+                    <dt>Channel</dt>
+                    <dd>Quick web join, then wallet-only customer experience</dd>
+                </div>
+            </dl>
+            <div class="form-actions">
+                <button class="button button--primary" type="button" @onclick="IssueWalletCardAsync">Add to Wallet</button>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="panel">
+            <div class="panel__header">
+                <div>
+                    <p class="eyebrow">Your card is ready</p>
+                    <h3>Your loyalty card has been created</h3>
+                </div>
+                <span class="chip chip--success">@_walletCard.ProgressDisplayText</span>
+            </div>
+            <p>This preview stands in for the final signed Apple Wallet pass and updates as the business stamps your visits.</p>
+            <div class="form-actions">
+                <a class="button button--primary" href="/wallet/card/@_walletCard.CardId">Open Card Preview</a>
+                <span class="field-hint">Pass code: <code>@_walletCard.CardCode</code></span>
+            </div>
+        </section>
+    }
+}
+
+@code {
+    [Parameter]
+    public string JoinCode { get; set; } = string.Empty;
+
+    private JoinExperienceSnapshot? _experience;
+    private WalletCardSnapshot? _walletCard;
+
+    protected override void OnParametersSet()
+    {
+        _experience = PlatformState.GetJoinExperience(JoinCode);
+    }
+
+    private Task IssueWalletCardAsync()
+    {
+        _walletCard = PlatformState.JoinCustomer(JoinCode);
+        if (_walletCard is not null)
+        {
+            Navigation.NavigateTo($"/wallet/card/{_walletCard.CardId}");
+        }
+        return Task.CompletedTask;
+    }
+
+    private string BuildHeroStyle() =>
+        _experience is null
+            ? string.Empty
+            : $"--join-primary: {_experience.BrandProfile.PrimaryColor}; --join-accent: {_experience.BrandProfile.AccentColor};";
+}

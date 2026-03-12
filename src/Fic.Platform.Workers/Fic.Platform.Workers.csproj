@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-Fic.Platform.Workers-2970aa63-6eec-42f1-acea-cd3f63e85dd3</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fic.ServiceDefaults\Fic.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Fic.BuildingBlocks\Fic.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Fic.Contracts\Fic.Contracts.csproj" />
+    <ProjectReference Include="..\Fic.MerchantAccounts\Fic.MerchantAccounts.csproj" />
+    <ProjectReference Include="..\Fic.LoyaltyCore\Fic.LoyaltyCore.csproj" />
+    <ProjectReference Include="..\Fic.WalletPasses\Fic.WalletPasses.csproj" />
+  </ItemGroup>
+</Project>

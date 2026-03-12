@@ -1,0 +1,215 @@
+@page "/portal/merchant/{MerchantId:guid}"
+@implements IDisposable
+@inject DemoPlatformState PlatformState
+@inject JoinQrCodeService QrCodes
+@inject NavigationManager Navigation
+
+<PageTitle>Your Loyalty Workspace</PageTitle>
+
+@if (_workspace is null)
+{
+    <section class="empty-state">
+        <h2>Vendor workspace not found.</h2>
+        <p>The merchant account may not exist in the current demo instance.</p>
+        <a class="button button--primary" href="/">Back to overview</a>
+    </section>
+}
+else
+{
+    <section class="workspace-header">
+        <div class="workspace-brand">
+            <div class="brand-lockup" style="@BuildBrandStyle()">
+                <img src="@_workspace.BrandProfile.LogoUrl" alt="@_workspace.Merchant.DisplayName logo" />
+            </div>
+            <div>
+                <p class="eyebrow">Your loyalty workspace</p>
+                <h2>@_workspace.Merchant.DisplayName</h2>
+                <p class="lede">Buy @_workspace.Programme.RewardThreshold @_workspace.Programme.RewardItemLabel, get one free.</p>
+            </div>
+        </div>
+        <div class="workspace-actions">
+            <span class="chip chip--accent">Join code: @_workspace.Programme.JoinCode</span>
+            <a class="button button--secondary" href="@_workspace.JoinUrl" target="_blank">Open Customer Join</a>
+        </div>
+    </section>
+
+    <section class="workspace-grid">
+        <article class="panel">
+            <div class="panel__header">
+                <div>
+                    <p class="eyebrow">Customer signup</p>
+                    <h3>Your join QR</h3>
+                </div>
+                <span class="chip">Poster or counter card</span>
+            </div>
+            <div class="qr-panel">
+                <div class="qr-panel__graphic">
+                    @((MarkupString)_joinQrSvg)
+                </div>
+                <div class="qr-panel__meta">
+                    <p>Customers scan this from their own phone, complete the short web join, and save the card to Apple Wallet.</p>
+                    <code>@_workspace.JoinUrl</code>
+                </div>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel__header">
+                <div>
+                    <p class="eyebrow">Till-side stamping</p>
+                    <h3>Scan a customer pass</h3>
+                </div>
+                <span class="chip">Phone, scanner, or paste</span>
+            </div>
+            <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
+                <label class="field">
+                    <span>Customer pass code</span>
+                    <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
+                </label>
+                <div class="form-actions">
+                    <button class="button button--primary" type="submit" disabled="@string.IsNullOrWhiteSpace(_scanCode)">Award visit</button>
+                    <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
+                </div>
+            </EditForm>
+            @if (!string.IsNullOrWhiteSpace(_scanMessage))
+            {
+                <p class="field-hint">@_scanMessage</p>
+            }
+        </article>
+    </section>
+
+    <section class="section-header">
+        <div>
+            <p class="eyebrow">Joined customers</p>
+            <h3>Cards in your programme</h3>
+        </div>
+        <span class="chip">@_workspace.Cards.Count active cards</span>
+    </section>
+
+    @if (_workspace.Cards.Count == 0)
+    {
+        <section class="empty-state">
+            <h4>No customers joined yet.</h4>
+            <p>Share the QR code first. Once someone joins and saves the card, their progress will appear here.</p>
+        </section>
+    }
+    else
+    {
+        <section class="card-list">
+            @foreach (var card in _workspace.Cards)
+            {
+                <article class="card-row">
+                    <div>
+                        <p class="eyebrow">Customer card</p>
+                        <h4>@card.ProgressDisplayText</h4>
+                        <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
+                    </div>
+                    <div class="card-row__meta">
+                        <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
+                        <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">View Customer Card</a>
+                        <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Pass Code</button>
+                        <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Mark Reward Redeemed</button>
+                    </div>
+                </article>
+            }
+        </section>
+    }
+
+    <section class="panel">
+        <div class="panel__header">
+            <div>
+                <p class="eyebrow">Recent activity</p>
+                <h3>What changed on your card</h3>
+            </div>
+            <span class="chip">Shared card state</span>
+        </div>
+        <div class="timeline">
+            @foreach (var entry in _workspace.Timeline)
+            {
+                <article class="timeline__entry">
+                    <div class="timeline__dot"></div>
+                    <div>
+                        <p class="timeline__event">@entry.EventType</p>
+                        <p>@entry.Summary</p>
+                        <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public Guid MerchantId { get; set; }
+
+    private MerchantWorkspaceSnapshot? _workspace;
+    private string _joinQrSvg = string.Empty;
+    private string _scanCode = string.Empty;
+    private string? _scanMessage;
+
+    protected override void OnInitialized()
+    {
+        PlatformState.Changed += HandleStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadWorkspace();
+    }
+
+    private void LoadWorkspace()
+    {
+        _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri);
+        _joinQrSvg = _workspace is null ? string.Empty : QrCodes.RenderSvg(_workspace.JoinUrl);
+    }
+
+    private Task HandleAwardVisitAsync()
+    {
+        var updated = PlatformState.AwardVisit(MerchantId, _scanCode, Navigation.BaseUri);
+        _scanMessage = updated is null
+            ? "That pass code does not belong to this business."
+            : $"Visit stamped. The customer card now shows {updated.Cards.First(x => x.CardCode == _scanCode.Trim()).ProgressDisplayText}.";
+
+        _scanCode = string.Empty;
+        LoadWorkspace();
+        return Task.CompletedTask;
+    }
+
+    private Task HandleRedeemAsync(Guid cardId)
+    {
+        var updated = PlatformState.RedeemReward(MerchantId, cardId, Navigation.BaseUri);
+        _scanMessage = updated is null ? "The reward could not be marked as redeemed." : "Reward redeemed and the card has reset for the next cycle.";
+        LoadWorkspace();
+        return Task.CompletedTask;
+    }
+
+    private void UseScanCode(string cardCode)
+    {
+        _scanCode = cardCode;
+        _scanMessage = "The customer pass code has been loaded into the scanner field.";
+    }
+
+    private void ClearScan()
+    {
+        _scanCode = string.Empty;
+        _scanMessage = null;
+    }
+
+    private string BuildBrandStyle() =>
+        _workspace is null
+            ? string.Empty
+            : $"--preview-primary: {_workspace.BrandProfile.PrimaryColor}; --preview-accent: {_workspace.BrandProfile.AccentColor};";
+
+    private void HandleStateChanged() =>
+        _ = InvokeAsync(() =>
+        {
+            LoadWorkspace();
+            StateHasChanged();
+        });
+
+    public void Dispose()
+    {
+        PlatformState.Changed -= HandleStateChanged;
+    }
+}

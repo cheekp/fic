@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fic.BuildingBlocks\Fic.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Fic.Contracts\Fic.Contracts.csproj" />
+    <ProjectReference Include="..\Fic.LoyaltyCore\Fic.LoyaltyCore.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
