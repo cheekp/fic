@@ -506,6 +506,24 @@ textarea {
     gap: 1.2rem;
 }
 
+.form-section {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface-strong);
+}
+
+.form-section__header {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.form-section__header h4 {
+    margin: 0;
+}
+
 .form-grid {
     display: grid;
     gap: 1rem;

@@ -87,6 +87,7 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 - Docs and code change together when behavior changes materially.
 - White-label branding is core product behavior, not optional decoration.
 - Wallet card state is domain state, not view-only text.
+- Programme is the merchant-facing unit of loyalty operation; the loyalty card is a programme output, not a peer workspace root.
 - Merchant assets are stored as assets, not buried inside primary documents.
 - Public join flow, merchant operations, and wallet delivery stay behind clear seams even inside a modular monolith.
 
@@ -136,6 +137,8 @@ The repo now supports:
 - merchant brand editing inside the workspace
 - loyalty card template editing inside the workspace
 - multiple loyalty cards per merchant workspace
+- programmes live under a merchant shop context
+- loyalty cards are configured within a programme rather than acting as a peer merchant root concept
 - issued customer card management separated from template editing
 - PNG logo upload for merchant branding
 - blob/local brand asset storage seam

@@ -20,7 +20,7 @@ public sealed class VendorWorkspaceComponentTests
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "overview");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "overview");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -31,7 +31,7 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
-    public async Task DefaultWorkspaceRoute_LandsInProgrammesOperate()
+    public async Task DefaultWorkspaceRoute_LandsInShopProgrammesOperate()
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
@@ -42,6 +42,7 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains("Daily use for this programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Open Customer Join", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Run daily loyalty from here", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -49,7 +50,7 @@ public sealed class VendorWorkspaceComponentTests
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "overview");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "overview");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -62,11 +63,26 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
+    public async Task ShopOverview_PresentsProgrammesAsChildSection_NotPeerWorkspaceScope()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "overview");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Programmes in this shop", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Daily use handoff", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Open programmes", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ShopEdit_ShowsShopEditorAndNotProgrammeOperations()
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "edit");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "edit");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -80,12 +96,13 @@ public sealed class VendorWorkspaceComponentTests
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "configure");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "configure");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Save Programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Loyalty card", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -109,7 +126,7 @@ public sealed class VendorWorkspaceComponentTests
             endsOn,
             BaseUri);
         Assert.NotNull(updated);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "operate", updated!.SelectedProgramme.ProgrammeId);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: updated!.SelectedProgramme.ProgrammeId);
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -143,7 +160,7 @@ public sealed class VendorWorkspaceComponentTests
             BaseUri);
 
         Assert.NotNull(updatedProgramme);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "operate", updatedProgramme!.SelectedProgramme.ProgrammeId);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: updatedProgramme!.SelectedProgramme.ProgrammeId);
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -188,7 +205,7 @@ public sealed class VendorWorkspaceComponentTests
             expiredEndsOn,
             BaseUri));
 
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "operate");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -208,7 +225,7 @@ public sealed class VendorWorkspaceComponentTests
         var secondProgramme = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
         Assert.NotNull(secondProgramme);
 
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "insights");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "insights");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -218,7 +235,9 @@ public sealed class VendorWorkspaceComponentTests
             {
                 var href = anchor.GetAttribute("href");
                 return href is not null
-                    && href.Contains($"tab=programmes&section=insights&programme={secondProgramme!.SelectedProgramme.ProgrammeId}", StringComparison.Ordinal);
+                    && href.Contains("section=programmes", StringComparison.Ordinal)
+                    && href.Contains("programmeSection=insights", StringComparison.Ordinal)
+                    && href.Contains($"programme={secondProgramme!.SelectedProgramme.ProgrammeId}", StringComparison.Ordinal);
             });
 
         Assert.True(matchingLink);
@@ -229,7 +248,7 @@ public sealed class VendorWorkspaceComponentTests
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "insights");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "insights");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -243,7 +262,7 @@ public sealed class VendorWorkspaceComponentTests
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "insights");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "insights");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -270,19 +289,30 @@ public sealed class VendorWorkspaceComponentTests
         context.Services.AddSingleton<IAppleWalletPassService>(new FakeAppleWalletPassService());
     }
 
-    private static void NavigateToWorkspace(BunitContext context, Guid merchantId, string? tab = null, string? section = null, Guid? programmeId = null)
+    private static void NavigateToWorkspace(
+        BunitContext context,
+        Guid merchantId,
+        string? section = null,
+        string? programmeSection = null,
+        Guid? programmeId = null,
+        string? legacyTab = null)
     {
         var navigation = context.Services.GetRequiredService<NavigationManager>();
         var queryParts = new List<string>();
 
-        if (!string.IsNullOrWhiteSpace(tab))
+        if (!string.IsNullOrWhiteSpace(legacyTab))
         {
-            queryParts.Add($"tab={tab}");
+            queryParts.Add($"tab={legacyTab}");
         }
 
         if (!string.IsNullOrWhiteSpace(section))
         {
             queryParts.Add($"section={section}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(programmeSection))
+        {
+            queryParts.Add($"programmeSection={programmeSection}");
         }
 
         if (programmeId.HasValue)
