@@ -60,9 +60,9 @@ else
                 <a class="workspace-tabs__item @(IsWorkspaceSection("programmes") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("programmes")">Programmes</a>
                 <a class="workspace-tabs__item @(IsWorkspaceSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("insights")">Insights</a>
             </nav>
-            @if (!IsWorkspaceSection("edit"))
+            @if (!IsShopSettingsOpen())
             {
-                <a class="button button--ghost button--compact workspace-tabs-bar__action" href="@GetWorkspaceSectionUrl("edit")">Shop settings</a>
+                <a class="button button--ghost button--compact workspace-tabs-bar__action" href="@GetShopSettingsUrl()">Shop settings</a>
             }
         </div>
 
@@ -169,98 +169,6 @@ else
                         </article>
                     </div>
                     <p class="field-hint">Current programme focus: <strong>@selectedProgrammeSummary.RewardHeadline</strong>. Customer join, stamping, dates, and loyalty card behaviour all live inside the programme workspace.</p>
-                </article>
-            </section>
-        }
-        else if (IsWorkspaceSection("edit"))
-        {
-            <section class="workspace-detail-grid">
-                <article class="panel">
-                    <div class="panel__header">
-                        <div>
-                            <p class="eyebrow">Shop settings</p>
-                            <h3>Change profile and brand defaults</h3>
-                        </div>
-                        <div class="workspace-actions">
-                            <span class="chip">Shop level</span>
-                            <a class="button button--ghost button--compact" href="@GetWorkspaceSectionUrl("overview")">Back to overview</a>
-                        </div>
-                    </div>
-
-                    <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="validation-summary" />
-
-                        <div class="form-grid">
-                            <label class="field">
-                                <span>Coffee shop name</span>
-                                <InputText @bind-Value="_shopForm.DisplayName" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Owner email</span>
-                                <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Town or city</span>
-                                <InputText @bind-Value="_shopForm.TownOrCity" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Postcode</span>
-                                <InputText @bind-Value="_shopForm.Postcode" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Site primary colour</span>
-                                <InputText @bind-Value="_shopForm.PrimaryColor" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Site accent colour</span>
-                                <InputText @bind-Value="_shopForm.AccentColor" class="input" />
-                            </label>
-
-                            <div class="field field--full">
-                                <span>Replace logo</span>
-                                <label class="upload-control">
-                                    <InputFile OnChange="HandleBrandLogoSelectedAsync" accept=".png" />
-                                    <span>Upload a PNG logo. We will suggest colours from it, but you can still override them manually.</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        @if (!string.IsNullOrWhiteSpace(_shopMessage))
-                        {
-                            <p class="field-hint">@_shopMessage</p>
-                        }
-
-                        <div class="form-actions">
-                            <button class="button button--primary" type="submit" disabled="@_isSavingShop">Save Shop</button>
-                            <button class="button button--ghost" type="button" @onclick="ResetShopForm">Reset</button>
-                        </div>
-                    </EditForm>
-                </article>
-
-                <article class="panel workspace-preview-panel @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
-                    <div class="panel__header">
-                        <div>
-                            <p class="eyebrow">Brand default</p>
-                            <h3>How programmes inherit the shop look</h3>
-                        </div>
-                        <span class="chip chip--accent">Inherited by default</span>
-                    </div>
-                    <div class="workspace-preview-card">
-                        <div class="brand-lockup brand-lockup--merchant">
-                            <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName logo preview" />
-                        </div>
-                        <div>
-                            <p class="field-hint">Programmes and loyalty cards inherit this look unless you later introduce programme-specific overrides.</p>
-                            <p class="workspace-preview-copy">@_shopForm.DisplayName</p>
-                            <p class="field-hint">Selected programme example: @selectedProgrammeSummary.RewardHeadline</p>
-                        </div>
-                    </div>
                 </article>
             </section>
         }
@@ -701,6 +609,94 @@ else
                 </div>
             </section>
         }
+
+        @if (IsShopSettingsOpen())
+        {
+            <div class="workspace-drawer-backdrop">
+                <aside class="panel workspace-drawer" aria-label="Shop settings drawer">
+                    <div class="panel__header">
+                        <div>
+                            <p class="eyebrow">Shop settings</p>
+                            <h3>Change profile and brand defaults</h3>
+                        </div>
+                        <div class="workspace-actions">
+                            <span class="chip">Shop level</span>
+                            <a class="button button--ghost button--compact" href="@GetCloseShopSettingsUrl()">Close</a>
+                        </div>
+                    </div>
+
+                    <p class="field-hint">These defaults apply across the shop. Programmes inherit them unless a customer delivery output introduces its own overrides later.</p>
+
+                    <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-summary" />
+
+                        <div class="form-grid">
+                            <label class="field">
+                                <span>Coffee shop name</span>
+                                <InputText @bind-Value="_shopForm.DisplayName" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Owner email</span>
+                                <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Town or city</span>
+                                <InputText @bind-Value="_shopForm.TownOrCity" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Postcode</span>
+                                <InputText @bind-Value="_shopForm.Postcode" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Site primary colour</span>
+                                <InputText @bind-Value="_shopForm.PrimaryColor" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Site accent colour</span>
+                                <InputText @bind-Value="_shopForm.AccentColor" class="input" />
+                            </label>
+
+                            <div class="field field--full">
+                                <span>Replace logo</span>
+                                <label class="upload-control">
+                                    <InputFile OnChange="HandleBrandLogoSelectedAsync" accept=".png" />
+                                    <span>Upload a PNG logo. We will suggest colours from it, but you can still override them manually.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(_shopMessage))
+                        {
+                            <p class="field-hint">@_shopMessage</p>
+                        }
+
+                        <section class="workspace-drawer__preview @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
+                            <div class="workspace-preview-card">
+                                <div class="brand-lockup brand-lockup--merchant">
+                                    <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName logo preview" />
+                                </div>
+                                <div>
+                                    <p class="eyebrow">Shared brand preview</p>
+                                    <p class="workspace-preview-copy">@_shopForm.DisplayName</p>
+                                    <p class="field-hint">Example output: @selectedProgrammeSummary.RewardHeadline</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div class="form-actions">
+                            <button class="button button--primary" type="submit" disabled="@_isSavingShop">Save Shop</button>
+                            <button class="button button--ghost" type="button" @onclick="ResetShopForm">Reset</button>
+                        </div>
+                    </EditForm>
+                </aside>
+            </div>
+        }
     </div>
 }
 
@@ -719,6 +715,9 @@ else
 
     [SupplyParameterFromQuery(Name = "programme")]
     public Guid? ProgrammeId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "settings")]
+    public string? Settings { get; set; }
 
     private MerchantWorkspaceSnapshot? _workspace;
     private string _joinQrSvg = string.Empty;
@@ -808,8 +807,15 @@ else
     private bool IsProgrammeSection(string section) =>
         IsWorkspaceSection("programmes") && string.Equals(GetActiveProgrammeSection(), section, StringComparison.OrdinalIgnoreCase);
 
+    private bool IsShopSettingsOpen() =>
+        string.Equals(Settings, "shop", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Section, "edit", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Tab, "brand", StringComparison.OrdinalIgnoreCase);
+
     private bool IsSetupStepActive(SetupStepView step) =>
-        string.Equals(GetActiveSection(), step.Section, StringComparison.OrdinalIgnoreCase)
+        (string.Equals(step.Section, "edit", StringComparison.OrdinalIgnoreCase)
+            ? IsShopSettingsOpen()
+            : string.Equals(GetActiveSection(), step.Section, StringComparison.OrdinalIgnoreCase))
         && (step.Section != "programmes"
             || string.Equals(GetActiveProgrammeSection(), step.ProgrammeSection ?? "operate", StringComparison.OrdinalIgnoreCase));
 
@@ -820,22 +826,38 @@ else
         NormalizeProgrammeSection(Tab, Section, ProgrammeSection);
 
     private string GetWorkspaceSectionUrl(string section) =>
+        GetWorkspaceUrl(
+            section,
+            section == "programmes" ? GetActiveProgrammeSection() : null,
+            _workspace?.SelectedProgramme.ProgrammeId,
+            settings: null);
+
+    private string GetShopSettingsUrl() =>
+        GetWorkspaceUrl(
+            GetActiveSection(),
+            IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : null,
+            _workspace?.SelectedProgramme.ProgrammeId,
+            settings: "shop");
+
+    private string GetCloseShopSettingsUrl() =>
+        GetWorkspaceUrl(
+            GetActiveSection(),
+            IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : null,
+            _workspace?.SelectedProgramme.ProgrammeId,
+            settings: null);
+
+    private string GetWorkspaceUrl(string section, string? programmeSection, Guid? programmeId, string? settings) =>
         Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
             ["tab"] = section == "programmes" ? "programmes" : "shop",
             ["section"] = section,
-            ["programmeSection"] = section == "programmes" ? GetActiveProgrammeSection() : null,
-            ["programme"] = _workspace?.SelectedProgramme.ProgrammeId
+            ["programmeSection"] = section == "programmes" ? (programmeSection ?? "operate") : null,
+            ["programme"] = programmeId,
+            ["settings"] = settings
         });
 
     private string GetProgrammeSectionUrl(string section, Guid? programmeId = null) =>
-        Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            ["tab"] = "programmes",
-            ["section"] = "programmes",
-            ["programmeSection"] = section,
-            ["programme"] = programmeId ?? _workspace?.SelectedProgramme.ProgrammeId
-        });
+        GetWorkspaceUrl("programmes", section, programmeId ?? _workspace?.SelectedProgramme.ProgrammeId, settings: null);
 
     private string GetProgrammeUrl(Guid programmeId, string? section = null) =>
         GetProgrammeSectionUrl(section ?? (IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : "operate"), programmeId);
@@ -843,17 +865,17 @@ else
     private string GetSetupStepUrl(SetupStepView step) =>
         step.Section == "programmes"
             ? GetProgrammeSectionUrl(step.ProgrammeSection ?? "operate")
-            : GetWorkspaceSectionUrl(step.Section);
+            : GetShopSettingsUrl();
 
     private string NormalizeWorkspaceSection(string? legacyTab, string? section) => section?.Trim().ToLowerInvariant() switch
     {
         "overview" => "overview",
-        "edit" => "edit",
+        "edit" => "overview",
         "insights" => "insights",
         "programmes" => "programmes",
         _ => legacyTab?.Trim().ToLowerInvariant() switch
         {
-            "brand" => "edit",
+            "brand" => "overview",
             "programmes" => "programmes",
             "programme" => "programmes",
             "cards" => "programmes",
