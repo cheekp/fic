@@ -468,6 +468,58 @@ textarea {
     border: 1px solid var(--brand-line);
 }
 
+.signup-shell {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    align-items: start;
+}
+
+.signup-sidecar {
+    display: grid;
+    gap: 1rem;
+}
+
+.signup-checklist {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.signup-checklist__item,
+.signup-summary {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface-strong);
+}
+
+.signup-checklist__item h4,
+.signup-summary h4 {
+    margin: 0 0 0.35rem;
+}
+
+.signup-checklist__item p,
+.signup-summary p {
+    margin: 0;
+}
+
+.signup-summary {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.signup-summary__identity {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: center;
+}
+
+.signup-summary__mark {
+    color: var(--brand-button-ink);
+    font-size: 1.2rem;
+}
+
 .signup-preview--studio {
     grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
 }
@@ -868,6 +920,7 @@ textarea {
 
 @media (max-width: 1100px) {
     .hero-panel,
+    .signup-shell,
     .workspace-detail-grid,
     .workspace-grid,
     .wallet-view,

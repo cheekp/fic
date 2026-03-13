@@ -277,22 +277,22 @@
 
         public static ShellContext Signup { get; } = new(
             "Create merchant workspace",
-            "Start with the merchant, not the customer card list.",
-            "The first job is to create the merchant workspace and its default loyalty card template. Issued customer cards come later.",
+            "Create the shop record first, then move into the workspace.",
+            "This step should stay light. The detailed brand, loyalty card, and customer operations belong inside the merchant workspace after signup.",
             "signup",
             false,
             false,
             true,
             true,
             false,
-            "Brand studio",
+            "Merchant setup",
             "Your merchant setup",
-            "Use the live preview to see how the merchant workspace and wallet pass inherit the same brand system.",
-            "What to upload",
+            "Collect the minimum inputs now, then let the workspace become the real product surface.",
+            "What happens next",
             [
-                "Use a clean PNG logo where possible.",
-                "Primary and accent colours shape the merchant workspace by default.",
-                "The wallet card inherits from the merchant brand unless explicitly overridden later."
+                "Land in Brand first and upload the real logo there.",
+                "Refine the loyalty card template from inside the workspace.",
+                "Use Customers for join QR, scans, and issued cards."
             ],
             null,
             null);

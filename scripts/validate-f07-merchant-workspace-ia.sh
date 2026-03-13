@@ -35,6 +35,8 @@ require_text "workspace-tabs__item" "src/Fic.Platform.Web/Components/Pages/Vendo
 require_text "UpdateMerchantBrandAsync" "src/Fic.Platform.Web/Services/DemoPlatformState.cs"
 require_text "UpdateProgramme" "src/Fic.Platform.Web/Services/DemoPlatformState.cs"
 require_text "Create Merchant Workspace" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
+require_text "Continue to Merchant Workspace" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
+require_text "What happens next" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
 require_text "browse all local workspaces" "src/Fic.Platform.Web/Components/Pages/Home.razor"
 require_text "merchant-shell-bar" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
 require_text "Billing" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"

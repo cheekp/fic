@@ -1,172 +1,107 @@
 @page "/portal/signup"
 @using System.ComponentModel.DataAnnotations
 @using System.Text
-@using Fic.MerchantAccounts
 @inject DemoPlatformState PlatformState
-@inject IJSRuntime JS
 @inject NavigationManager Navigation
-@inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>Create Merchant Workspace</PageTitle>
 
 <section class="section-header">
     <div>
         <p class="eyebrow">Merchant onboarding</p>
-        <h2>Create the workspace your team will run the loyalty programme from</h2>
-        <p class="lede">Set up the merchant brand and first loyalty card template now. After signup, you land in the workspace to manage brand, card settings, join QR, and issued customer cards.</p>
+        <h2>Set up the shop, then finish everything inside the merchant workspace</h2>
+        <p class="lede">Keep this step light. We create the merchant workspace and starter loyalty card template, then take you straight into the place where the owner will manage branding, card settings, join QR, and customer cards.</p>
     </div>
 </section>
 
-<section class="panel">
-    <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-loyalty-card" class="form-stack">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="validation-summary" />
+<section class="signup-shell">
+    <article class="panel">
+        <div class="panel__header">
+            <div>
+                <p class="eyebrow">Step 1</p>
+                <h3>Create your merchant workspace</h3>
+            </div>
+            <span class="chip">Under a minute</span>
+        </div>
 
-        <div class="form-grid">
-            <label class="field">
-                <span>Business name</span>
-                <InputText @bind-Value="_form.DisplayName" class="input" />
-            </label>
+        <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-merchant-workspace" class="form-stack">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
 
-            <label class="field">
-                <span>Owner email</span>
-                <InputText @bind-Value="_form.ContactEmail" class="input" />
-            </label>
-
-            <label class="field">
-                <span>What are customers collecting?</span>
-                <InputText @bind-Value="_form.RewardItemLabel" class="input" />
-            </label>
-
-            <label class="field">
-                <span>How many before the reward?</span>
-                <InputNumber @bind-Value="_form.RewardThreshold" class="input" />
-            </label>
-
-            <label class="field field--full">
-                <span>Offer text shown to customers</span>
-                <InputText @bind-Value="_form.RewardCopy" class="input" />
-            </label>
-
-            <label class="field">
-                <span>Site primary colour</span>
-                <InputText @bind-Value="_form.PrimaryColor" class="input" />
-            </label>
-
-            <label class="field">
-                <span>Site accent colour</span>
-                <InputText @bind-Value="_form.AccentColor" class="input" />
-            </label>
-
-            <div class="field field--full">
-                <span>Your logo</span>
-                <label class="upload-control">
-                    <InputFile OnChange="HandleLogoSelectedAsync" accept=".png" />
-                    <span>Upload a PNG logo for the cleanest Apple Wallet result, or let the preview generate a simple initials mark for now.</span>
+            <div class="form-grid">
+                <label class="field">
+                    <span>Business name</span>
+                    <InputText @bind-Value="_form.DisplayName" class="input" />
                 </label>
-                @if (!string.IsNullOrWhiteSpace(_logoUploadMessage))
-                {
-                    <p class="field-hint">@_logoUploadMessage</p>
-                }
+
+                <label class="field">
+                    <span>Owner email</span>
+                    <InputText @bind-Value="_form.ContactEmail" class="input" />
+                </label>
+
+                <label class="field">
+                    <span>What are customers collecting?</span>
+                    <InputText @bind-Value="_form.RewardItemLabel" class="input" />
+                </label>
+
+                <label class="field">
+                    <span>How many before the reward?</span>
+                    <InputNumber @bind-Value="_form.RewardThreshold" class="input" />
+                </label>
             </div>
 
-            <div class="field field--full">
-                <span>Wallet card branding</span>
-                <p class="field-hint">The wallet card inherits your site logo and colours by default. We can add card-level overrides later without changing the merchant setup model.</p>
+            <p class="field-hint">We will start with a simple generated brand mark and sensible defaults. The owner uploads the real logo, tunes colours, and edits customer-facing copy inside the workspace.</p>
+
+            <div class="form-actions">
+                <button class="button button--primary" type="submit" disabled="@_isSubmitting">Continue to Merchant Workspace</button>
+                <a class="button button--ghost" href="/">Back to start</a>
             </div>
+        </EditForm>
+    </article>
+
+    <aside class="panel signup-sidecar">
+        <div class="panel__header">
+            <div>
+                <p class="eyebrow">What happens next</p>
+                <h3>The workspace becomes the real product</h3>
+            </div>
+            <span class="chip chip--accent">@BuildRewardHeadline()</span>
         </div>
 
-        @{
-            var previewTheme = BuildPreviewTheme();
-        }
-        <div class="signup-preview signup-preview--studio @previewTheme.ThemeClass" style="@previewTheme.CssVariables">
-            <div class="signup-preview__shell">
-                <div class="signup-preview__chrome">
-                    <div class="signup-preview__logo">
-                        @if (!string.IsNullOrWhiteSpace(_logoPreviewUri))
-                        {
-                            <img src="@_logoPreviewUri" alt="@_form.DisplayName logo preview" />
-                        }
-                        else
-                        {
-                            <span>@GetInitials(_form.DisplayName)</span>
-                        }
-                    </div>
-                    <div>
-                        <p class="eyebrow">Merchant workspace feel</p>
-                        <h3>@_form.DisplayName</h3>
-                        <p>@BuildRewardHeadline()</p>
-                        <p class="field-hint">The shell, panels, and pass all inherit the same derived brand tokens.</p>
-                    </div>
-                </div>
-
-                <div class="signup-preview__surface">
-                    <span class="chip chip--accent">Brand system compiled</span>
-                    <div class="signup-preview__actions">
-                        <span class="signup-preview__action">Customer join QR</span>
-                        <span class="signup-preview__action">Till-side stamping</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="signup-preview__wallet @previewTheme.ThemeClass" style="@previewTheme.CssVariables">
-                <p class="wallet-pass__label">Wallet card direction</p>
-                <h3>@_form.DisplayName</h3>
-                <p class="signup-preview__wallet-copy">@_form.RewardCopy</p>
-                <p class="wallet-pass__progress">2/@_form.RewardThreshold</p>
-                <div class="stamp-track" aria-label="preview stamps">
-                    @for (var i = 0; i < _form.RewardThreshold; i++)
-                    {
-                        <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
-                    }
-                </div>
-            </div>
+        <div class="signup-checklist">
+            <article class="signup-checklist__item">
+                <h4>Brand the workspace</h4>
+                <p>Upload the real logo, confirm colours, and make the merchant area feel like the shop.</p>
+            </article>
+            <article class="signup-checklist__item">
+                <h4>Shape the loyalty card</h4>
+                <p>Refine the reward copy and preview how the wallet card inherits the workspace brand.</p>
+            </article>
+            <article class="signup-checklist__item">
+                <h4>Start customer operations</h4>
+                <p>Open the join QR, issue customer cards, and stamp visits from the same workspace.</p>
+            </article>
         </div>
 
-        <div class="form-actions">
-            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create My Merchant Workspace</button>
-            <a class="button button--ghost" href="/">Back to start</a>
+        <div class="signup-summary">
+            <p class="eyebrow">Starter workspace</p>
+            <div class="signup-summary__identity">
+                <div class="brand-lockup brand-lockup--resume signup-summary__mark">
+                    <span>@GetInitials(_form.DisplayName)</span>
+                </div>
+                <div>
+                    <h4>@_form.DisplayName</h4>
+                    <p class="field-hint">@BuildRewardCopy()</p>
+                </div>
+            </div>
+            <p class="field-hint">This is just the starting point. The more complete experience begins once the merchant lands in their own workspace.</p>
         </div>
-    </EditForm>
+    </aside>
 </section>
 
 @code {
     private readonly SignupFormModel _form = new();
     private bool _isSubmitting;
-    private string? _logoPreviewUri;
-    private string? _logoUploadMessage;
-    private byte[]? _logoUploadBytes;
-    private string _logoFileName = "logo.png";
-    private MerchantLogoMetadata _logoMetadata = new(160, 160);
-
-    private async Task HandleLogoSelectedAsync(InputFileChangeEventArgs args)
-    {
-        var file = args.File;
-        if (file is null)
-        {
-            return;
-        }
-
-        if (!string.Equals(file.ContentType, "image/png", StringComparison.OrdinalIgnoreCase))
-        {
-            _logoUploadBytes = null;
-            _logoPreviewUri = null;
-            _logoMetadata = new MerchantLogoMetadata(160, 160);
-            _logoUploadMessage = "Please upload a PNG logo for the merchant brand asset flow.";
-            return;
-        }
-
-        await using var stream = file.OpenReadStream(2 * 1024 * 1024);
-        using var buffer = new MemoryStream();
-        await stream.CopyToAsync(buffer);
-
-        _logoUploadBytes = buffer.ToArray();
-        _logoMetadata = MerchantBrandAssetInspector.ReadLogoMetadata(_logoUploadBytes);
-        _logoFileName = file.Name;
-        _logoPreviewUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(_logoUploadBytes)}";
-        await SuggestPaletteFromLogoAsync(_logoPreviewUri);
-        _logoUploadMessage = $"{file.Name} loaded into your site preview. Suggested colours have been matched from the logo and you can still tweak them below.";
-    }
 
     private async Task HandleSubmitAsync()
     {
@@ -179,18 +114,14 @@
                 _form.ContactEmail,
                 _form.RewardItemLabel,
                 _form.RewardThreshold,
-                _form.RewardCopy,
-                _logoUploadBytes is null ? null : new MerchantLogoUpload(_logoUploadBytes, "image/png", _logoFileName),
-                _logoPreviewUri ?? BuildFallbackLogo(_form.DisplayName, _form.PrimaryColor, _form.AccentColor),
-                _form.PrimaryColor,
-                _form.AccentColor,
+                BuildRewardCopy(),
+                null,
+                BuildFallbackLogo(_form.DisplayName, DefaultPrimaryColor, DefaultAccentColor),
+                DefaultPrimaryColor,
+                DefaultAccentColor,
                 Navigation.BaseUri);
 
             Navigation.NavigateTo($"/portal/merchant/{workspace.Merchant.MerchantId}?tab=brand");
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logoUploadMessage = ex.Message;
         }
         finally
         {
@@ -201,29 +132,7 @@
     private string BuildRewardHeadline() =>
         $"Buy {_form.RewardThreshold} {_form.RewardItemLabel.ToLowerInvariant()}, get one free";
 
-    private MerchantThemeView BuildPreviewTheme() =>
-        BrandPresentation.BuildPreview(
-            NormalizeColor(_form.PrimaryColor),
-            NormalizeColor(_form.AccentColor),
-            _logoMetadata.Width,
-            _logoMetadata.Height);
-
-    private async Task SuggestPaletteFromLogoAsync(string logoPreviewUri)
-    {
-        try
-        {
-            var palette = await JS.InvokeAsync<string[]>("ficBranding.extractPaletteFromDataUrl", logoPreviewUri);
-            if (palette.Length >= 2)
-            {
-                _form.PrimaryColor = NormalizeColor(palette[0]);
-                _form.AccentColor = NormalizeColor(palette[1]);
-            }
-        }
-        catch (JSException)
-        {
-            // Keep manual colours if local JS palette extraction is unavailable.
-        }
-    }
+    private string BuildRewardCopy() => $"{BuildRewardHeadline()}.";
 
     private static string GetInitials(string name)
     {
@@ -256,6 +165,9 @@
         return $"data:image/svg+xml;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(svg))}";
     }
 
+    private const string DefaultPrimaryColor = "#1f3731";
+    private const string DefaultAccentColor = "#f4c15d";
+
     private static string NormalizeColor(string value) =>
         value.StartsWith('#') ? value : $"#{value}";
 
@@ -272,14 +184,5 @@
 
         [Range(2, 20)]
         public int RewardThreshold { get; set; } = 5;
-
-        [Required, StringLength(120)]
-        public string RewardCopy { get; set; } = "Your next cuppa is free once you reach the full stamp count.";
-
-        [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
-        public string PrimaryColor { get; set; } = "#1f3731";
-
-        [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
-        public string AccentColor { get; set; } = "#f4c15d";
     }
 }

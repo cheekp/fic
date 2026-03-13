@@ -107,6 +107,7 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 The repo now supports:
 
 - self-serve merchant signup
+- thin merchant signup that hands off quickly into the merchant workspace
 - merchant-owned workspace flow after signup
 - `FIC` shell focused on acquisition and signup, with a lighter merchant-owned workspace frame after onboarding
 - merchant reward configuration
