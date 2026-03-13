@@ -12,3 +12,4 @@ Recommended contents for the first architecture note:
 
 Current draft:
 - `FIC_PLATFORM_ARCHITECTURE_DRAFT.md`
+- `FIC_DELIVERY_GUARDRAILS_NOTE.md`

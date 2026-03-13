@@ -115,8 +115,17 @@ Completed slice chain to date:
 - `F07`
   - merchant-first workspace information architecture
   - validator: `scripts/validate-f07-merchant-workspace-ia.sh`
+- `F08`
+  - workspace polish and bUnit component coverage
+  - validator: `scripts/validate-f08-workspace-polish-and-bunit.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
+
+Current active slice:
+
+- `F09`
+  - delivery guardrails (preflight, hotspot reporting, seam checklist)
+  - validator: `scripts/validate-f09-delivery-guardrails.sh`
 
 ## Current Product Reality
 
@@ -158,6 +167,10 @@ Current high-value local loops:
   - run the focused xUnit suite for state-heavy behavior before trusting UI-only changes
 - component test loop:
   - use bUnit for merchant-workspace interaction rules where UI behavior is meaningful but a full browser test is still too heavy
+- preflight loop:
+  - run `scripts/dev-preflight.sh` before implementation-heavy changes to catch environment and Razor form drift early
+- churn hotspot loop:
+  - run `scripts/report-churn-hotspots.sh` during planning/refactor checks to identify repeated edit concentration
 - direct web preview:
   - run the Blazor app with the local profile for browser and LAN demos
 - wallet demo:
