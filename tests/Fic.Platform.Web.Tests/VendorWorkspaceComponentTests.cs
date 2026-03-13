@@ -132,6 +132,25 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
+    public async Task Programmes_NewProgrammeFlow_MakesWalletDeliveryExplicit()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        cut.FindAll("button")
+            .Single(button => button.TextContent.Contains("New Programme", StringComparison.Ordinal))
+            .Click();
+
+        Assert.Contains("Choose the current delivery output", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Current option", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ProgrammesOperate_DisablesJoinAction_WhenProgrammeIsScheduled()
     {
         var state = CreateState();

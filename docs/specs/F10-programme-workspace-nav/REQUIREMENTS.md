@@ -28,6 +28,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
 ### Programme Scope
 
 - the `Programmes` section should feel like a dedicated working area for the selected programme
+- creating a programme should make the current delivery option explicit instead of implying a generic empty programme while silently creating a wallet-card flow
 - the programme list must be grouped by lifecycle state:
   - `Active`
   - `Scheduled`

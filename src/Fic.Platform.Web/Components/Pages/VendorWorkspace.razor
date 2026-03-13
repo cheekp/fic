@@ -327,9 +327,30 @@ else
                             <p class="eyebrow">Programmes</p>
                             <h3>Run daily loyalty from here</h3>
                         </div>
-                        <button class="button button--secondary" type="button" @onclick="HandleCreateProgrammeAsync">Add Programme</button>
+                        <button class="button button--secondary" type="button" @onclick="ToggleCreateProgrammeOptions">New Programme</button>
                     </div>
                     <p class="field-hint">A programme defines the rule, schedule, customer operations, and delivery outputs for one loyalty flow.</p>
+
+                    @if (_isCreateProgrammeOptionsOpen)
+                    {
+                        <section class="programme-create-panel">
+                            <div class="programme-create-panel__header">
+                                <div>
+                                    <p class="eyebrow">Create programme</p>
+                                    <h4>Choose the current delivery output</h4>
+                                </div>
+                                <button class="button button--ghost button--compact" type="button" @onclick="ToggleCreateProgrammeOptions">Close</button>
+                            </div>
+                            <button class="programme-create-option" type="button" @onclick="HandleCreateWalletProgrammeAsync">
+                                <div>
+                                    <strong>Wallet loyalty card</strong>
+                                    <p class="field-hint">Creates a programme that customers join by QR and keep in Apple Wallet.</p>
+                                </div>
+                                <span class="chip chip--accent">Current option</span>
+                            </button>
+                            <p class="field-hint">More programme delivery types can sit here later without changing the programme model.</p>
+                        </section>
+                    }
 
                     <div class="programme-groups">
                         @foreach (var group in programmeGroups)
@@ -720,6 +741,7 @@ else
     private bool _isSetupRoadmapCollapsed;
     private bool _isSetupRoadmapDismissed;
     private bool _didInitializeRoadmapState;
+    private bool _isCreateProgrammeOptionsOpen;
     private readonly ShopForm _shopForm = new();
     private readonly CardTemplateForm _cardForm = new();
     private byte[]? _pendingLogoUploadBytes;
@@ -952,11 +974,15 @@ else
         LoadWorkspace(refreshForms: true);
     }
 
-    private Task HandleCreateProgrammeAsync()
+    private void ToggleCreateProgrammeOptions() =>
+        _isCreateProgrammeOptionsOpen = !_isCreateProgrammeOptionsOpen;
+
+    private Task HandleCreateWalletProgrammeAsync()
     {
         var updated = PlatformState.CreateProgramme(MerchantId, Navigation.BaseUri);
         if (updated is not null)
         {
+            _isCreateProgrammeOptionsOpen = false;
             Navigation.NavigateTo($"/portal/merchant/{MerchantId}?tab=programmes&section=configure&programme={updated.SelectedProgramme.ProgrammeId}");
         }
 

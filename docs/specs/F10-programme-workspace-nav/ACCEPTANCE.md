@@ -7,15 +7,16 @@
 3. The workspace navigation makes `Programmes` a section within the shop workspace, not a peer root tab.
 4. The `Programmes` section groups programmes into active, scheduled, and expired sections.
 5. Switching between programmes preserves the nested programme section where practical.
-6. `Shop -> Overview` avoids join, stamping, and repeated programme dashboard content.
-7. `Shop -> Programmes -> Operate` contains join QR, join link, stamping, issued passes, and programme activity.
-8. `Shop -> Programmes -> Configure` contains programme rule, dates, and customer delivery settings, without customer join controls.
-9. `Shop -> Programmes -> Insights` shows only selected-programme metrics.
-10. `Shop -> Insights` shows only shop-wide metrics plus programme comparison.
-11. The workspace avoids duplicate shop-settings links in the same view.
-12. The selected programme header is compact and does not repeat a full summary dashboard.
-13. The FIC utility chrome remains present but visually quieter than the merchant navigation.
-14. The F10 validator passes.
+6. Creating a programme makes the current delivery option explicit.
+7. `Shop -> Overview` avoids join, stamping, and repeated programme dashboard content.
+8. `Shop -> Programmes -> Operate` contains join QR, join link, stamping, issued passes, and programme activity.
+9. `Shop -> Programmes -> Configure` contains programme rule, dates, and customer delivery settings, without customer join controls.
+10. `Shop -> Programmes -> Insights` shows only selected-programme metrics.
+11. `Shop -> Insights` shows only shop-wide metrics plus programme comparison.
+12. The workspace avoids duplicate shop-settings links in the same view.
+13. The selected programme header is compact and does not repeat a full summary dashboard.
+14. The FIC utility chrome remains present but visually quieter than the merchant navigation.
+15. The F10 validator passes.
 
 ## Demo Walkthrough
 
