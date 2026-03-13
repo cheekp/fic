@@ -101,7 +101,7 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
-    public async Task ShopEdit_ShowsShopEditorAndNotProgrammeOperations()
+    public async Task LegacyEditRoute_OpensShopSettingsDrawer()
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
@@ -111,8 +111,24 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Save Shop", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Back to overview", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Shop settings drawer", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Close", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ShopSettingsDrawer_CanOpenFromProgrammesWithoutLeavingProgrammeSurface()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "configure", settings: "shop");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Shop settings drawer", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Programme configuration", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -341,7 +357,8 @@ public sealed class VendorWorkspaceComponentTests
         string? section = null,
         string? programmeSection = null,
         Guid? programmeId = null,
-        string? legacyTab = null)
+        string? legacyTab = null,
+        string? settings = null)
     {
         var navigation = context.Services.GetRequiredService<NavigationManager>();
         var queryParts = new List<string>();
@@ -364,6 +381,11 @@ public sealed class VendorWorkspaceComponentTests
         if (programmeId.HasValue)
         {
             queryParts.Add($"programme={programmeId.Value}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(settings))
+        {
+            queryParts.Add($"settings={settings}");
         }
 
         var query = queryParts.Count == 0 ? string.Empty : $"?{string.Join("&", queryParts)}";

@@ -122,6 +122,9 @@ Completed slice chain to date:
 - `F09`
   - merchant workspace hierarchy correction
   - validator: `scripts/validate-f09-merchant-workspace-polish.sh`
+- `F10`
+  - programme-centric workspace navigation
+  - validator: `scripts/validate-f10-programme-workspace-nav.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
@@ -135,9 +138,10 @@ The repo now supports:
 - `FIC` shell focused on acquisition and signup, with a lighter merchant-owned workspace frame after onboarding
 - merchant reward configuration
 - merchant brand editing inside the workspace
-- loyalty card template editing inside the workspace
-- multiple loyalty cards per merchant workspace
+- shop settings available as an in-context merchant workspace surface
+- multiple programmes per merchant shop
 - programmes live under a merchant shop context
+- the programme workspace now uses nested `Operate`, `Configure`, and `Insights` sections
 - loyalty cards are configured within a programme rather than acting as a peer merchant root concept
 - issued customer card management separated from template editing
 - PNG logo upload for merchant branding
@@ -198,7 +202,7 @@ Review the harness when:
 
 The next likely product slices are:
 
-- programme-centric workspace navigation and daily-use optimisation
+- programme workspace polish and daily-use reduction of visual density
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries

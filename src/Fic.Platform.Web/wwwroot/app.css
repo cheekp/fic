@@ -921,6 +921,31 @@ textarea {
     flex-shrink: 0;
 }
 
+.workspace-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    justify-content: end;
+    padding: 4.5rem 1.25rem 1.25rem;
+    background: rgba(14, 22, 21, 0.18);
+    backdrop-filter: blur(10px);
+}
+
+.workspace-drawer {
+    width: min(34rem, 100%);
+    max-height: calc(100vh - 5.75rem);
+    overflow: auto;
+    box-shadow: 0 24px 56px rgba(12, 20, 18, 0.22);
+}
+
+.workspace-drawer__preview {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface-strong) 88%, transparent 12%);
+}
+
 .workspace-tabs__item {
     display: inline-flex;
     align-items: center;
@@ -966,7 +991,7 @@ textarea {
 
 .programme-rail {
     display: grid;
-    gap: 1rem;
+    gap: 0.85rem;
 }
 
 .programme-rail__header {
@@ -1006,9 +1031,9 @@ textarea {
 
 .programme-create-panel {
     display: grid;
-    gap: 0.85rem;
-    margin-bottom: 0.5rem;
-    padding: 0.9rem;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+    padding: 0.8rem;
     border-radius: var(--radius-md);
     border: 1px solid var(--brand-line);
     background: color-mix(in srgb, var(--brand-surface-strong) 82%, transparent 18%);
@@ -1139,7 +1164,7 @@ textarea {
 .programme-list__item {
     display: grid;
     gap: 0.6rem;
-    padding: 0.9rem 1rem;
+    padding: 0.85rem 0.95rem;
     border-radius: var(--radius-md);
     border: 1px solid var(--brand-line);
     background: var(--brand-surface-strong);
@@ -1159,10 +1184,10 @@ textarea {
 .programme-list__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
+    gap: 0.45rem 0.65rem;
     align-items: center;
     color: var(--brand-muted);
-    font-size: 0.9rem;
+    font-size: 0.86rem;
 }
 
 .qr-panel {
@@ -1487,6 +1512,16 @@ textarea {
     .join-hero__logo {
         width: 100%;
         max-width: 220px;
+    }
+
+    .workspace-drawer-backdrop {
+        justify-content: stretch;
+        padding: 1rem;
+    }
+
+    .workspace-drawer {
+        width: 100%;
+        max-height: calc(100vh - 2rem);
     }
 
     .resume-card__metrics {
