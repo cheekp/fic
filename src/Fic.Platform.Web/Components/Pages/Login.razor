@@ -3,12 +3,15 @@
 
 <PageTitle>Log In</PageTitle>
 
-<section class="panel account-panel">
+<section class="panel company-support account-panel">
     <div class="panel__header">
         <div>
-            <p class="eyebrow">Account access</p>
-            <h2>Log in to your shop</h2>
-            <p class="lede">Standard account entry for merchants. Authentication is still a stub in this internal MVP.</p>
+            <p class="eyebrow">North Star account support</p>
+            <h2>Log in to your FIC workspace</h2>
+            <p class="lede">
+                Merchant access sits inside the North Star support layer. Authentication is still a stub in this
+                internal MVP, but the route and support framing are now in place.
+            </p>
         </div>
     </div>
 
@@ -38,6 +41,15 @@
             <a class="button button--ghost" href="/account/forgot-password">Forgot password?</a>
         </div>
     </EditForm>
+
+    <div class="company-support__footer">
+        <p>Need help with access, billing, or rollout questions?</p>
+        <div class="company-support__links">
+            <a class="inline-link" href="/support/account">Account support</a>
+            <a class="inline-link" href="/support/billing">Billing support</a>
+            <a class="inline-link" href="/consultancy">Training &amp; consultancy</a>
+        </div>
+    </div>
 </section>
 
 @code {
@@ -45,7 +57,7 @@
     private string? _message;
 
     private void HandleSubmit() =>
-        _message = "Authentication is not wired in this slice yet. This page is the standard merchant login stub.";
+        _message = "Authentication is not wired in this slice yet. This company-branded login surface is the supported entry point for merchants.";
 
     private sealed class LoginFormModel
     {
