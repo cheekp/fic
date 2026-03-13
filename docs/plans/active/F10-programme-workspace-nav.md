@@ -23,6 +23,7 @@ Make the merchant workspace feel anchored around the real day-to-day operating m
 - keep room for future programme types so the programme model does not become synonymous with a wallet loyalty card
 - remove duplicated action affordances that make the workspace feel indecisive
 - simplify the programme page layout so the selected programme reads like one working surface, not several competing summary cards
+- turn the `Programmes` screen into a proper left rail plus focused work pane
 - reduce duplicate explanatory copy and repeated summary cards in the shop and programme surfaces
 - tighten the FIC utility chrome into a quieter merchant utility menu
 

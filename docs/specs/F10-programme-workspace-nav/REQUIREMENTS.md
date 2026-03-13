@@ -28,6 +28,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
 ### Programme Scope
 
 - the `Programmes` section should feel like a dedicated working area for the selected programme
+- the `Programmes` section should use a narrow selection rail on the left and one focused work surface on the right
 - creating a programme should make the current delivery option explicit instead of implying a generic empty programme while silently creating a wallet-card flow
 - the programme list must be grouped by lifecycle state:
   - `Active`
@@ -40,6 +41,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
   - `Insights`
 - the selected programme header should stay compact and should not repeat a large summary dashboard already available in the nested sections
 - the programmes layout should prioritize programme selection and the active nested view over large explanatory banners
+- the programmes rail should avoid large explainer blocks once grouped programme selection is visible
 
 ### Programme Operate
 
@@ -62,6 +64,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
 - `Configure` must communicate that the loyalty card is the current customer-facing output of the programme, not the definition of the programme itself
 - `Configure` should make delivery management visible enough that future delivery options could be added without renaming the core programme model
 - the configuration surface should not repeat customer join or stamping actions
+- the configuration surface should avoid separate explanatory panels once the delivery option and preview are already visible
 
 ### Programme Insights
 

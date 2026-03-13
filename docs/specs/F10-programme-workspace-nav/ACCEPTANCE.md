@@ -16,7 +16,9 @@
 12. The workspace avoids duplicate shop-settings links in the same view.
 13. The selected programme header is compact and does not repeat a full summary dashboard.
 14. The FIC utility chrome remains present but visually quieter than the merchant navigation.
-15. The F10 validator passes.
+15. `Programmes` uses a left programme rail and a single focused work pane rather than competing summary surfaces.
+16. `Programmes -> Configure` keeps the delivery option explicit without a separate delivery-model explainer panel.
+17. The F10 validator passes.
 
 ## Demo Walkthrough
 
@@ -25,7 +27,8 @@
 3. Confirm the programme list is grouped by lifecycle status.
 4. Switch from one programme to another while staying inside the same nested programme section.
 5. Open `Shop -> Programmes -> Configure` and confirm join and stamping controls are absent while the loyalty card is presented as the current delivery output of the programme.
-6. Confirm the configure view makes delivery management explicit and keeps wallet loyalty card as the current delivery option.
-7. Open `Shop -> Programmes -> Insights` and confirm only programme-level metrics are shown.
-8. Open `Shop -> Insights` and confirm programme comparison appears there instead of programme operations.
-9. Run the F10 validator and confirm build plus tests pass.
+6. Confirm the programmes screen uses a selection rail on the left and one focused work pane on the right.
+7. Confirm the configure view makes delivery management explicit, keeps wallet loyalty card as the current delivery option, and omits a separate delivery-model explainer panel.
+8. Open `Shop -> Programmes -> Insights` and confirm only programme-level metrics are shown.
+9. Open `Shop -> Insights` and confirm programme comparison appears there instead of programme operations.
+10. Run the F10 validator and confirm build plus tests pass.

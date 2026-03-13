@@ -42,7 +42,8 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains("Daily use for this programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Open Customer Join", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Run daily loyalty from here", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Select a programme", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Run daily loyalty from here", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -129,6 +130,7 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("wallet loyalty card", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Current output", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Current output and future room", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -145,7 +147,7 @@ public sealed class VendorWorkspaceComponentTests
             .Single(button => button.TextContent.Contains("New Programme", StringComparison.Ordinal))
             .Click();
 
-        Assert.Contains("Choose the current delivery output", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Choose customer delivery", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Current option", cut.Markup, StringComparison.Ordinal);
     }
