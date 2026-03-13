@@ -2,4 +2,5 @@
 
 Keep the current delivery plan here.
 
-At inception, that plan is `F00-inception.md`.
+Current active plan:
+- `F08-workspace-polish-and-bunit.md`
