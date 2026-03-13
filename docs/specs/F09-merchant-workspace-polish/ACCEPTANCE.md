@@ -3,19 +3,22 @@
 ## Acceptance Criteria
 
 1. The workspace uses a horizontal onboarding roadmap that can be collapsed and dismissed.
-2. The shop tab keeps editing focused on shop details and branding rather than mixing in card operations.
-3. The loyalty cards tab makes multi-card management explicit.
-4. The customers tab makes it clear that join and stamping belong to the selected loyalty card.
-5. The insights tab separates shop-level and selected-card metrics in the rendered UI.
-6. FIC utility chrome remains visually distinct from merchant-owned workspace content.
-7. The existing workspace tests still pass, and any changed UI behavior has matching test updates.
-8. The F09 validator passes.
+2. The workspace uses `Shop` and `Programmes` as the primary scopes.
+3. The `Shop` scope contains `Overview`, `Edit Shop`, and `Insights`.
+4. The `Programmes` scope contains `Operate`, `Configure`, and `Insights`.
+5. Customer join and till-side stamping appear only inside programme `Operate`.
+6. Programme configuration, dates, and wallet-copy editing appear only inside programme `Configure`.
+7. Shop-level insights and selected-programme insights are rendered in separate scopes.
+8. FIC utility chrome remains visually distinct from merchant-owned workspace content.
+9. The existing workspace tests still pass, and any changed UI behavior has matching test updates.
+10. The F09 validator passes.
 
 ## Demo Walkthrough
 
-1. Open a merchant workspace and land on the shop tab.
-2. Confirm the tab reads as shop setup and ownership, not as a generic dashboard.
-3. Switch to `Loyalty Cards` and confirm multiple programmes are clearly managed there.
-4. Switch to `Customers` and confirm the selected card drives the join and stamping surfaces.
-5. Switch to `Insights` and confirm shop-level versus selected-card metrics are distinct.
-6. Run the F09 validator and confirm build plus tests pass.
+1. Open a merchant workspace and confirm the top-level scopes are `Shop` and `Programmes`.
+2. Open `Shop -> Overview` and confirm the roadmap is secondary to the main workspace.
+3. Open `Shop -> Edit Shop` and confirm only shop profile and branding controls appear there.
+4. Open `Programmes -> Operate` and confirm the selected programme drives join QR, stamping, and issued passes.
+5. Open `Programmes -> Configure` and confirm the selected programme rule, validity dates, and wallet copy can be edited there.
+6. Open `Shop -> Insights` and `Programmes -> Insights` and confirm the metrics are separated by scope.
+7. Run the F09 validator and confirm build plus tests pass.

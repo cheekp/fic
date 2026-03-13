@@ -888,6 +888,10 @@ textarea {
     gap: 0.75rem;
 }
 
+.workspace-tabs--sub {
+    margin-top: -0.2rem;
+}
+
 .workspace-tabs__item {
     display: inline-flex;
     align-items: center;

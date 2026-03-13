@@ -6,37 +6,46 @@ Reduce merchant-workspace noise and make the page structure match the real produ
 
 ## Functional Requirements
 
-### Shop Area
-
-- the shop tab should act as the owner-facing setup and profile area for the coffee shop
-- shop details and branding should stay editable there
-- setup readiness should be consolidated into a horizontal roadmap/progress presentation rather than abstract status cards
-- the roadmap should support collapse and dismiss behavior without breaking the rest of the workspace layout
-
 ### Workspace Hierarchy
 
 - FIC-level account and utility actions should stay visually separate from merchant-owned workspace content
-- the merchant workspace should present shop-level meta before dropping the user into loyalty-programme operations
+- the merchant workspace must present two primary scopes:
+  - `Shop`
+  - `Programmes`
 - the overall page should read from top to bottom as:
   - FIC utility chrome
-  - merchant shop meta and onboarding state
-  - loyalty card and customer operations
+  - merchant shop context
+  - selected workspace scope
+- a loyalty card must be presented as a tool or artifact of a loyalty programme, not as the top-level object name
 
-### Loyalty Cards
+### Shop Scope
 
-- the cards tab should make it obvious that a shop can manage multiple loyalty cards/programmes
-- the selected card editor should focus on programme configuration, validity dates, and wallet copy
-- the wallet preview should stay card-specific and inherit from the shop brand by default
+- the `Shop` scope should contain:
+  - `Overview`
+  - `Edit Shop`
+  - `Insights`
+- shop details and branding should stay editable only inside the shop area
+- setup readiness should be consolidated into a horizontal roadmap/progress presentation rather than abstract status cards
+- the roadmap should support collapse and dismiss behavior without breaking the rest of the workspace layout
+- once setup is complete, the roadmap should feel secondary to the working interface
 
-### Customers
+### Programme Scope
 
-- customer join and till-side stamping must remain tied to the selected loyalty card
-- the customer area should make the selected-card context obvious without duplicating card-editing controls
+- the `Programmes` scope should make it obvious that a shop can manage multiple loyalty programmes
+- the selected programme must expose:
+  - `Operate`
+  - `Configure`
+  - `Insights`
+- `Operate` should own customer join, QR sharing, till-side stamping, and issued customer passes
+- `Configure` should own the programme rule, begin and expiry dates, and wallet card copy
+- the wallet preview should stay programme-specific and inherit from the shop brand by default
+- the daily-use/default working area after setup should favour programme operations over shop editing
 
 ### Insights
 
-- insights must distinguish between shop-wide metrics and selected-card metrics
+- insights must distinguish between shop-wide metrics and selected-programme metrics
 - the terminology should stay merchant-friendly and avoid internal jargon where possible
+- shop insights and programme insights must not be mixed into a single peer tab view
 
 ## Non-Goals
 
