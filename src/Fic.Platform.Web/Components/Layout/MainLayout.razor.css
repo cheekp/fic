@@ -73,8 +73,14 @@
     padding: 0.2rem 0 1rem;
 }
 
+.merchant-shell-bar__utility {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
 .merchant-shell-bar__menu {
-    display: none;
+    display: inline-flex;
     width: 2.4rem;
     min-width: 2.4rem;
     padding: 0;
@@ -103,10 +109,28 @@
 }
 
 .merchant-shell-bar__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    align-items: center;
+    position: absolute;
+    top: calc(100% + 0.65rem);
+    right: 0;
+    z-index: 12;
+    display: none;
+    width: min(18rem, calc(100vw - 2rem));
+    padding: 0.7rem;
+    border-radius: 1.1rem;
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface-strong) 94%, white 6%);
+    box-shadow: 0 18px 36px var(--brand-shadow);
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    justify-items: stretch;
+}
+
+.merchant-shell-bar__actions .button {
+    justify-content: flex-start;
+}
+
+.merchant-shell-bar__actions--open {
+    display: grid;
 }
 
 .loyalty-agent {
@@ -382,19 +406,11 @@
     }
 
     .merchant-shell-bar__menu {
-        display: inline-flex;
         align-self: end;
     }
 
     .merchant-shell-bar__actions {
-        display: none;
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .merchant-shell-bar__actions--open {
-        display: flex;
+        width: min(16rem, calc(100vw - 1.5rem));
     }
 
     .shell__header-meta,

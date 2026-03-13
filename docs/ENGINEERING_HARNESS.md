@@ -87,6 +87,7 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 - Docs and code change together when behavior changes materially.
 - White-label branding is core product behavior, not optional decoration.
 - Wallet card state is domain state, not view-only text.
+- Programme is the merchant-facing unit of loyalty operation; the loyalty card is a programme output, not a peer workspace root.
 - Merchant assets are stored as assets, not buried inside primary documents.
 - Public join flow, merchant operations, and wallet delivery stay behind clear seams even inside a modular monolith.
 
@@ -115,6 +116,12 @@ Completed slice chain to date:
 - `F07`
   - merchant-first workspace information architecture
   - validator: `scripts/validate-f07-merchant-workspace-ia.sh`
+- `F08`
+  - workspace polish baseline plus bUnit coverage
+  - validator: `scripts/validate-f08-workspace-polish-and-bunit.sh`
+- `F09`
+  - merchant workspace hierarchy correction
+  - validator: `scripts/validate-f09-merchant-workspace-polish.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
@@ -130,6 +137,8 @@ The repo now supports:
 - merchant brand editing inside the workspace
 - loyalty card template editing inside the workspace
 - multiple loyalty cards per merchant workspace
+- programmes live under a merchant shop context
+- loyalty cards are configured within a programme rather than acting as a peer merchant root concept
 - issued customer card management separated from template editing
 - PNG logo upload for merchant branding
 - blob/local brand asset storage seam
@@ -189,6 +198,7 @@ Review the harness when:
 
 The next likely product slices are:
 
+- programme-centric workspace navigation and daily-use optimisation
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries

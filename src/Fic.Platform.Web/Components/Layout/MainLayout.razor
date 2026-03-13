@@ -20,20 +20,22 @@
         {
             <div class="merchant-shell-bar">
                 <span class="merchant-shell-bar__powered">Powered by FIC</span>
-                <button class="merchant-shell-bar__menu button button--ghost button--compact"
-                        type="button"
-                        @onclick="ToggleMerchantUtilityMenu"
-                        aria-expanded="@_isMerchantUtilityMenuOpen"
-                        aria-label="Toggle merchant utilities">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                <div class="merchant-shell-bar__actions @(_isMerchantUtilityMenuOpen ? "merchant-shell-bar__actions--open" : string.Empty)">
-                    <button class="button button--ghost button--compact" type="button" disabled>Training &amp; Consultancy</button>
-                    <button class="button button--ghost button--compact" type="button" disabled>Billing</button>
-                    <button class="button button--ghost button--compact" type="button" disabled>Account</button>
-                    <button class="button button--ghost button--compact" type="button" disabled>Log Out</button>
+                <div class="merchant-shell-bar__utility">
+                    <button class="merchant-shell-bar__menu button button--ghost button--compact"
+                            type="button"
+                            @onclick="ToggleMerchantUtilityMenu"
+                            aria-expanded="@_isMerchantUtilityMenuOpen"
+                            aria-label="Toggle merchant utilities">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <div class="merchant-shell-bar__actions @(_isMerchantUtilityMenuOpen ? "merchant-shell-bar__actions--open" : string.Empty)">
+                        <button class="button button--ghost button--compact" type="button" disabled>Training &amp; Consultancy</button>
+                        <button class="button button--ghost button--compact" type="button" disabled>Billing</button>
+                        <button class="button button--ghost button--compact" type="button" disabled>Account</button>
+                        <button class="button button--ghost button--compact" type="button" disabled>Log Out</button>
+                    </div>
                 </div>
             </div>
         }
