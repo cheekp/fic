@@ -10,6 +10,14 @@
     overflow: clip;
 }
 
+.shell--sidebar-collapsed {
+    grid-template-columns: 92px minmax(0, 1fr);
+}
+
+.shell--full-width {
+    grid-template-columns: 1fr;
+}
+
 .shell::before {
     content: "";
     position: absolute;
@@ -37,12 +45,119 @@
     border-right: 1px solid rgba(239, 234, 222, 0.12);
 }
 
+.shell__sidebar--collapsed {
+    padding-inline: 0.85rem;
+}
+
 .shell__body {
     min-width: 0;
     padding: 1.5rem;
     background:
         radial-gradient(circle at top right, var(--brand-glow), transparent 30%),
         linear-gradient(180deg, color-mix(in srgb, var(--brand-canvas-start) 90%, #f7f1e4 10%) 0%, color-mix(in srgb, var(--brand-canvas-end) 88%, #efe5d3 12%) 100%);
+}
+
+.shell__body--compact {
+    padding-top: 1rem;
+}
+
+.shell__body--full {
+    padding-inline: clamp(1rem, 3vw, 2.2rem);
+}
+
+.merchant-shell-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.2rem 0 1rem;
+}
+
+.merchant-shell-bar__menu {
+    display: none;
+    width: 2.4rem;
+    min-width: 2.4rem;
+    padding: 0;
+    gap: 0.2rem;
+    flex-direction: column;
+}
+
+.merchant-shell-bar__menu span {
+    display: block;
+    width: 0.95rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.merchant-shell-bar__powered {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.15rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface-strong) 72%, transparent 28%);
+    color: var(--brand-muted);
+    font-size: 0.84rem;
+}
+
+.merchant-shell-bar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.loyalty-agent {
+    position: fixed;
+    right: clamp(1rem, 2vw, 1.6rem);
+    bottom: clamp(1rem, 2vw, 1.6rem);
+    z-index: 20;
+    display: grid;
+    justify-items: end;
+    gap: 0.75rem;
+}
+
+.loyalty-agent__panel {
+    width: min(24rem, calc(100vw - 2rem));
+    padding: 1rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface-strong) 92%, white 8%);
+    box-shadow: 0 22px 44px var(--brand-shadow);
+}
+
+.loyalty-agent__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+}
+
+.loyalty-agent__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.loyalty-agent__launcher {
+    width: 3.15rem;
+    min-width: 3.15rem;
+    height: 3.15rem;
+    min-height: 3.15rem;
+    padding: 0;
+    border-radius: 999px;
+    display: inline-grid;
+    place-items: center;
+    box-shadow: 0 18px 36px var(--brand-shadow);
+}
+
+.loyalty-agent__glyph {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .shell__header {
@@ -53,6 +168,70 @@
     align-items: end;
     padding: 1.5rem 0 2rem;
     border-bottom: 1px solid var(--brand-line);
+}
+
+.shell__compact-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 0.35rem 0 1.2rem;
+    border-bottom: 1px solid var(--brand-line);
+}
+
+.shell__compact-headline {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.shell__compact-title {
+    margin: 0;
+    font-size: clamp(1.3rem, 2vw, 1.8rem);
+    line-height: 1.05;
+}
+
+.shell__compact-meta {
+    display: flex;
+    gap: 0.9rem;
+    align-items: center;
+    justify-content: end;
+    max-width: 34rem;
+}
+
+.shell__compact-subtitle {
+    margin: 0;
+    color: var(--brand-muted);
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.shell__rail-toggle {
+    width: 2.8rem;
+    height: 2.8rem;
+    flex: none;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid var(--brand-line);
+    border-radius: 999px;
+    background: var(--brand-surface-strong);
+    cursor: pointer;
+}
+
+.button--compact {
+    min-height: 2.15rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.92rem;
+}
+
+.shell__rail-toggle span {
+    width: 1rem;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--brand-ink);
 }
 
 .shell__header::after {
@@ -155,6 +334,10 @@
         grid-template-columns: 1fr;
     }
 
+    .shell--sidebar-collapsed {
+        grid-template-columns: 1fr;
+    }
+
     .shell__sidebar {
         min-height: auto;
     }
@@ -168,6 +351,16 @@
         align-items: start;
     }
 
+    .shell__compact-header {
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .merchant-shell-bar {
+        justify-content: space-between;
+        align-items: center;
+    }
+
     .shell__header::after {
         inset: auto 0 -1.4rem 0;
         height: 5rem;
@@ -176,12 +369,52 @@
     .shell__header-meta {
         justify-content: start;
     }
+
+    .shell__compact-meta {
+        justify-content: start;
+    }
 }
 
 @media (max-width: 760px) {
-    .shell__header-meta {
+    .merchant-shell-bar {
+        align-items: start;
+        gap: 0.7rem;
+    }
+
+    .merchant-shell-bar__menu {
+        display: inline-flex;
+        align-self: end;
+    }
+
+    .merchant-shell-bar__actions {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .merchant-shell-bar__actions--open {
+        display: flex;
+    }
+
+    .shell__header-meta,
+    .shell__compact-meta {
         flex-direction: column;
         align-items: start;
+    }
+
+    .loyalty-agent {
+        right: 0.75rem;
+        left: 0.75rem;
+        justify-items: stretch;
+    }
+
+    .loyalty-agent__panel {
+        width: auto;
+    }
+
+    .loyalty-agent__launcher {
+        width: 100%;
     }
 }
 

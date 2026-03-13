@@ -16,6 +16,8 @@ public sealed record LoyaltyProgramme(
     string RewardItemLabel,
     int RewardThreshold,
     string RewardCopy,
+    DateOnly StartsOn,
+    DateOnly EndsOn,
     string JoinCode,
     DateTimeOffset ConfiguredAtUtc);
 
@@ -41,6 +43,13 @@ public sealed record ProgrammeConfigured(
     string RewardItemLabel,
     int RewardThreshold,
     DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(ProgrammeConfigured), OccurredAtUtc);
+
+public sealed record CardTemplateUpdated(
+    Guid MerchantId,
+    Guid ProgrammeId,
+    string RewardItemLabel,
+    int RewardThreshold,
+    DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(CardTemplateUpdated), OccurredAtUtc);
 
 public sealed record CustomerJoined(
     Guid MerchantId,

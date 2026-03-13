@@ -5,32 +5,109 @@
 @inject DemoPlatformState PlatformState
 @inject MerchantBrandPresentationService BrandPresentation
 
-<div class="shell">
-    <aside class="shell__sidebar">
-        <NavMenu ShellContext="_shellContext" />
-    </aside>
+<div class="shell @ShellLayoutClass">
+    @if (_shellContext.ShowSidebar)
+    {
+        <aside class="shell__sidebar @(IsSidebarCollapsed ? "shell__sidebar--collapsed" : string.Empty)">
+            <NavMenu ShellContext="_shellContext"
+                     IsCollapsed="IsSidebarCollapsed"
+                     OnToggle="ToggleSidebar" />
+        </aside>
+    }
 
-    <div class="shell__body @CurrentTheme.ThemeClass" style="@CurrentTheme.CssVariables">
-        <header class="shell__header">
-            <div class="shell__headline">
-                <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
-                <h1 class="shell__title">@_shellContext.Title</h1>
+    <div class="shell__body @CurrentTheme.ThemeClass @(_shellContext.UseCompactHeader ? "shell__body--compact" : string.Empty) @(_shellContext.ShowSidebar ? string.Empty : "shell__body--full")" style="@CurrentTheme.CssVariables">
+        @if (_shellContext.ShowMerchantUtilityBar)
+        {
+            <div class="merchant-shell-bar">
+                <span class="merchant-shell-bar__powered">Powered by FIC</span>
+                <button class="merchant-shell-bar__menu button button--ghost button--compact"
+                        type="button"
+                        @onclick="ToggleMerchantUtilityMenu"
+                        aria-expanded="@_isMerchantUtilityMenuOpen"
+                        aria-label="Toggle merchant utilities">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="merchant-shell-bar__actions @(_isMerchantUtilityMenuOpen ? "merchant-shell-bar__actions--open" : string.Empty)">
+                    <button class="button button--ghost button--compact" type="button" disabled>Training &amp; Consultancy</button>
+                    <button class="button button--ghost button--compact" type="button" disabled>Billing</button>
+                    <button class="button button--ghost button--compact" type="button" disabled>Account</button>
+                    <button class="button button--ghost button--compact" type="button" disabled>Log Out</button>
+                </div>
             </div>
+        }
 
-            <div class="shell__header-meta">
-                @if (!string.IsNullOrWhiteSpace(_shellContext.LogoUrl))
-                {
-                    <div class="shell__mark">
-                        <img src="@_shellContext.LogoUrl" alt="@_shellContext.Title logo" />
+        @if (_shellContext.UseCompactHeader)
+        {
+            <header class="shell__compact-header">
+                <div class="shell__compact-headline">
+                    <div class="shell__headline">
+                        <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
+                        <h1 class="shell__compact-title">@_shellContext.Title</h1>
                     </div>
-                }
-                <p class="shell__subtitle">@_shellContext.Subtitle</p>
-            </div>
-        </header>
+                </div>
+
+                <div class="shell__compact-meta">
+                    <span class="chip">Powered by FIC</span>
+                    <p class="shell__compact-subtitle">@_shellContext.Subtitle</p>
+                </div>
+            </header>
+        }
+        else if (_shellContext.ShowHeader)
+        {
+            <header class="shell__header">
+                <div class="shell__headline">
+                    <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
+                    <h1 class="shell__title">@_shellContext.Title</h1>
+                </div>
+
+                <div class="shell__header-meta">
+                    @if (!string.IsNullOrWhiteSpace(_shellContext.LogoUrl))
+                    {
+                        <div class="shell__mark">
+                            <img src="@_shellContext.LogoUrl" alt="@_shellContext.Title logo" />
+                        </div>
+                    }
+                    <p class="shell__subtitle">@_shellContext.Subtitle</p>
+                </div>
+            </header>
+        }
 
         <main class="shell__content">
             @Body
         </main>
+
+        @if (_shellContext.Agent is not null)
+        {
+            <div class="loyalty-agent">
+                @if (_isLoyaltyAgentOpen)
+                {
+                    <section class="loyalty-agent__panel">
+                        <div class="loyalty-agent__header">
+                            <div>
+                                <p class="eyebrow">@_shellContext.Agent.Kicker</p>
+                                <h3>@_shellContext.Agent.Title</h3>
+                            </div>
+                            <button class="button button--ghost button--compact" type="button" @onclick="ToggleLoyaltyAgent">Close</button>
+                        </div>
+                        <p class="lede">@_shellContext.Agent.Description</p>
+                        <div class="loyalty-agent__actions">
+                            <button class="button button--secondary button--compact" type="button" disabled>@_shellContext.Agent.PrimaryAction</button>
+                            <button class="button button--secondary button--compact" type="button" disabled>@_shellContext.Agent.SecondaryAction</button>
+                        </div>
+                    </section>
+                }
+
+                <button class="button button--primary loyalty-agent__launcher"
+                        type="button"
+                        @onclick="ToggleLoyaltyAgent"
+                        aria-label="@_shellContext.Agent.LaunchLabel"
+                        title="@_shellContext.Agent.LaunchLabel">
+                    <span class="loyalty-agent__glyph" aria-hidden="true">?</span>
+                </button>
+            </div>
+        }
     </div>
 </div>
 
@@ -43,8 +120,17 @@
 @code {
     private MerchantThemeView _defaultTheme = default!;
     private ShellContext _shellContext = ShellContext.Default;
+    private string _shellKind = string.Empty;
+    private bool _isSidebarCollapsed;
+    private bool _isMerchantUtilityMenuOpen;
+    private bool _isLoyaltyAgentOpen;
 
     private MerchantThemeView CurrentTheme => _shellContext.Theme ?? _defaultTheme;
+    private bool IsSidebarCollapsed => _isSidebarCollapsed;
+    private string ShellLayoutClass =>
+        _shellContext.ShowSidebar
+            ? (IsSidebarCollapsed ? "shell--sidebar-collapsed" : string.Empty)
+            : "shell--full-width";
 
     protected override void OnInitialized()
     {
@@ -56,6 +142,8 @@
 
     private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
     {
+        _isMerchantUtilityMenuOpen = false;
+        _isLoyaltyAgentOpen = false;
         RebuildShellContext();
         StateHasChanged();
     }
@@ -68,6 +156,23 @@
         });
 
     private void RebuildShellContext()
+    {
+        var nextContext = ResolveShellContext();
+        if (!string.Equals(_shellKind, nextContext.Kind, StringComparison.Ordinal))
+        {
+            _shellKind = nextContext.Kind;
+            _isSidebarCollapsed = nextContext.DefaultRailCollapsed;
+        }
+
+        _shellContext = nextContext;
+        if (!_shellContext.ShowMerchantUtilityBar)
+        {
+            _isMerchantUtilityMenuOpen = false;
+            _isLoyaltyAgentOpen = false;
+        }
+    }
+
+    private ShellContext ResolveShellContext()
     {
         var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri)
             .Split('?', '#')[0]
@@ -82,22 +187,30 @@
             var workspace = PlatformState.GetMerchantWorkspace(merchantId, Navigation.BaseUri);
             if (workspace is not null)
             {
-                _shellContext = new ShellContext(
-                    "Your live merchant workspace",
-                    workspace.Merchant.DisplayName,
-                    $"Your QR join flow, till-side stamping, and wallet view are now carrying the same brand system.",
-                    "Merchant brand live",
-                    workspace.Merchant.DisplayName,
-                    $"Buy {workspace.Programme.RewardThreshold} {workspace.Programme.RewardItemLabel}, get one free.",
-                    "In this workspace",
-                    [
-                        "Customers join from your QR and land in your brand, not ours.",
-                        "Staff scan the same card code the wallet pass exposes.",
-                        "The pass preview and vendor console read the same progress state."
-                    ],
-                    workspace.BrandProfile.LogoUrl,
-                    BrandPresentation.Build(workspace.BrandProfile));
-                return;
+                return new ShellContext(
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    "merchant",
+                    false,
+                    false,
+                    false,
+                    false,
+                    true,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    [],
+                    null,
+                    BrandPresentation.Build(workspace.BrandProfile),
+                    new AgentContext(
+                        "Support",
+                        "Speak with Loyalty Agent",
+                        "Quick support for programme setup, merchant guidance, and consultancy handoff.",
+                        "Open Loyalty Agent",
+                        "Ask a setup question",
+                        "Book consultancy"));
             }
         }
 
@@ -108,10 +221,16 @@
             var experience = PlatformState.GetJoinExperience(joinCode);
             if (experience is not null)
             {
-                _shellContext = new ShellContext(
+                return new ShellContext(
                     "Customer join flow",
                     $"Join {experience.Merchant.DisplayName}",
                     $"This page carries the merchant styling forward before the pass is issued.",
+                    "join",
+                    false,
+                    false,
+                    true,
+                    false,
+                    false,
                     "Join screen",
                     experience.Merchant.DisplayName,
                     experience.Programme.RewardCopy,
@@ -122,8 +241,14 @@
                         "Once issued, the pass updates as visits are awarded."
                     ],
                     experience.BrandProfile.LogoUrl,
-                    BrandPresentation.Build(experience.BrandProfile));
-                return;
+                    BrandPresentation.Build(experience.BrandProfile),
+                    new AgentContext(
+                        "Support",
+                        "Get join help",
+                        "Use this discreet help surface if someone needs support during the join and Wallet handoff flow.",
+                        "Open join help",
+                        "Ask about joining",
+                        "Contact support"));
             }
         }
 
@@ -135,10 +260,16 @@
             var card = PlatformState.GetWalletCard(cardId);
             if (card is not null)
             {
-                _shellContext = new ShellContext(
+                return new ShellContext(
                     "Wallet pass preview",
                     card.VendorDisplayName,
                     $"Progress, reward state, and branded pass chrome stay in sync from the same projection.",
+                    "wallet",
+                    false,
+                    false,
+                    true,
+                    false,
+                    false,
                     "Wallet state",
                     card.VendorDisplayName,
                     card.ProgressDisplayText,
@@ -149,17 +280,37 @@
                         "The same brand tokens the merchant workspace uses."
                     ],
                     card.LogoUrl,
-                    BrandPresentation.Build(card));
-                return;
+                    BrandPresentation.Build(card),
+                    new AgentContext(
+                        "Support",
+                        "Get Wallet help",
+                        "Use this discreet help surface for Wallet pass questions, refresh issues, or redemption support.",
+                        "Open Wallet help",
+                        "Ask about Wallet",
+                        "Contact support"));
             }
         }
 
-        _shellContext = segments.Length >= 2
+        if (segments.Length >= 3
+            && string.Equals(segments[0], "portal", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "signup", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[2], "billing", StringComparison.OrdinalIgnoreCase))
+        {
+            return ShellContext.Billing;
+        }
+
+        return segments.Length >= 2
             && string.Equals(segments[0], "portal", StringComparison.OrdinalIgnoreCase)
             && string.Equals(segments[1], "signup", StringComparison.OrdinalIgnoreCase)
             ? ShellContext.Signup
             : ShellContext.Default;
     }
+
+    private void ToggleSidebar() => _isSidebarCollapsed = !_isSidebarCollapsed;
+
+    private void ToggleMerchantUtilityMenu() => _isMerchantUtilityMenuOpen = !_isMerchantUtilityMenuOpen;
+
+    private void ToggleLoyaltyAgent() => _isLoyaltyAgentOpen = !_isLoyaltyAgentOpen;
 
     public void Dispose()
     {
@@ -171,44 +322,114 @@
         string Eyebrow,
         string Title,
         string Subtitle,
+        string Kind,
+        bool UseCompactHeader,
+        bool DefaultRailCollapsed,
+        bool ShowHeader,
+        bool ShowSidebar,
+        bool ShowMerchantUtilityBar,
         string SidebarKicker,
         string SidebarName,
         string SidebarCopy,
         string PanelTitle,
         IReadOnlyList<string> PanelPoints,
         string? LogoUrl,
-        MerchantThemeView? Theme)
+        MerchantThemeView? Theme,
+        AgentContext? Agent)
     {
         public static ShellContext Default { get; } = new(
-            "Self-serve Apple Wallet loyalty",
-            "Launch your own wallet loyalty card.",
-            "Set the reward, add the logo, share one QR, and let customers keep progress in Apple Wallet.",
+            "FIC Loyalty",
+            "Set up your loyalty programme.",
+            "For independent coffee shops: no app, no customer accounts, simple QR onboarding, and a wallet loyalty card customers actually keep.",
+            "default",
+            false,
+            false,
+            false,
+            false,
+            false,
             "Self-Serve Setup",
             "FIC Loyalty",
             "Create your card, brand it, share the join QR, and stamp visits from your phone or till-side device.",
             "What this setup gives you",
             [
-                "Your customers do not need an app.",
-                "Your staff can scan and stamp from the web.",
-                "Your branding now has a real path through the merchant surfaces."
+                "FIC stays the product-level shell.",
+                "Shop owners get their own branded area after signup.",
+                "Brand, card template, and customers stay clearly separated."
             ],
             null,
-            null);
+            null,
+            new AgentContext(
+                "Sales",
+                "Speak with Sales",
+                "Use this discreet launcher for plan questions, onboarding guidance, or consultancy conversations before signup.",
+                "Open sales help",
+                "Ask about pricing",
+                "Talk to sales"));
 
         public static ShellContext Signup { get; } = new(
-            "Create your loyalty card",
-            "Build the branded experience before you publish it.",
-            "We take one logo and two colours, then turn them into a cleaner merchant shell and wallet treatment.",
-            "Brand studio",
+            "FIC Merchant Setup",
+            "Set up your loyalty programme.",
+            "Create the shop first. The richer brand editing, card setup, and customer operations belong inside the owner-facing shop area after signup.",
+            "signup",
+            false,
+            false,
+            false,
+            false,
+            false,
+            "Merchant setup",
             "Your merchant setup",
-            "Use the live preview to see how the workspace and wallet pass can inherit the same brand system.",
-            "What to upload",
+            "Collect the minimum inputs now, then let the workspace become the real product surface.",
+            "What happens next",
             [
-                "Use a clean PNG logo where possible.",
-                "Primary and accent colours shape the full UI treatment.",
-                "The preview now aims for a polished brand feel, not logo tiling."
+                "Land in Brand first and upload the real logo there.",
+                "Refine the loyalty card template from inside the shop area.",
+                "Use Customers for join QR, scans, and issued cards."
             ],
             null,
-            null);
+            null,
+            new AgentContext(
+                "Setup",
+                "Get setup help",
+                "Use this discreet launcher if you need help creating the shop account before moving into billing and workspace setup.",
+                "Open setup help",
+                "Ask about setup",
+                "Contact support"));
+
+        public static ShellContext Billing { get; } = new(
+            "Billing setup",
+            "Complete mock billing",
+            "This step simulates commercial onboarding before the merchant lands in the live workspace.",
+            "billing",
+            false,
+            false,
+            false,
+            false,
+            false,
+            "Billing",
+            "Billing setup",
+            "Mock billing keeps the internal demo flow realistic without introducing a live payment system.",
+            "Billing step",
+            [
+                "Pick a demo plan.",
+                "Confirm billing contact details.",
+                "Continue into the merchant workspace."
+            ],
+            null,
+            null,
+            new AgentContext(
+                "Billing",
+                "Get billing help",
+                "Use this discreet launcher for plan, pricing, or mock billing questions during onboarding.",
+                "Open billing help",
+                "Ask about billing",
+                "Talk to sales"));
     }
+
+    public sealed record AgentContext(
+        string Kicker,
+        string Title,
+        string Description,
+        string LaunchLabel,
+        string PrimaryAction,
+        string SecondaryAction);
 }

@@ -1,125 +1,27 @@
-﻿@page "/"
-@implements IDisposable
-@inject DemoPlatformState PlatformState
+@page "/"
 
 <PageTitle>FIC Loyalty</PageTitle>
 
-<section class="hero-panel">
-    <div>
-        <p class="eyebrow">Self-serve loyalty</p>
-        <h2>Set up a branded loyalty card your customers keep in Apple Wallet.</h2>
-        <p class="lede">Choose the reward, upload your brand assets, share a join QR, and stamp visits from your own browser-based workspace.</p>
+<section class="panel home-landing">
+    <div class="home-landing__utility">
+        <div class="home-landing__utility-links">
+            <a href="/account/login">Log In</a>
+            <a href="/account/forgot-password">Forgot password?</a>
+        </div>
     </div>
-    <div class="hero-panel__actions">
-        <a class="button button--primary" href="/portal/signup">Create Your Loyalty Card</a>
-        <span class="chip">No customer app required</span>
-        <span class="chip">Apple Wallet first</span>
+
+    <div class="home-landing__media">
+        <img src="/images/home-hero.jpeg" alt="Customers sitting in a bright independent coffee shop." />
+    </div>
+
+    <div class="home-landing__content">
+        <p class="eyebrow">For independent coffee shops</p>
+        <h2>Set up your loyalty programme in minutes.</h2>
+
+        <blockquote class="home-landing__quote">
+            “Customer loyalty is not driven by rewards alone. It emerges from the combined influence of value, recognition, experience, and connection.”
+        </blockquote>
+
+        <a class="button button--primary" href="/portal/signup">Sign Up Now</a>
     </div>
 </section>
-
-<section class="metrics-grid">
-    <article class="metric-card">
-        <span class="metric-card__label">Step 1</span>
-        <strong class="metric-card__value">Brand It</strong>
-        <p class="metric-card__copy">Add your name, colours, logo, and reward rule so the card feels like your business.</p>
-    </article>
-    <article class="metric-card">
-        <span class="metric-card__label">Step 2</span>
-        <strong class="metric-card__value">Share It</strong>
-        <p class="metric-card__copy">Put one QR code on the counter or receipt so customers can join from their phone in seconds.</p>
-    </article>
-    <article class="metric-card">
-        <span class="metric-card__label">Step 3</span>
-        <strong class="metric-card__value">Stamp It</strong>
-        <p class="metric-card__copy">Scan the customer’s wallet pass from your own device and let the card update with the new count.</p>
-    </article>
-</section>
-
-<section class="section-header">
-    <div>
-        <p class="eyebrow">Recent demo workspaces</p>
-        <h3>Jump back into a merchant setup</h3>
-    </div>
-    <a class="button button--secondary" href="/portal/signup">Create Another Card</a>
-</section>
-
-@if (_merchants.Count == 0)
-{
-    <section class="empty-state">
-        <h4>No loyalty card created yet.</h4>
-        <p>Start by setting your reward, colours, and logo. The next screen will generate the customer join QR for you.</p>
-        <a class="button button--primary" href="/portal/signup">Create Your First Card</a>
-    </section>
-}
-else
-{
-    <section class="resume-grid">
-        @foreach (var merchant in _merchants.Take(3))
-        {
-            <article class="resume-card">
-                <div class="resume-card__head">
-                    <div class="resume-card__brand">
-                        <div class="brand-lockup brand-lockup--resume">
-                            <img src="@merchant.LogoUrl" alt="@merchant.DisplayName logo" />
-                        </div>
-                        <div>
-                            <p class="merchant-card__kicker">Merchant site</p>
-                            <h4>@merchant.DisplayName</h4>
-                            <p class="field-hint">@merchant.RewardHeadline</p>
-                        </div>
-                    </div>
-                </div>
-                <dl class="resume-card__metrics">
-                    <div>
-                        <dt>Active cards</dt>
-                        <dd>@merchant.ActiveCards</dd>
-                    </div>
-                    <div>
-                        <dt>Rewards unlocked</dt>
-                        <dd>@merchant.RewardsUnlocked</dd>
-                    </div>
-                    <div>
-                        <dt>Join code</dt>
-                        <dd>@merchant.JoinCode</dd>
-                    </div>
-                </dl>
-                <div class="resume-card__actions">
-                    <a class="button button--secondary" href="/portal/merchant/@merchant.MerchantId">Open My Workspace</a>
-                    <a class="button button--ghost" href="/join/@merchant.JoinCode" target="_blank">Preview Customer Join</a>
-                </div>
-            </article>
-        }
-    </section>
-
-    @if (_merchants.Count > 3)
-    {
-        <p class="field-hint">Showing the three most recent local demo workspaces.</p>
-    }
-}
-
-@code {
-    private IReadOnlyList<MerchantSummarySnapshot> _merchants = [];
-
-    protected override void OnInitialized()
-    {
-        LoadState();
-        PlatformState.Changed += HandleStateChanged;
-    }
-
-    private void LoadState()
-    {
-        _merchants = PlatformState.GetMerchantSummaries();
-    }
-
-    private void HandleStateChanged() =>
-        _ = InvokeAsync(() =>
-        {
-            LoadState();
-            StateHasChanged();
-        });
-
-    public void Dispose()
-    {
-        PlatformState.Changed -= HandleStateChanged;
-    }
-}

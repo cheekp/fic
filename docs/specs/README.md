@@ -2,6 +2,10 @@
 
 Use specs for buildable slices that are ready to move into implementation.
 
+Status does not live here.
+Use `docs/plans/active/`, `docs/plans/planned/`, and `docs/plans/completed/` for workflow state.
+Keep `docs/specs/` flat by slice so old contracts stay easy to find without carrying duplicate status folders.
+
 ## Suggested Structure
 - `F##-slug/REQUIREMENTS.md`
 - `F##-slug/ACCEPTANCE.md`

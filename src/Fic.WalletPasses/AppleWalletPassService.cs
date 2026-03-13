@@ -206,6 +206,18 @@ public sealed class AppleWalletPassService(
                     },
                     new AppleWalletField
                     {
+                        Key = "valid-from",
+                        Label = "VALID FROM",
+                        Value = card.StartsOn.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)
+                    },
+                    new AppleWalletField
+                    {
+                        Key = "expires-on",
+                        Label = "EXPIRES",
+                        Value = card.EndsOn.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)
+                    },
+                    new AppleWalletField
+                    {
                         Key = "scan-code",
                         Label = "PASS CODE",
                         Value = card.CardCode

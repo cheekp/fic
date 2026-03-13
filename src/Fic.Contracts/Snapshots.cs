@@ -3,6 +3,8 @@ namespace Fic.Contracts;
 public sealed record MerchantAccountSnapshot(
     Guid MerchantId,
     string DisplayName,
+    string TownOrCity,
+    string Postcode,
     string ContactEmail,
     DateTimeOffset CreatedAtUtc);
 
@@ -18,7 +20,31 @@ public sealed record LoyaltyProgrammeSnapshot(
     string RewardItemLabel,
     int RewardThreshold,
     string RewardCopy,
+    DateOnly StartsOn,
+    DateOnly EndsOn,
     string JoinCode);
+
+public sealed record ProgrammeSummarySnapshot(
+    Guid ProgrammeId,
+    string RewardHeadline,
+    string RewardItemLabel,
+    int RewardThreshold,
+    DateOnly StartsOn,
+    DateOnly EndsOn,
+    string JoinCode,
+    int ActiveCards,
+    int RewardsUnlocked);
+
+public sealed record MerchantSetupChecklistSnapshot(
+    bool ShopDetailsComplete,
+    bool BrandComplete,
+    bool HasAnyProgramme,
+    bool JoinReady);
+
+public sealed record MerchantInsightsSnapshot(
+    int ProgrammesCount,
+    int ActiveCards,
+    int RewardsUnlocked);
 
 public sealed record WalletCardSnapshot(
     Guid CardId,
@@ -30,6 +56,8 @@ public sealed record WalletCardSnapshot(
     string LogoUrl,
     string RewardItemLabel,
     string RewardCopy,
+    DateOnly StartsOn,
+    DateOnly EndsOn,
     string PrimaryColor,
     string AccentColor,
     int LogoWidth,
@@ -67,7 +95,10 @@ public sealed record TimelineEventSnapshot(
 public sealed record MerchantWorkspaceSnapshot(
     MerchantAccountSnapshot Merchant,
     BrandProfileSnapshot BrandProfile,
-    LoyaltyProgrammeSnapshot Programme,
-    string JoinUrl,
-    IReadOnlyList<WalletCardSnapshot> Cards,
+    MerchantSetupChecklistSnapshot SetupChecklist,
+    MerchantInsightsSnapshot ShopInsights,
+    IReadOnlyList<ProgrammeSummarySnapshot> Programmes,
+    LoyaltyProgrammeSnapshot SelectedProgramme,
+    string SelectedJoinUrl,
+    IReadOnlyList<WalletCardSnapshot> SelectedProgrammeCards,
     IReadOnlyList<TimelineEventSnapshot> Timeline);

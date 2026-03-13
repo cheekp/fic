@@ -49,13 +49,21 @@ else
                     <dd>0/@_experience.Programme.RewardThreshold @_experience.Programme.RewardItemLabel.ToLowerInvariant()</dd>
                 </div>
                 <div>
+                    <dt>Validity</dt>
+                    <dd>@FormatDate(_experience.Programme.StartsOn) to @FormatDate(_experience.Programme.EndsOn)</dd>
+                </div>
+                <div>
                     <dt>Channel</dt>
                     <dd>Quick web join, then wallet-only customer experience</dd>
                 </div>
             </dl>
+            @if (!ProgrammeIsJoinOpen)
+            {
+                <p class="field-hint">@BuildProgrammeWindowMessage(_experience.Programme.StartsOn, _experience.Programme.EndsOn)</p>
+            }
             <p class="field-hint">@WalletPasses.GetCapability().HelperText</p>
             <div class="form-actions">
-                <button class="button button--primary" type="button" @onclick="IssueWalletCardAsync">@WalletPasses.GetCapability().ActionLabel</button>
+                <button class="button button--primary" type="button" disabled="@(!ProgrammeIsJoinOpen)" @onclick="IssueWalletCardAsync">@WalletPasses.GetCapability().ActionLabel</button>
             </div>
         </section>
     }
@@ -70,6 +78,7 @@ else
                 <span class="chip chip--success">@_walletCard.ProgressDisplayText</span>
             </div>
             <p>This preview stands in for the final signed Apple Wallet pass and updates as the business stamps your visits.</p>
+            <p class="field-hint">Valid @FormatDate(_walletCard.StartsOn) to @FormatDate(_walletCard.EndsOn)</p>
             <div class="form-actions">
                 <a class="button button--primary" href="/wallet/card/@_walletCard.CardId">Open Card Preview</a>
                 <span class="field-hint">Pass code: <code>@_walletCard.CardCode</code></span>
@@ -84,6 +93,8 @@ else
 
     private JoinExperienceSnapshot? _experience;
     private WalletCardSnapshot? _walletCard;
+    private bool ProgrammeIsJoinOpen =>
+        _experience is not null && IsProgrammeActiveOn(_experience.Programme.StartsOn, _experience.Programme.EndsOn);
 
     protected override void OnParametersSet()
     {
@@ -92,6 +103,11 @@ else
 
     private Task IssueWalletCardAsync()
     {
+        if (!ProgrammeIsJoinOpen)
+        {
+            return Task.CompletedTask;
+        }
+
         _walletCard = PlatformState.JoinCustomer(JoinCode);
         if (_walletCard is not null)
         {
@@ -105,6 +121,30 @@ else
             }
         }
         return Task.CompletedTask;
+    }
+
+    private static bool IsProgrammeActiveOn(DateOnly startsOn, DateOnly endsOn)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        return today >= startsOn && today <= endsOn;
+    }
+
+    private static string FormatDate(DateOnly date) => date.ToString("dd MMM yyyy");
+
+    private static string BuildProgrammeWindowMessage(DateOnly startsOn, DateOnly endsOn)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (today < startsOn)
+        {
+            return $"This loyalty card becomes available on {FormatDate(startsOn)}.";
+        }
+
+        if (today > endsOn)
+        {
+            return $"This loyalty card expired on {FormatDate(endsOn)}.";
+        }
+
+        return $"This loyalty card is active until {FormatDate(endsOn)}.";
     }
 
 }

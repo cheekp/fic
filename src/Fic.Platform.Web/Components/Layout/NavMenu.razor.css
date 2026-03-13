@@ -6,6 +6,32 @@
     min-height: 100%;
 }
 
+.nav-shell__top {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.nav-toggle {
+    width: 2.8rem;
+    height: 2.8rem;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.24rem;
+    border: 1px solid rgba(255, 247, 224, 0.16);
+    border-radius: 999px;
+    background: rgba(255, 247, 224, 0.08);
+    cursor: pointer;
+}
+
+.nav-toggle span {
+    width: 1rem;
+    height: 2px;
+    border-radius: 999px;
+    background: #fff7e0;
+}
+
 .nav-brand {
     display: grid;
     gap: 0.6rem;
@@ -38,6 +64,19 @@
     gap: 0.6rem;
 }
 
+.nav-section {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.nav-section__title {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.68rem;
+    color: rgba(247, 230, 184, 0.68);
+}
+
 .nav-links ::deep .nav-links__item {
     display: block;
     padding: 0.9rem 1rem;
@@ -47,6 +86,23 @@
     text-decoration: none;
     background: rgba(255, 247, 224, 0.04);
     transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.nav-links__stub {
+    display: block;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    font: inherit;
+    border: 1px dashed rgba(255, 247, 224, 0.14);
+    border-radius: 1rem;
+    color: rgba(255, 247, 224, 0.82);
+    background: rgba(255, 247, 224, 0.02);
+    text-align: left;
+}
+
+.nav-links__stub:disabled {
+    opacity: 0.72;
+    cursor: not-allowed;
 }
 
 .nav-links ::deep .nav-links__item.active {
@@ -78,4 +134,40 @@
     padding-left: 1.1rem;
     color: rgba(232, 238, 228, 0.78);
     line-height: 1.6;
+}
+
+.nav-shell--collapsed {
+    align-items: center;
+}
+
+.nav-shell--collapsed .nav-shell__top,
+.nav-shell--collapsed .nav-brand,
+.nav-shell--collapsed .nav-section,
+.nav-shell--collapsed .nav-panel {
+    width: 100%;
+}
+
+.nav-shell--collapsed .nav-brand__copy,
+.nav-shell--collapsed .nav-brand__kicker,
+.nav-shell--collapsed .nav-section__title,
+.nav-shell--collapsed .nav-panel {
+    display: none;
+}
+
+.nav-shell--collapsed .nav-brand {
+    justify-items: center;
+    gap: 0;
+}
+
+.nav-shell--collapsed .nav-brand__name {
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.nav-shell--collapsed .nav-links ::deep .nav-links__item,
+.nav-shell--collapsed .nav-links__stub {
+    padding-inline: 0.4rem;
+    text-align: center;
+    font-size: 0.74rem;
 }
