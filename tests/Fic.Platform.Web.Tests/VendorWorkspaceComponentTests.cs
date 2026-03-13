@@ -96,6 +96,7 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("Insights", topLevelLinks);
         Assert.DoesNotContain("Edit Shop", topLevelLinks);
         Assert.Contains("Shop settings", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(1, CountOccurrences(cut.Markup, "Shop settings"));
     }
 
     [Fact]
@@ -126,6 +127,7 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("Save Programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Customer delivery", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("wallet loyalty card", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Current output", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -349,6 +351,9 @@ public sealed class VendorWorkspaceComponentTests
 
     private static DemoPlatformState CreateState() =>
         new(NullLogger<DemoPlatformState>.Instance, new InMemoryMerchantBrandAssetStore());
+
+    private static int CountOccurrences(string value, string search) =>
+        value.Split(search, StringSplitOptions.None).Length - 1;
 
     private static Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(DemoPlatformState state) =>
         state.CreateMerchantAsync(

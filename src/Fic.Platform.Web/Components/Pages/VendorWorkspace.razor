@@ -108,7 +108,6 @@ else
                             <p class="eyebrow">Shop overview</p>
                             <h3>This shop is the root context</h3>
                         </div>
-                        <a class="button button--ghost button--compact" href="@GetWorkspaceSectionUrl("edit")">Open shop settings</a>
                     </div>
                     <div class="workspace-preview-card">
                         <div class="brand-lockup brand-lockup--merchant">
@@ -330,7 +329,7 @@ else
                         </div>
                         <button class="button button--secondary" type="button" @onclick="HandleCreateProgrammeAsync">Add Programme</button>
                     </div>
-                    <p class="field-hint">A programme defines the reward rule, active dates, join QR, customer activity, and the loyalty card customers keep.</p>
+                    <p class="field-hint">A programme defines the rule, schedule, customer operations, and delivery outputs for one loyalty flow.</p>
 
                     <div class="programme-groups">
                         @foreach (var group in programmeGroups)
@@ -364,19 +363,23 @@ else
                 </aside>
 
                 <div class="workspace-stack">
-                    <section class="panel programme-focus">
-                    <div class="panel__header">
-                        <div>
-                            <p class="eyebrow">Selected programme</p>
-                            <h3>@selectedProgrammeSummary.RewardHeadline</h3>
-                        </div>
+                    <section class="panel programme-focus programme-focus--compact">
+                        <div class="panel__header">
+                            <div>
+                                <p class="eyebrow">Selected programme</p>
+                                <h3>@selectedProgrammeSummary.RewardHeadline</h3>
+                            </div>
                             <div class="workspace-actions">
                                 <span class="chip">@selectedProgrammeBadge</span>
                                 <span class="chip">@selectedProgrammeSummary.ActiveCards customers</span>
                                 <span class="chip">@selectedProgrammeSummary.RewardsUnlocked unlocked</span>
                             </div>
                         </div>
-                        <p class="field-hint">Operate runs join and stamping. Configure changes the programme rule, schedule, and current customer delivery. Insights shows performance for this programme only.</p>
+                        <div class="programme-focus__summary">
+                            <span>Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
+                            <span>Current delivery: wallet loyalty card</span>
+                            <span>Operate for daily use, configure for programme setup, insights for performance.</span>
+                        </div>
                     </section>
 
                     <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
@@ -553,7 +556,16 @@ else
                                     <section class="form-section">
                                         <div class="form-section__header">
                                             <h4>Customer delivery</h4>
-                                            <p class="field-hint">Today this programme delivers through a wallet loyalty card.</p>
+                                            <p class="field-hint">Choose how this programme is delivered to customers. Today the live option is wallet loyalty card.</p>
+                                        </div>
+                                        <div class="delivery-options">
+                                            <article class="delivery-option delivery-option--active">
+                                                <div>
+                                                    <strong>Wallet loyalty card</strong>
+                                                    <p class="field-hint">Live today. Customers join this programme and keep progress in Apple Wallet.</p>
+                                                </div>
+                                                <span class="chip chip--accent">Current output</span>
+                                            </article>
                                         </div>
                                         <div class="form-grid">
                                             <label class="field field--full">
@@ -568,7 +580,7 @@ else
                                         <p class="field-hint">@_cardMessage</p>
                                     }
 
-                                    <p class="field-hint">Customers can only join and stamp visits during the active programme window. The wallet loyalty card is the current output, not the programme definition itself.</p>
+                                    <p class="field-hint">Customers can only join and stamp visits during the active programme window. The wallet loyalty card is the current delivery option, not the definition of the programme itself.</p>
 
                                     <div class="form-actions">
                                         <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Programme</button>
@@ -581,7 +593,7 @@ else
                                 <article class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
                                     <header class="wallet-pass__header">
                                         <div>
-                                            <p class="wallet-pass__label">Wallet loyalty card preview</p>
+                                            <p class="wallet-pass__label">Current delivery preview</p>
                                             <h2>@_shopForm.DisplayName</h2>
                                         </div>
                                         <div class="wallet-pass__mark">
@@ -609,10 +621,10 @@ else
                                     <div class="panel__header">
                                         <div>
                                             <p class="eyebrow">Delivery model</p>
-                                            <h3>Shop brand, programme behaviour</h3>
+                                            <h3>Current output and future room</h3>
                                         </div>
                                     </div>
-                                    <p class="field-hint">The shop supplies the shared brand. The selected programme controls the rule, schedule, and customer delivery behaviour. Today that delivery happens through a wallet loyalty card.</p>
+                                    <p class="field-hint">The shop supplies the shared brand. The selected programme controls the rule, schedule, and customer delivery behaviour. Today that delivery happens through a wallet loyalty card, but the programme model leaves room for future output types.</p>
                                 </article>
                             </div>
                         </section>

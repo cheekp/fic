@@ -21,6 +21,8 @@ Make the merchant workspace feel anchored around the real day-to-day operating m
 - make the selected programme workspace feel like one focused area with nested `Operate`, `Configure`, and `Insights`
 - make the loyalty card clearly live inside programme configuration instead of behaving like a top-level object
 - keep room for future programme types so the programme model does not become synonymous with a wallet loyalty card
+- remove duplicated action affordances that make the workspace feel indecisive
+- simplify the programme page layout so the selected programme reads like one working surface, not several competing summary cards
 - reduce duplicate explanatory copy and repeated summary cards in the shop and programme surfaces
 - tighten the FIC utility chrome into a quieter merchant utility menu
 
@@ -32,6 +34,7 @@ Make the merchant workspace feel anchored around the real day-to-day operating m
 - the shop overview becomes calmer because it stops repeating programme operation and insight content
 - the top utility chrome reads as account/help/platform support, not as merchant navigation
 - the workspace becomes easier to scan because redundant summary surfaces are removed
+- delivery management feels explicit enough that wallet loyalty card reads as the current delivery option, not the meaning of the programme itself
 
 ## Exit Criteria
 

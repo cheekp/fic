@@ -22,6 +22,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
 - the shop overview should avoid repeating selected-programme controls, join actions, or daily-use customer operations
 - the shop overview should use a small number of summary panels and direct actions, not a second operational dashboard
 - shop editing should remain available, but as a secondary settings action rather than a primary working tab
+- the workspace should avoid duplicated actions such as multiple links to the same shop-settings destination
 - onboarding guidance may remain on the shop overview, but it should stay secondary once complete
 
 ### Programme Scope
@@ -37,6 +38,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
   - `Configure`
   - `Insights`
 - the selected programme header should stay compact and should not repeat a large summary dashboard already available in the nested sections
+- the programmes layout should prioritize programme selection and the active nested view over large explanatory banners
 
 ### Programme Operate
 
@@ -57,6 +59,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
   - current customer delivery copy
   - current customer delivery preview
 - `Configure` must communicate that the loyalty card is the current customer-facing output of the programme, not the definition of the programme itself
+- `Configure` should make delivery management visible enough that future delivery options could be added without renaming the core programme model
 - the configuration surface should not repeat customer join or stamping actions
 
 ### Programme Insights
