@@ -915,8 +915,42 @@ textarea {
     align-items: start;
 }
 
+.workspace-detail-grid--programme-shell {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+}
+
 .workspace-preview-panel {
     min-height: 100%;
+}
+
+.programme-sidebar {
+    align-self: start;
+}
+
+.programme-focus {
+    display: grid;
+    gap: 1rem;
+}
+
+.programme-groups {
+    display: grid;
+    gap: 1rem;
+}
+
+.programme-group {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.programme-group__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.programme-group__header h4 {
+    margin: 0;
 }
 
 .shop-profile-summary {

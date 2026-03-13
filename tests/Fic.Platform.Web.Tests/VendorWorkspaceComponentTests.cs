@@ -31,6 +31,20 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
+    public async Task DefaultWorkspaceRoute_LandsInProgrammesOperate()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId);
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Daily use for this programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Open Customer Join", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ShopOverview_DismissesRoadmapWhenRequested()
     {
         using var context = CreateContext();
@@ -136,6 +150,78 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains(updatedProgramme.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain(workspace.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesScope_GroupsProgrammesByLifecycle()
+    {
+        var state = CreateState();
+        using var context = CreateContext();
+        RegisterServices(context, state);
+        var workspace = await CreateMerchantAsync(state);
+
+        var scheduled = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        Assert.NotNull(scheduled);
+        var scheduledStartsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(7);
+        var scheduledEndsOn = scheduledStartsOn.AddDays(30);
+        Assert.NotNull(state.UpdateProgramme(
+            workspace.Merchant.MerchantId,
+            scheduled!.SelectedProgramme.ProgrammeId,
+            scheduled.SelectedProgramme.RewardItemLabel,
+            scheduled.SelectedProgramme.RewardThreshold,
+            scheduled.SelectedProgramme.RewardCopy,
+            scheduledStartsOn,
+            scheduledEndsOn,
+            BaseUri));
+
+        var expired = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        Assert.NotNull(expired);
+        var expiredStartsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-60);
+        var expiredEndsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-7);
+        Assert.NotNull(state.UpdateProgramme(
+            workspace.Merchant.MerchantId,
+            expired!.SelectedProgramme.ProgrammeId,
+            expired.SelectedProgramme.RewardItemLabel,
+            expired.SelectedProgramme.RewardThreshold,
+            expired.SelectedProgramme.RewardCopy,
+            expiredStartsOn,
+            expiredEndsOn,
+            BaseUri));
+
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "operate");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains(">Active<", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(">Scheduled<", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(">Expired<", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammeSelection_PreservesCurrentProgrammeSection()
+    {
+        var state = CreateState();
+        using var context = CreateContext();
+        RegisterServices(context, state);
+        var workspace = await CreateMerchantAsync(state);
+        var secondProgramme = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        Assert.NotNull(secondProgramme);
+
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "insights");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        var matchingLink = cut.FindAll("a")
+            .Any(anchor =>
+            {
+                var href = anchor.GetAttribute("href");
+                return href is not null
+                    && href.Contains($"tab=programmes&section=insights&programme={secondProgramme!.SelectedProgramme.ProgrammeId}", StringComparison.Ordinal);
+            });
+
+        Assert.True(matchingLink);
     }
 
     [Fact]

@@ -115,6 +115,12 @@ Completed slice chain to date:
 - `F07`
   - merchant-first workspace information architecture
   - validator: `scripts/validate-f07-merchant-workspace-ia.sh`
+- `F08`
+  - workspace polish baseline plus bUnit coverage
+  - validator: `scripts/validate-f08-workspace-polish-and-bunit.sh`
+- `F09`
+  - merchant workspace hierarchy correction
+  - validator: `scripts/validate-f09-merchant-workspace-polish.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
@@ -189,6 +195,7 @@ Review the harness when:
 
 The next likely product slices are:
 
+- programme-centric workspace navigation and daily-use optimisation
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries
