@@ -254,14 +254,14 @@
         MerchantThemeView? Theme)
     {
         public static ShellContext Default { get; } = new(
-            "Self-serve merchant loyalty",
-            "Create a merchant workspace and launch a wallet loyalty card.",
-            "FIC is the product shell. Merchants should feel like they step into their own workspace after signup.",
+            "FIC Loyalty",
+            "Launch a wallet loyalty card your regulars actually keep.",
+            "For independent coffee shops: create the shop workspace, publish one join QR, and run the loyalty programme without asking customers to install an app.",
             "default",
             false,
             false,
             true,
-            true,
+            false,
             false,
             "Self-Serve Setup",
             "FIC Loyalty",
@@ -276,14 +276,14 @@
             null);
 
         public static ShellContext Signup { get; } = new(
-            "Create merchant workspace",
-            "Create the shop record first, then move into the workspace.",
-            "This step should stay light. The detailed brand, loyalty card, and customer operations belong inside the merchant workspace after signup.",
+            "FIC Merchant Setup",
+            "Start with the shop, then finish everything inside the workspace.",
+            "Create the merchant workspace first. The richer brand editing, card setup, and customer operations belong inside the merchant-owned workspace after signup.",
             "signup",
             false,
             false,
             true,
-            true,
+            false,
             false,
             "Merchant setup",
             "Your merchant setup",
