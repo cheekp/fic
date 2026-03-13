@@ -129,6 +129,7 @@ The repo now supports:
 - merchant reward configuration
 - merchant brand editing inside the workspace
 - loyalty card template editing inside the workspace
+- multiple loyalty cards per merchant workspace
 - issued customer card management separated from template editing
 - PNG logo upload for merchant branding
 - blob/local brand asset storage seam
@@ -145,9 +146,7 @@ The repo does not yet represent finished production behavior for:
 - live Apple pass update web service and APNs loop
 - billing
 - production privacy/legal review
-- merchant self-service brand editing after onboarding
 - production-grade workspace/auth model
-- multi-programme or multi-card-template merchant support
 
 ## Local Proof Loop
 
@@ -157,6 +156,8 @@ Current high-value local loops:
   - run the slice validator before claiming a slice is done
 - targeted test loop:
   - run the focused xUnit suite for state-heavy behavior before trusting UI-only changes
+- component test loop:
+  - use bUnit for merchant-workspace interaction rules where UI behavior is meaningful but a full browser test is still too heavy
 - direct web preview:
   - run the Blazor app with the local profile for browser and LAN demos
 - wallet demo:

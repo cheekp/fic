@@ -1,5 +1,7 @@
 # F00 Inception
 
+Completed once the repo moved from inception docs into implemented delivery slices (`F01` onward).
+
 ## Goal
 Turn the business plan and the initial technical architecture into the first buildable delivery slice.
 
