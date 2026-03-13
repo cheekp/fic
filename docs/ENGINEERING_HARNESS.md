@@ -108,7 +108,7 @@ The repo now supports:
 
 - self-serve merchant signup
 - merchant-owned workspace flow after signup
-- collapsible `FIC` platform shell around the merchant workspace
+- `FIC` shell focused on acquisition and signup, with a lighter merchant-owned workspace frame after onboarding
 - merchant reward configuration
 - merchant brand editing inside the workspace
 - loyalty card template editing inside the workspace
@@ -120,7 +120,7 @@ The repo now supports:
 - wallet preview flow
 - Apple Wallet `.pkpass` issuance seam
 - merchant-scoped brand theming across workspace, join flow, and wallet preview
-- platform-level nav reserved for home, merchant creation, and future account concerns such as billing/auth
+- platform-level concerns reduced to lightweight workspace utilities once inside a merchant-owned area
 
 The repo does not yet represent finished production behavior for:
 

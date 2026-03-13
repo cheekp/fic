@@ -36,10 +36,10 @@ require_text "UpdateMerchantBrandAsync" "src/Fic.Platform.Web/Services/DemoPlatf
 require_text "UpdateProgramme" "src/Fic.Platform.Web/Services/DemoPlatformState.cs"
 require_text "Create Merchant Workspace" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
 require_text "browse all local workspaces" "src/Fic.Platform.Web/Components/Pages/Home.razor"
-require_text "Collapse platform rail" "src/Fic.Platform.Web/Components/Layout/NavMenu.razor"
-require_text "Billing" "src/Fic.Platform.Web/Components/Layout/NavMenu.razor"
-require_text "Log Out" "src/Fic.Platform.Web/Components/Layout/NavMenu.razor"
-require_text "shell__compact-header" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
+require_text "merchant-shell-bar" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
+require_text "Billing" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
+require_text "Log Out" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
+require_text "ShowSidebar" "src/Fic.Platform.Web/Components/Layout/MainLayout.razor"
 
 env DOTNET_CLI_HOME="${DOTNET_CLI_HOME}" \
     NUGET_PACKAGES="${NUGET_PACKAGES}" \

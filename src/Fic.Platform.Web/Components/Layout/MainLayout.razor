@@ -5,27 +5,33 @@
 @inject DemoPlatformState PlatformState
 @inject MerchantBrandPresentationService BrandPresentation
 
-<div class="shell @(IsSidebarCollapsed ? "shell--sidebar-collapsed" : string.Empty)">
-    <aside class="shell__sidebar @(IsSidebarCollapsed ? "shell__sidebar--collapsed" : string.Empty)">
-        <NavMenu ShellContext="_shellContext"
-                 IsCollapsed="IsSidebarCollapsed"
-                 OnToggle="ToggleSidebar" />
-    </aside>
+<div class="shell @ShellLayoutClass">
+    @if (_shellContext.ShowSidebar)
+    {
+        <aside class="shell__sidebar @(IsSidebarCollapsed ? "shell__sidebar--collapsed" : string.Empty)">
+            <NavMenu ShellContext="_shellContext"
+                     IsCollapsed="IsSidebarCollapsed"
+                     OnToggle="ToggleSidebar" />
+        </aside>
+    }
 
-    <div class="shell__body @CurrentTheme.ThemeClass @(_shellContext.UseCompactHeader ? "shell__body--compact" : string.Empty)" style="@CurrentTheme.CssVariables">
+    <div class="shell__body @CurrentTheme.ThemeClass @(_shellContext.UseCompactHeader ? "shell__body--compact" : string.Empty) @(_shellContext.ShowSidebar ? string.Empty : "shell__body--full")" style="@CurrentTheme.CssVariables">
+        @if (_shellContext.ShowMerchantUtilityBar)
+        {
+            <div class="merchant-shell-bar">
+                <span class="merchant-shell-bar__powered">Powered by FIC</span>
+                <div class="merchant-shell-bar__actions">
+                    <button class="button button--ghost button--compact" type="button" disabled>Billing</button>
+                    <button class="button button--ghost button--compact" type="button" disabled>Account</button>
+                    <button class="button button--ghost button--compact" type="button" disabled>Log Out</button>
+                </div>
+            </div>
+        }
+
         @if (_shellContext.UseCompactHeader)
         {
             <header class="shell__compact-header">
                 <div class="shell__compact-headline">
-                    <button class="shell__rail-toggle"
-                            type="button"
-                            @onclick="ToggleSidebar"
-                            aria-expanded="@(!IsSidebarCollapsed)"
-                            aria-label="@(IsSidebarCollapsed ? "Expand platform rail" : "Collapse platform rail")">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
                     <div class="shell__headline">
                         <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
                         <h1 class="shell__compact-title">@_shellContext.Title</h1>
@@ -38,7 +44,7 @@
                 </div>
             </header>
         }
-        else
+        else if (_shellContext.ShowHeader)
         {
             <header class="shell__header">
                 <div class="shell__headline">
@@ -78,6 +84,10 @@
 
     private MerchantThemeView CurrentTheme => _shellContext.Theme ?? _defaultTheme;
     private bool IsSidebarCollapsed => _isSidebarCollapsed;
+    private string ShellLayoutClass =>
+        _shellContext.ShowSidebar
+            ? (IsSidebarCollapsed ? "shell--sidebar-collapsed" : string.Empty)
+            : "shell--full-width";
 
     protected override void OnInitialized()
     {
@@ -128,21 +138,20 @@
             if (workspace is not null)
             {
                 return new ShellContext(
-                    "FIC platform shell",
-                    "Merchant workspace",
-                    "Collapse the FIC rail when you want focus. Billing, account, and auth live in the platform shell, while brand, card template, and customers stay inside the merchant workspace.",
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
                     "merchant",
+                    false,
+                    false,
+                    false,
+                    false,
                     true,
-                    true,
-                    "Platform shell",
-                    "FIC Loyalty",
-                    "Keep platform-level actions here. The merchant workspace stays focused on brand, card setup, and customer operations.",
-                    "Platform vs workspace",
-                    [
-                        "Billing, account, and auth belong to FIC platform chrome.",
-                        "The merchant workspace owns brand, card template, and customer operations.",
-                        "Issued customer cards are still separate from the default loyalty card template."
-                    ],
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    [],
                     null,
                     BrandPresentation.Build(workspace.BrandProfile));
             }
@@ -160,6 +169,9 @@
                     $"Join {experience.Merchant.DisplayName}",
                     $"This page carries the merchant styling forward before the pass is issued.",
                     "join",
+                    false,
+                    false,
+                    true,
                     false,
                     false,
                     "Join screen",
@@ -189,6 +201,9 @@
                     card.VendorDisplayName,
                     $"Progress, reward state, and branded pass chrome stay in sync from the same projection.",
                     "wallet",
+                    false,
+                    false,
+                    true,
                     false,
                     false,
                     "Wallet state",
@@ -227,6 +242,9 @@
         string Kind,
         bool UseCompactHeader,
         bool DefaultRailCollapsed,
+        bool ShowHeader,
+        bool ShowSidebar,
+        bool ShowMerchantUtilityBar,
         string SidebarKicker,
         string SidebarName,
         string SidebarCopy,
@@ -241,6 +259,9 @@
             "FIC is the product shell. Merchants should feel like they step into their own workspace after signup.",
             "default",
             false,
+            false,
+            true,
+            true,
             false,
             "Self-Serve Setup",
             "FIC Loyalty",
@@ -260,6 +281,9 @@
             "The first job is to create the merchant workspace and its default loyalty card template. Issued customer cards come later.",
             "signup",
             false,
+            false,
+            true,
+            true,
             false,
             "Brand studio",
             "Your merchant setup",
