@@ -19,7 +19,7 @@ Refactor the internal demo flow so it feels like a merchant product rather than 
 ### Merchant Journey
 
 - `/` should behave as the FIC landing and launch surface.
-- Merchant signup should create a merchant workspace, not feel like a detached card creation wizard.
+- Merchant signup should create the merchant workspace behind the scenes, but the public language should be shop-owner oriented rather than internal platform jargon.
 - Merchant signup should stay intentionally thin and defer richer brand/card editing to the workspace itself.
 - After signup, the merchant should land directly in their workspace.
 

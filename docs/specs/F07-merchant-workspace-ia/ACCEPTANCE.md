@@ -3,7 +3,7 @@
 ## Acceptance Criteria
 
 1. The home page behaves as a FIC landing surface, not as a multi-merchant demo console.
-2. Merchant signup uses workspace-oriented language, stays thin, and lands the user directly in the merchant workspace.
+2. Merchant signup uses shop-owner language, stays thin, and lands the user directly in the merchant workspace.
 3. The merchant workspace separates `Brand`, `Loyalty Card`, and `Customers`.
 4. Brand is the default workspace section.
 5. Merchants can update workspace branding from inside the workspace.

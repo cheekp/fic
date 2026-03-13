@@ -7,11 +7,11 @@
 <section class="hero-panel">
     <div>
         <p class="eyebrow">Independent coffee shop flow</p>
-        <h2>One merchant workspace. One join QR. One wallet card your regulars keep.</h2>
-        <p class="lede">The aim is simple: get a shop live quickly, then let the owner run loyalty from their own branded workspace rather than from a platform-style console.</p>
+        <h2>Set up your loyalty programme.</h2>
+        <p class="lede">A simple wallet loyalty system for independent coffee shops. No app. No customer accounts. Simple QR onboarding.</p>
     </div>
     <div class="hero-panel__actions">
-        <a class="button button--primary" href="/portal/signup">Create Merchant Workspace</a>
+        <a class="button button--primary" href="/portal/signup">Set Up Your Loyalty Programme</a>
         <span class="chip">Apple Wallet first</span>
         <span class="chip">No customer app required</span>
     </div>
@@ -21,12 +21,12 @@
     <article class="metric-card">
         <span class="metric-card__label">Step 1</span>
         <strong class="metric-card__value">Set Up</strong>
-        <p class="metric-card__copy">Create the merchant workspace with the shop name and starter loyalty rule.</p>
+        <p class="metric-card__copy">Set up the shop with its name and starter loyalty rule.</p>
     </article>
     <article class="metric-card">
         <span class="metric-card__label">Step 2</span>
         <strong class="metric-card__value">Brand</strong>
-        <p class="metric-card__copy">Upload the logo, tune colours, and shape how the workspace and wallet card feel.</p>
+        <p class="metric-card__copy">Upload the logo, tune colours, and shape how the shop and wallet card feel.</p>
     </article>
     <article class="metric-card">
         <span class="metric-card__label">Step 3</span>
@@ -38,9 +38,9 @@
 @if (_latestMerchant is null)
 {
     <section class="empty-state">
-        <h4>No merchant workspace created yet.</h4>
-        <p>Start by creating a merchant workspace. Once that exists, the merchant can manage brand, card template, and issued customer cards from one place.</p>
-        <a class="button button--primary" href="/portal/signup">Create Your First Merchant Workspace</a>
+        <h4>No loyalty programme set up yet.</h4>
+        <p>Start by setting up the shop’s loyalty programme. Once that exists, the owner can manage branding, the loyalty card, and issued customer cards from one place.</p>
+        <a class="button button--primary" href="/portal/signup">Set Up Your First Loyalty Programme</a>
     </section>
 }
 else
@@ -68,8 +68,8 @@ else
             </div>
         </dl>
         <div class="resume-card__actions">
-            <a class="button button--primary" href="/portal/merchant/@_latestMerchant.MerchantId?tab=brand">Open Merchant Workspace</a>
-            <a class="button button--ghost" href="/portal/signup">Create Another Merchant</a>
+            <a class="button button--primary" href="/portal/merchant/@_latestMerchant.MerchantId?tab=brand">Open Your Loyalty Programme</a>
+            <a class="button button--ghost" href="/portal/signup">Set Up Another Loyalty Programme</a>
         </div>
         <p class="field-hint">
             Local demo-only tools:
