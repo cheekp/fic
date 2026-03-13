@@ -760,6 +760,111 @@ textarea {
     gap: 1rem;
 }
 
+.workspace-stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.setup-roadmap {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.setup-roadmap--collapsed {
+    gap: 0;
+}
+
+.setup-roadmap__steps {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.setup-roadmap__step {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.8rem;
+    align-items: center;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface-strong);
+    text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.setup-roadmap__step--complete {
+    background: color-mix(in srgb, var(--brand-surface-strong) 78%, rgba(47, 122, 75, 0.12) 22%);
+}
+
+.setup-roadmap__step--current {
+    border-color: color-mix(in srgb, var(--brand-accent) 54%, var(--brand-line) 46%);
+    box-shadow: 0 14px 28px rgba(20, 33, 29, 0.08);
+}
+
+.setup-roadmap__step-index {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: inline-grid;
+    place-items: center;
+    background: var(--brand-button);
+    color: var(--brand-button-ink);
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.setup-roadmap__step-copy {
+    display: grid;
+    gap: 0.18rem;
+}
+
+.setup-roadmap__step-copy strong {
+    font-size: 0.98rem;
+}
+
+.setup-roadmap__step-copy span {
+    color: var(--brand-muted);
+    font-size: 0.88rem;
+}
+
+.workspace-overview-strip {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.workspace-overview-card {
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface-strong) 76%, transparent 24%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.workspace-overview-card__label {
+    display: block;
+    margin-bottom: 0.45rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: var(--brand-muted);
+}
+
+.workspace-overview-card__value {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-family: "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 1.2rem;
+    line-height: 1.15;
+}
+
+.workspace-overview-card__copy {
+    margin: 0;
+    color: var(--brand-muted);
+    line-height: 1.5;
+}
+
 .workspace-setup-strip {
     display: grid;
     gap: 0.5rem;
@@ -810,6 +915,33 @@ textarea {
     min-height: 100%;
 }
 
+.shop-profile-summary {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0 0 1.1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shop-profile-summary div {
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface-strong);
+}
+
+.shop-profile-summary dt {
+    margin-bottom: 0.35rem;
+    color: var(--brand-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+}
+
+.shop-profile-summary dd {
+    margin: 0;
+    font-weight: 600;
+}
+
 .workspace-preview-card {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -825,6 +957,40 @@ textarea {
     margin: 0.2rem 0 0;
     font-size: 1.1rem;
     font-weight: 600;
+}
+
+.programme-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.programme-list__item {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem 1.05rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface-strong);
+    text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.programme-list__item h4 {
+    margin: 0;
+}
+
+.programme-list__item--active {
+    border-color: color-mix(in srgb, var(--brand-accent) 56%, var(--brand-line) 44%);
+    box-shadow: 0 18px 36px rgba(20, 33, 29, 0.08);
+}
+
+.programme-list__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+    color: var(--brand-muted);
+    font-size: 0.9rem;
 }
 
 .qr-panel {
@@ -1082,6 +1248,7 @@ textarea {
     .signup-shell,
     .workspace-detail-grid,
     .workspace-grid,
+    .shop-profile-summary,
     .wallet-view,
     .join-hero,
     .signup-preview--studio {
@@ -1114,6 +1281,7 @@ textarea {
     .form-grid,
     .signup-preview,
     .qr-panel,
+    .setup-roadmap__steps,
     .merchant-card__head,
     .merchant-card__brand,
     .resume-card__head,

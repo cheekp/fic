@@ -24,6 +24,8 @@ else
     var workspaceTheme = BrandPresentation.Build(_workspace.BrandProfile);
     var brandPreviewTheme = BuildBrandPreviewTheme();
     var selectedProgrammeSummary = SelectedProgrammeSummary;
+    var setupSteps = BuildSetupSteps();
+    var completedSetupSteps = setupSteps.Count(x => x.IsComplete);
 
     <div class="workspace-stage @workspaceTheme.ThemeClass" style="@workspaceTheme.CssVariables">
         <section class="workspace-header">
@@ -38,12 +40,70 @@ else
                     <p class="lede">Run the shop, manage loyalty cards, and view customer activity from one merchant-owned area.</p>
                 </div>
             </div>
-            @if (WalletCapability.SupportsAppleWalletPass)
-            {
-                <div class="workspace-actions">
+            <div class="workspace-actions">
+                <span class="chip">@_workspace.ShopInsights.ProgrammesCount loyalty cards</span>
+                <span class="chip">@_workspace.ShopInsights.ActiveCards customers</span>
+                <span class="chip">@_workspace.ShopInsights.RewardsUnlocked unlocked</span>
+                @if (WalletCapability.SupportsAppleWalletPass)
+                {
                     <span class="chip chip--success">Signed Apple Wallet ready</span>
+                }
+            </div>
+        </section>
+
+        @if (!_isSetupRoadmapDismissed)
+        {
+            <section class="panel setup-roadmap @(_isSetupRoadmapCollapsed ? "setup-roadmap--collapsed" : string.Empty)">
+                <div class="panel__header">
+                    <div>
+                        <p class="eyebrow">Onboarding roadmap</p>
+                        <h3>@BuildSetupRoadmapHeadline(completedSetupSteps, setupSteps.Count)</h3>
+                    </div>
+                    <div class="workspace-actions">
+                        <span class="chip chip--accent">@completedSetupSteps/@setupSteps.Count complete</span>
+                        <button class="button button--ghost button--compact" type="button" @onclick="ToggleSetupRoadmap">
+                            @(_isSetupRoadmapCollapsed ? "Show setup" : "Hide setup")
+                        </button>
+                        <button class="button button--ghost button--compact" type="button" @onclick="DismissSetupRoadmap">Dismiss</button>
+                    </div>
                 </div>
-            }
+
+                @if (!_isSetupRoadmapCollapsed)
+                {
+                    <p class="field-hint">@BuildSetupRoadmapMessage(setupSteps)</p>
+                    <div class="setup-roadmap__steps">
+                        @foreach (var step in setupSteps)
+                        {
+                            <a class="setup-roadmap__step @(step.IsComplete ? "setup-roadmap__step--complete" : string.Empty) @(IsTab(step.Tab) ? "setup-roadmap__step--current" : string.Empty)"
+                               href="@GetTabUrl(step.Tab)">
+                                <span class="setup-roadmap__step-index">@step.Order</span>
+                                <span class="setup-roadmap__step-copy">
+                                    <strong>@step.Label</strong>
+                                    <span>@step.StatusLabel</span>
+                                </span>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+        }
+
+        <section class="workspace-overview-strip" aria-label="Shop overview">
+            <article class="workspace-overview-card">
+                <span class="workspace-overview-card__label">Shop</span>
+                <strong class="workspace-overview-card__value">@_workspace.Merchant.DisplayName</strong>
+                <p class="workspace-overview-card__copy">@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
+            </article>
+            <article class="workspace-overview-card">
+                <span class="workspace-overview-card__label">Current card</span>
+                <strong class="workspace-overview-card__value">@selectedProgrammeSummary.RewardHeadline</strong>
+                <p class="workspace-overview-card__copy">@BuildProgrammeWindowMessage(selectedProgrammeSummary.StartsOn, selectedProgrammeSummary.EndsOn)</p>
+            </article>
+            <article class="workspace-overview-card">
+                <span class="workspace-overview-card__label">Customers</span>
+                <strong class="workspace-overview-card__value">@_workspace.ShopInsights.ActiveCards</strong>
+                <p class="workspace-overview-card__copy">Across all loyalty cards in this shop.</p>
+            </article>
         </section>
 
         <nav class="workspace-tabs" aria-label="Workspace sections">
@@ -60,116 +120,141 @@ else
                     <div class="panel__header">
                         <div>
                             <p class="eyebrow">Shop details</p>
-                            <h3>Edit your shop</h3>
+                            <h3>Your shop profile</h3>
+                        </div>
+                        <div class="workspace-actions">
+                            <span class="chip">Shop level</span>
+                            <button class="button button--ghost button--compact" type="button" @onclick="ToggleShopEditor">
+                                @(_isShopEditorOpen ? "Hide editor" : "Edit shop details")
+                            </button>
                         </div>
                     </div>
-                    <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="validation-summary" />
+                    <dl class="shop-profile-summary">
+                        <div>
+                            <dt>Coffee shop name</dt>
+                            <dd>@_workspace.Merchant.DisplayName</dd>
+                        </div>
+                        <div>
+                            <dt>Owner email</dt>
+                            <dd>@_workspace.Merchant.ContactEmail</dd>
+                        </div>
+                        <div>
+                            <dt>Location</dt>
+                            <dd>@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</dd>
+                        </div>
+                        <div>
+                            <dt>Brand colours</dt>
+                            <dd>@_shopForm.PrimaryColor / @_shopForm.AccentColor</dd>
+                        </div>
+                    </dl>
 
-                        <div class="form-grid">
-                            <label class="field">
-                                <span>Coffee shop name</span>
-                                <InputText @bind-Value="_shopForm.DisplayName" class="input" />
-                            </label>
+                    @if (_isShopEditorOpen)
+                    {
+                        <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="validation-summary" />
 
-                            <label class="field">
-                                <span>Owner email</span>
-                                <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Town or city</span>
-                                <InputText @bind-Value="_shopForm.TownOrCity" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Postcode</span>
-                                <InputText @bind-Value="_shopForm.Postcode" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Site primary colour</span>
-                                <InputText @bind-Value="_shopForm.PrimaryColor" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Site accent colour</span>
-                                <InputText @bind-Value="_shopForm.AccentColor" class="input" />
-                            </label>
-
-                            <div class="field field--full">
-                                <span>Replace logo</span>
-                                <label class="upload-control">
-                                    <InputFile OnChange="HandleBrandLogoSelectedAsync" accept=".png" />
-                                    <span>Upload a PNG logo. We will suggest colours from it, but you can still override them manually.</span>
+                            <div class="form-grid">
+                                <label class="field">
+                                    <span>Coffee shop name</span>
+                                    <InputText @bind-Value="_shopForm.DisplayName" class="input" />
                                 </label>
+
+                                <label class="field">
+                                    <span>Owner email</span>
+                                    <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Town or city</span>
+                                    <InputText @bind-Value="_shopForm.TownOrCity" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Postcode</span>
+                                    <InputText @bind-Value="_shopForm.Postcode" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Site primary colour</span>
+                                    <InputText @bind-Value="_shopForm.PrimaryColor" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Site accent colour</span>
+                                    <InputText @bind-Value="_shopForm.AccentColor" class="input" />
+                                </label>
+
+                                <div class="field field--full">
+                                    <span>Replace logo</span>
+                                    <label class="upload-control">
+                                        <InputFile OnChange="HandleBrandLogoSelectedAsync" accept=".png" />
+                                        <span>Upload a PNG logo. We will suggest colours from it, but you can still override them manually.</span>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
 
-                        @if (!string.IsNullOrWhiteSpace(_shopMessage))
-                        {
-                            <p class="field-hint">@_shopMessage</p>
-                        }
+                            @if (!string.IsNullOrWhiteSpace(_shopMessage))
+                            {
+                                <p class="field-hint">@_shopMessage</p>
+                            }
 
-                        <div class="form-actions">
-                            <button class="button button--primary" type="submit" disabled="@_isSavingShop">Save Shop</button>
-                        </div>
-                    </EditForm>
+                            <div class="form-actions">
+                                <button class="button button--primary" type="submit" disabled="@_isSavingShop">Save Shop</button>
+                                <button class="button button--ghost" type="button" @onclick="CloseShopEditor">Cancel</button>
+                            </div>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <p class="field-hint">Use the editor only when you need to change shop details, colours, or logo. The signup journey should stay one-time and light.</p>
+                    }
                 </article>
 
                 <div class="workspace-stack">
-                    <article class="panel">
-                        <div class="panel__header">
-                            <div>
-                                <p class="eyebrow">Setup checklist</p>
-                                <h3>Completed setup</h3>
-                            </div>
-                        </div>
-                        <div class="checklist">
-                            <div class="checklist__item">
-                                <span>Shop details</span>
-                                <span class="chip @(_workspace.SetupChecklist.ShopDetailsComplete ? "chip--success" : string.Empty)">
-                                    @(_workspace.SetupChecklist.ShopDetailsComplete ? "Complete" : "Pending")
-                                </span>
-                            </div>
-                            <div class="checklist__item">
-                                <span>Branding</span>
-                                <span class="chip @(_workspace.SetupChecklist.BrandComplete ? "chip--success" : string.Empty)">
-                                    @(_workspace.SetupChecklist.BrandComplete ? "Complete" : "Pending")
-                                </span>
-                            </div>
-                            <div class="checklist__item">
-                                <span>Loyalty card created</span>
-                                <span class="chip @(_workspace.SetupChecklist.HasAnyProgramme ? "chip--success" : string.Empty)">
-                                    @(_workspace.SetupChecklist.HasAnyProgramme ? "Complete" : "Pending")
-                                </span>
-                            </div>
-                            <div class="checklist__item">
-                                <span>Customer join ready</span>
-                                <span class="chip @(_workspace.SetupChecklist.JoinReady ? "chip--success" : string.Empty)">
-                                    @(_workspace.SetupChecklist.JoinReady ? "Ready" : "Pending")
-                                </span>
-                            </div>
-                        </div>
-                    </article>
-
                     <article class="panel workspace-preview-panel @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
                         <div class="panel__header">
                             <div>
-                                <p class="eyebrow">Shop preview</p>
-                                <h3>@_shopForm.DisplayName</h3>
+                                <p class="eyebrow">Shop brand</p>
+                                <h3>How the shop presents itself</h3>
                             </div>
-                            <span class="chip chip--accent">Cards inherit this brand</span>
+                            <span class="chip chip--accent">Inherited by default</span>
                         </div>
                         <div class="workspace-preview-card">
                             <div class="brand-lockup brand-lockup--merchant">
                                 <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName logo preview" />
                             </div>
                             <div>
-                                <p class="field-hint">The shop brand is the source of truth. Each loyalty card inherits this look by default.</p>
-                                <p class="workspace-preview-copy">@selectedProgrammeSummary.RewardHeadline</p>
+                                <p class="field-hint">The shop brand is the source of truth. Loyalty cards inherit this look unless you decide to add card-specific overrides later.</p>
+                                <p class="workspace-preview-copy">@_shopForm.DisplayName</p>
+                                <p class="field-hint">Current card example: @selectedProgrammeSummary.RewardHeadline</p>
                             </div>
+                        </div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel__header">
+                            <div>
+                                <p class="eyebrow">Shop summary</p>
+                                <h3>What this shop controls</h3>
+                            </div>
+                        </div>
+                        <div class="metrics-grid">
+                            <article class="metric-card">
+                                <span class="metric-card__label">Loyalty cards</span>
+                                <strong class="metric-card__value">@_workspace.ShopInsights.ProgrammesCount</strong>
+                                <p class="metric-card__copy">Active and scheduled programmes owned by this shop.</p>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-card__label">Customers</span>
+                                <strong class="metric-card__value">@_workspace.ShopInsights.ActiveCards</strong>
+                                <p class="metric-card__copy">Customer passes currently enrolled across every card.</p>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-card__label">Unlocked</span>
+                                <strong class="metric-card__value">@_workspace.ShopInsights.RewardsUnlocked</strong>
+                                <p class="metric-card__copy">Rewards available to redeem across the whole shop.</p>
+                            </article>
                         </div>
                     </article>
                 </div>
@@ -186,6 +271,7 @@ else
                         </div>
                         <button class="button button--secondary" type="button" @onclick="HandleCreateProgrammeAsync">Add Loyalty Card</button>
                     </div>
+                    <p class="field-hint">Each shop can run one or more loyalty cards. Select a card here to manage dates, copy, and wallet presentation.</p>
                     <div class="programme-list">
                         @foreach (var programme in _workspace.Programmes)
                         {
@@ -197,6 +283,7 @@ else
                                     <p class="field-hint">@programme.StartsOn.ToString("dd MMM yyyy") to @programme.EndsOn.ToString("dd MMM yyyy")</p>
                                 </div>
                                 <div class="programme-list__meta">
+                                    <span class="chip">@BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn)</span>
                                     <span>@programme.ActiveCards active</span>
                                     <span>@programme.RewardsUnlocked unlocked</span>
                                 </div>
@@ -210,6 +297,33 @@ else
                         <div class="panel__header">
                             <div>
                                 <p class="eyebrow">Selected loyalty card</p>
+                                <h3>@selectedProgrammeSummary.RewardHeadline</h3>
+                            </div>
+                            <span class="chip">Card level</span>
+                        </div>
+                        <div class="metrics-grid">
+                            <article class="metric-card">
+                                <span class="metric-card__label">Status</span>
+                                <strong class="metric-card__value">@BuildProgrammeWindowBadge(selectedProgrammeSummary.StartsOn, selectedProgrammeSummary.EndsOn)</strong>
+                                <p class="metric-card__copy">@BuildProgrammeWindowMessage(selectedProgrammeSummary.StartsOn, selectedProgrammeSummary.EndsOn)</p>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-card__label">Customers</span>
+                                <strong class="metric-card__value">@selectedProgrammeSummary.ActiveCards</strong>
+                                <p class="metric-card__copy">Customer passes enrolled on this loyalty card.</p>
+                            </article>
+                            <article class="metric-card">
+                                <span class="metric-card__label">Unlocked</span>
+                                <strong class="metric-card__value">@selectedProgrammeSummary.RewardsUnlocked</strong>
+                                <p class="metric-card__copy">Rewards currently available on this loyalty card.</p>
+                            </article>
+                        </div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel__header">
+                            <div>
+                                <p class="eyebrow">Card settings</p>
                                 <h3>Configure the programme</h3>
                             </div>
                             <span class="chip">@BuildProgrammeWindowBadge(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn)</span>
@@ -296,10 +410,11 @@ else
                             <p class="eyebrow">Shop insights</p>
                             <h3>Across the whole shop</h3>
                         </div>
+                        <span class="chip">Shop level</span>
                     </div>
                     <div class="metrics-grid">
                         <article class="metric-card">
-                            <span class="metric-card__label">Programmes</span>
+                            <span class="metric-card__label">Loyalty cards</span>
                             <strong class="metric-card__value">@_workspace.ShopInsights.ProgrammesCount</strong>
                             <p class="metric-card__copy">Loyalty cards configured for this shop.</p>
                         </article>
@@ -322,7 +437,7 @@ else
                             <p class="eyebrow">Selected card insights</p>
                             <h3>@selectedProgrammeSummary.RewardHeadline</h3>
                         </div>
-                        <span class="chip">Card level</span>
+                        <span class="chip">Selected card</span>
                     </div>
                     <div class="metrics-grid">
                         <article class="metric-card">
@@ -346,6 +461,33 @@ else
         }
         else
         {
+            <section class="panel">
+                <div class="panel__header">
+                    <div>
+                        <p class="eyebrow">Selected loyalty card</p>
+                        <h3>@selectedProgrammeSummary.RewardHeadline</h3>
+                    </div>
+                    <span class="chip">Customer operations are card specific</span>
+                </div>
+                <div class="metrics-grid">
+                    <article class="metric-card">
+                        <span class="metric-card__label">Join code</span>
+                        <strong class="metric-card__value">@selectedProgrammeSummary.JoinCode</strong>
+                        <p class="metric-card__copy">The QR and join link on this page belong only to this selected loyalty card.</p>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-card__label">Validity</span>
+                        <strong class="metric-card__value">@selectedProgrammeSummary.StartsOn.ToString("dd MMM")</strong>
+                        <p class="metric-card__copy">Runs until @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy").</p>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-card__label">Customers</span>
+                        <strong class="metric-card__value">@selectedProgrammeSummary.ActiveCards</strong>
+                        <p class="metric-card__copy">Issued customer cards on this selected loyalty card.</p>
+                    </article>
+                </div>
+            </section>
+
             <section class="workspace-detail-grid">
                 <article class="panel">
                     <div class="panel__header">
@@ -487,6 +629,9 @@ else
     private string? _cardMessage;
     private bool _isSavingShop;
     private bool _isSavingCard;
+    private bool _isSetupRoadmapCollapsed;
+    private bool _isSetupRoadmapDismissed;
+    private bool _isShopEditorOpen;
     private readonly ShopForm _shopForm = new();
     private readonly CardTemplateForm _cardForm = new();
     private byte[]? _pendingLogoUploadBytes;
@@ -630,6 +775,7 @@ else
             if (updated is not null)
             {
                 _shopMessage = "Shop updated.";
+                _isShopEditorOpen = false;
                 LoadWorkspace(refreshForms: true);
             }
         }
@@ -760,6 +906,45 @@ else
 
     private static string FormatDate(DateOnly date) => date.ToString("dd MMM yyyy");
 
+    private IReadOnlyList<SetupStepView> BuildSetupSteps()
+    {
+        if (_workspace is null)
+        {
+            return [];
+        }
+
+        return
+        [
+            new SetupStepView(1, "Shop details", "shop", _workspace.SetupChecklist.ShopDetailsComplete, _workspace.SetupChecklist.ShopDetailsComplete ? "Complete" : "Add details"),
+            new SetupStepView(2, "Brand", "shop", _workspace.SetupChecklist.BrandComplete, _workspace.SetupChecklist.BrandComplete ? "Complete" : "Upload logo"),
+            new SetupStepView(3, "Loyalty card", "cards", _workspace.SetupChecklist.HasAnyProgramme, _workspace.SetupChecklist.HasAnyProgramme ? "Complete" : "Create first card"),
+            new SetupStepView(4, "Customer join", "customers", _workspace.SetupChecklist.JoinReady, _workspace.SetupChecklist.JoinReady ? "Ready" : "Publish join QR")
+        ];
+    }
+
+    private static string BuildSetupRoadmapHeadline(int completed, int total) =>
+        completed == total ? "Your shop is ready to run loyalty." : $"{completed} of {total} setup steps complete";
+
+    private static string BuildSetupRoadmapMessage(IReadOnlyList<SetupStepView> steps)
+    {
+        var nextStep = steps.FirstOrDefault(step => !step.IsComplete);
+        return nextStep is null
+            ? "Brand, loyalty cards, and customer join are all ready. Use the tabs below to run the programme."
+            : $"Next best step: {nextStep.Label}.";
+    }
+
+    private void ToggleSetupRoadmap() => _isSetupRoadmapCollapsed = !_isSetupRoadmapCollapsed;
+
+    private void DismissSetupRoadmap() => _isSetupRoadmapDismissed = true;
+
+    private void ToggleShopEditor() => _isShopEditorOpen = !_isShopEditorOpen;
+
+    private void CloseShopEditor()
+    {
+        _isShopEditorOpen = false;
+        LoadWorkspace(refreshForms: true);
+    }
+
     private static bool IsProgrammeActiveOn(DateOnly startsOn, DateOnly endsOn)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -853,4 +1038,6 @@ else
             }
         }
     }
+
+    private sealed record SetupStepView(int Order, string Label, string Tab, bool IsComplete, string StatusLabel);
 }

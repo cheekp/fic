@@ -16,7 +16,7 @@ public sealed class VendorWorkspaceComponentTests
     private const string FallbackLogoUrl = "data:image/svg+xml;base64,ZmFrZQ==";
 
     [Fact]
-    public async Task ShopTab_ShowsSetupChecklist()
+    public async Task ShopTab_ShowsRoadmapAndKeepsShopEditorCollapsedByDefault()
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
@@ -25,8 +25,43 @@ public sealed class VendorWorkspaceComponentTests
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Setup checklist", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Completed setup", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Onboarding roadmap", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Edit shop details", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Save Shop", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ShopTab_RevealsShopEditorWhenRequested()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        cut.FindAll("button")
+            .Single(button => button.TextContent.Contains("Edit shop details", StringComparison.Ordinal))
+            .Click();
+
+        Assert.Contains("Save Shop", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ShopTab_DismissesRoadmapWhenRequested()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        cut.FindAll("button")
+            .Single(button => button.TextContent.Contains("Dismiss", StringComparison.Ordinal))
+            .Click();
+
+        Assert.DoesNotContain("Onboarding roadmap", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -104,6 +139,20 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains(updatedProgramme.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain(workspace.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task InsightsTab_ShowsShopAndSelectedCardSections()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "insights");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Across the whole shop", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Selected card insights", cut.Markup, StringComparison.Ordinal);
     }
 
     private static BunitContext CreateContext() => new();
