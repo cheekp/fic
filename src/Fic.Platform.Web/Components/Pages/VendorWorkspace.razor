@@ -47,6 +47,7 @@ else
                 </div>
             </div>
             <div class="workspace-actions">
+                <a class="button button--ghost button--compact" href="@GetWorkspaceSectionUrl("edit")">Shop settings</a>
                 <span class="chip">@_workspace.ShopInsights.ProgrammesCount programmes</span>
                 @if (WalletCapability.SupportsAppleWalletPass)
                 {
@@ -59,7 +60,6 @@ else
             <a class="workspace-tabs__item @(IsWorkspaceSection("overview") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("overview")">Overview</a>
             <a class="workspace-tabs__item @(IsWorkspaceSection("programmes") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("programmes")">Programmes</a>
             <a class="workspace-tabs__item @(IsWorkspaceSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("insights")">Insights</a>
-            <a class="workspace-tabs__item @(IsWorkspaceSection("edit") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("edit")">Edit Shop</a>
         </nav>
 
         @if (IsWorkspaceSection("overview"))
@@ -108,7 +108,7 @@ else
                             <p class="eyebrow">Shop overview</p>
                             <h3>This shop is the root context</h3>
                         </div>
-                        <a class="button button--ghost button--compact" href="@GetWorkspaceSectionUrl("edit")">Edit shop</a>
+                        <a class="button button--ghost button--compact" href="@GetWorkspaceSectionUrl("edit")">Open shop settings</a>
                     </div>
                     <div class="workspace-preview-card">
                         <div class="brand-lockup brand-lockup--merchant">
@@ -175,10 +175,13 @@ else
                 <article class="panel">
                     <div class="panel__header">
                         <div>
-                            <p class="eyebrow">Edit shop</p>
-                            <h3>Change profile and brand</h3>
+                            <p class="eyebrow">Shop settings</p>
+                            <h3>Change profile and brand defaults</h3>
                         </div>
-                        <span class="chip">Shop level</span>
+                        <div class="workspace-actions">
+                            <span class="chip">Shop level</span>
+                            <a class="button button--ghost button--compact" href="@GetWorkspaceSectionUrl("overview")">Back to overview</a>
+                        </div>
                     </div>
 
                     <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack">
@@ -362,18 +365,18 @@ else
 
                 <div class="workspace-stack">
                     <section class="panel programme-focus">
-                        <div class="panel__header">
-                            <div>
-                                <p class="eyebrow">Selected programme</p>
-                                <h3>@selectedProgrammeSummary.RewardHeadline</h3>
-                            </div>
+                    <div class="panel__header">
+                        <div>
+                            <p class="eyebrow">Selected programme</p>
+                            <h3>@selectedProgrammeSummary.RewardHeadline</h3>
+                        </div>
                             <div class="workspace-actions">
                                 <span class="chip">@selectedProgrammeBadge</span>
                                 <span class="chip">@selectedProgrammeSummary.ActiveCards customers</span>
                                 <span class="chip">@selectedProgrammeSummary.RewardsUnlocked unlocked</span>
                             </div>
                         </div>
-                        <p class="field-hint">Operate runs join and stamping. Configure changes the rule, dates, and loyalty card. Insights shows performance for this programme only.</p>
+                        <p class="field-hint">Operate runs join and stamping. Configure changes the programme rule, schedule, and current customer delivery. Insights shows performance for this programme only.</p>
                     </section>
 
                     <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
@@ -511,7 +514,7 @@ else
                                 <div class="panel__header">
                                     <div>
                                         <p class="eyebrow">Programme configuration</p>
-                                        <h3>Rule, schedule, and loyalty card</h3>
+                                        <h3>Programme and customer delivery</h3>
                                     </div>
                                     <span class="chip">@selectedProgrammeBadge</span>
                                 </div>
@@ -549,12 +552,12 @@ else
 
                                     <section class="form-section">
                                         <div class="form-section__header">
-                                            <h4>Loyalty card</h4>
-                                            <p class="field-hint">This is the customer-facing output of the programme.</p>
+                                            <h4>Customer delivery</h4>
+                                            <p class="field-hint">Today this programme delivers through a wallet loyalty card.</p>
                                         </div>
                                         <div class="form-grid">
                                             <label class="field field--full">
-                                                <span>Wallet card copy</span>
+                                                <span>Wallet loyalty card copy</span>
                                                 <InputText @bind-Value="_cardForm.RewardCopy" class="input" />
                                             </label>
                                         </div>
@@ -565,7 +568,7 @@ else
                                         <p class="field-hint">@_cardMessage</p>
                                     }
 
-                                    <p class="field-hint">Customers can only join and stamp visits between the begin and expiry dates.</p>
+                                    <p class="field-hint">Customers can only join and stamp visits during the active programme window. The wallet loyalty card is the current output, not the programme definition itself.</p>
 
                                     <div class="form-actions">
                                         <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Programme</button>
@@ -578,7 +581,7 @@ else
                                 <article class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
                                     <header class="wallet-pass__header">
                                         <div>
-                                            <p class="wallet-pass__label">Loyalty card preview</p>
+                                            <p class="wallet-pass__label">Wallet loyalty card preview</p>
                                             <h2>@_shopForm.DisplayName</h2>
                                         </div>
                                         <div class="wallet-pass__mark">
@@ -598,18 +601,18 @@ else
                                                 <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
                                             }
                                         </div>
-                                        <p class="wallet-pass__status">This loyalty card inherits the shop brand and the selected programme rule.</p>
+                                        <p class="wallet-pass__status">This wallet loyalty card inherits the shop brand and the selected programme rule.</p>
                                     </div>
                                 </article>
 
                                 <article class="panel">
                                     <div class="panel__header">
                                         <div>
-                                            <p class="eyebrow">Inheritance</p>
+                                            <p class="eyebrow">Delivery model</p>
                                             <h3>Shop brand, programme behaviour</h3>
                                         </div>
                                     </div>
-                                    <p class="field-hint">The shop supplies the shared brand. The selected programme controls reward copy, validity, threshold, and wallet-card behaviour.</p>
+                                    <p class="field-hint">The shop supplies the shared brand. The selected programme controls the rule, schedule, and customer delivery behaviour. Today that delivery happens through a wallet loyalty card.</p>
                                 </article>
                             </div>
                         </section>

@@ -21,6 +21,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
   - shop-wide insights
 - the shop overview should avoid repeating selected-programme controls, join actions, or daily-use customer operations
 - the shop overview should use a small number of summary panels and direct actions, not a second operational dashboard
+- shop editing should remain available, but as a secondary settings action rather than a primary working tab
 - onboarding guidance may remain on the shop overview, but it should stay secondary once complete
 
 ### Programme Scope
@@ -53,9 +54,9 @@ Make the merchant workspace easier to operate by treating the shop as the root c
   - programme reward rule
   - begin date
   - expiry date
-  - wallet card copy
-  - wallet preview
-- `Configure` must communicate that the loyalty card is part of the programme configuration, not a separate top-level workspace object
+  - current customer delivery copy
+  - current customer delivery preview
+- `Configure` must communicate that the loyalty card is the current customer-facing output of the programme, not the definition of the programme itself
 - the configuration surface should not repeat customer join or stamping actions
 
 ### Programme Insights
@@ -66,7 +67,7 @@ Make the merchant workspace easier to operate by treating the shop as the root c
 ### Naming
 
 - UI copy should prefer `programme` as the governing object for loyalty operations
-- `loyalty card` should only appear as the customer-facing output or option within a programme
+- `loyalty card` should only appear as the current customer-facing output or option within a programme
 - the interface should avoid language that makes `loyalty card` sound like a peer to `shop` or `programme`
 
 ## Non-Goals

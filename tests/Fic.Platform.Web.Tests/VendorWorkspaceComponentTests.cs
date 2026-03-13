@@ -78,6 +78,27 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
+    public async Task PrimaryNavigation_DoesNotExposeEditShopAsPeerTab()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "overview");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        var topLevelLinks = cut.FindAll("nav[aria-label='Shop sections'] a")
+            .Select(anchor => anchor.TextContent.Trim())
+            .ToArray();
+
+        Assert.Contains("Overview", topLevelLinks);
+        Assert.Contains("Programmes", topLevelLinks);
+        Assert.Contains("Insights", topLevelLinks);
+        Assert.DoesNotContain("Edit Shop", topLevelLinks);
+        Assert.Contains("Shop settings", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ShopEdit_ShowsShopEditorAndNotProgrammeOperations()
     {
         using var context = CreateContext();
@@ -88,6 +109,7 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Save Shop", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Back to overview", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -102,7 +124,8 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Save Programme", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Loyalty card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Customer delivery", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("wallet loyalty card", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 

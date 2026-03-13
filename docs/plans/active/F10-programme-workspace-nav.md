@@ -16,9 +16,11 @@ Make the merchant workspace feel anchored around the real day-to-day operating m
 - keep `Shop` as the merchant root
 - move `Programmes` underneath the shop rather than treating it as a peer scope
 - keep the shop root focused on shop identity, shop-wide insight, and clear handoff into programmes
+- keep shop editing as a secondary settings action rather than a primary working tab
 - group programmes by `active`, `scheduled`, and `expired`
 - make the selected programme workspace feel like one focused area with nested `Operate`, `Configure`, and `Insights`
 - make the loyalty card clearly live inside programme configuration instead of behaving like a top-level object
+- keep room for future programme types so the programme model does not become synonymous with a wallet loyalty card
 - reduce duplicate explanatory copy and repeated summary cards in the shop and programme surfaces
 - tighten the FIC utility chrome into a quieter merchant utility menu
 
