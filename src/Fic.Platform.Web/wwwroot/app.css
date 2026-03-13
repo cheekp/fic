@@ -188,6 +188,106 @@ textarea {
     grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.hero-panel--landing {
+    align-items: center;
+}
+
+.home-landing {
+    max-width: 68rem;
+    margin: 1.5rem auto 0;
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    justify-items: center;
+}
+
+.home-landing__utility {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.home-landing__utility-links {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    color: var(--brand-muted);
+}
+
+.home-landing__utility-links a {
+    text-decoration: none;
+}
+
+.home-landing__utility-links a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.home-landing__content {
+    display: grid;
+    gap: 0.85rem;
+    justify-items: center;
+    text-align: center;
+    max-width: 38rem;
+}
+
+.home-landing__quote {
+    margin: 0;
+    max-width: 36rem;
+    color: var(--brand-muted);
+    font-family: "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 1rem;
+    line-height: 1.75;
+}
+
+.home-landing__media {
+    width: 100%;
+    max-width: 56rem;
+    border-radius: calc(var(--radius-lg) - 0.25rem);
+    overflow: hidden;
+    box-shadow: 0 28px 56px var(--brand-shadow);
+}
+
+.home-landing__media img {
+    width: 100%;
+    height: auto;
+    max-height: 25rem;
+    object-fit: cover;
+}
+
+.home-landing__socials {
+    display: inline-flex;
+    gap: 0.55rem;
+    justify-content: center;
+}
+
+.social-link {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid var(--brand-line);
+    background: transparent;
+    text-decoration: none;
+    color: var(--brand-ink);
+}
+
+.social-link__icon {
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.hero-panel__inline-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
 .hero-panel h2,
 .section-header h3,
 .workspace-header h2,
@@ -247,6 +347,11 @@ textarea {
     border-color: var(--brand-line);
     background: transparent;
     color: var(--brand-ink);
+}
+
+.button--compact {
+    min-height: 2.45rem;
+    padding: 0.5rem 0.95rem;
 }
 
 .chip {
@@ -468,6 +573,25 @@ textarea {
     border: 1px solid var(--brand-line);
 }
 
+.signup-panel {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.account-panel {
+    max-width: 38rem;
+    margin: 0 auto;
+}
+
+.signup-inline-note {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface-strong);
+}
+
 .signup-shell {
     display: grid;
     gap: 1rem;
@@ -634,6 +758,19 @@ textarea {
 .workspace-stage {
     display: grid;
     gap: 1rem;
+}
+
+.workspace-setup-strip {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.workspace-setup-strip h3 {
+    margin: 0;
+}
+
+.workspace-setup-strip .lede {
+    margin: 0;
 }
 
 .workspace-summary-grid {
@@ -847,6 +984,10 @@ textarea {
     align-items: center;
 }
 
+.landing-note {
+    max-width: 760px;
+}
+
 .empty-state {
     text-align: center;
     padding-block: 2.4rem;
@@ -865,6 +1006,24 @@ textarea {
 .latest-workspace {
     display: grid;
     gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.latest-workspace__copy {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.latest-workspace__copy h3 {
+    margin: 0;
+}
+
+.latest-workspace__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
 }
 
 .resume-card__metrics {
@@ -929,12 +1088,29 @@ textarea {
         grid-template-columns: 1fr;
     }
 
+    .latest-workspace {
+        grid-template-columns: 1fr;
+    }
+
     .hero-panel__actions {
         justify-content: start;
     }
 }
 
 @media (max-width: 760px) {
+    .home-landing {
+        padding: 1rem;
+    }
+
+    .home-landing__utility {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .home-landing__utility-links {
+        justify-content: center;
+    }
+
     .form-grid,
     .signup-preview,
     .qr-panel,

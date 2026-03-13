@@ -4,99 +4,51 @@
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
 
-<PageTitle>Set Up Your Loyalty Programme</PageTitle>
+<PageTitle>Create Your Shop</PageTitle>
 
-<section class="section-header">
-    <div>
-        <p class="eyebrow">Coffee shop signup</p>
-        <h2>Set up your loyalty programme, then finish the details inside your shop area</h2>
-        <p class="lede">Keep this step light. We create the shop and starter loyalty card, then take the owner straight into the area where branding, card settings, join QR, and customer cards are managed. No app. No customer accounts. Simple QR onboarding.</p>
+<section class="panel signup-panel">
+    <div class="panel__header">
+        <div>
+            <p class="eyebrow">Step 1 of 2</p>
+            <h2>Create your shop</h2>
+            <p class="lede">Enter the shop details first. The loyalty programme is configured later inside the workspace.</p>
+        </div>
     </div>
-</section>
 
-<section class="signup-shell">
-    <article class="panel">
-        <div class="panel__header">
-            <div>
-                <p class="eyebrow">Step 1</p>
-                <h3>Set up your shop</h3>
-            </div>
-            <span class="chip">Under a minute</span>
+    <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-shop" class="form-stack">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="validation-summary" />
+
+        <div class="form-grid">
+            <label class="field">
+                <span>Coffee shop name</span>
+                <InputText @bind-Value="_form.DisplayName" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Owner email</span>
+                <InputText @bind-Value="_form.ContactEmail" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Town or city</span>
+                <InputText @bind-Value="_form.TownOrCity" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Postcode</span>
+                <InputText @bind-Value="_form.Postcode" class="input" />
+            </label>
+
         </div>
 
-        <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-merchant-workspace" class="form-stack">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="validation-summary" />
+        <p class="field-hint">Next: confirm mock billing, then continue into the workspace.</p>
 
-            <div class="form-grid">
-                <label class="field">
-                    <span>Business name</span>
-                    <InputText @bind-Value="_form.DisplayName" class="input" />
-                </label>
-
-                <label class="field">
-                    <span>Owner email</span>
-                    <InputText @bind-Value="_form.ContactEmail" class="input" />
-                </label>
-
-                <label class="field">
-                    <span>What are customers collecting?</span>
-                    <InputText @bind-Value="_form.RewardItemLabel" class="input" />
-                </label>
-
-                <label class="field">
-                    <span>How many before the reward?</span>
-                    <InputNumber @bind-Value="_form.RewardThreshold" class="input" />
-                </label>
-            </div>
-
-            <p class="field-hint">We will start with a simple generated brand mark and sensible defaults. The owner uploads the real logo, tunes colours, and edits customer-facing copy inside the workspace.</p>
-
-            <div class="form-actions">
-                <button class="button button--primary" type="submit" disabled="@_isSubmitting">Continue to Your Loyalty Programme</button>
-                <a class="button button--ghost" href="/">Back to start</a>
-            </div>
-        </EditForm>
-    </article>
-
-    <aside class="panel signup-sidecar">
-        <div class="panel__header">
-            <div>
-                <p class="eyebrow">What happens next</p>
-                <h3>Your loyalty programme becomes the real product</h3>
-            </div>
-            <span class="chip chip--accent">@BuildRewardHeadline()</span>
+        <div class="form-actions">
+            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create My Shop</button>
+            <a class="button button--ghost" href="/">Back to start</a>
         </div>
-
-        <div class="signup-checklist">
-            <article class="signup-checklist__item">
-                <h4>Brand your programme</h4>
-                <p>Upload the real logo, confirm colours, and make the area feel like the shop.</p>
-            </article>
-            <article class="signup-checklist__item">
-                <h4>Shape the loyalty card</h4>
-                <p>Refine the reward copy and preview how the wallet card inherits the shop brand.</p>
-            </article>
-            <article class="signup-checklist__item">
-                <h4>Start customer operations</h4>
-                <p>Open the join QR, issue customer cards, and stamp visits from the same place.</p>
-            </article>
-        </div>
-
-        <div class="signup-summary">
-            <p class="eyebrow">Starter shop</p>
-            <div class="signup-summary__identity">
-                <div class="brand-lockup brand-lockup--resume signup-summary__mark">
-                    <span>@GetInitials(_form.DisplayName)</span>
-                </div>
-                <div>
-                    <h4>@_form.DisplayName</h4>
-                    <p class="field-hint">@BuildRewardCopy()</p>
-                </div>
-            </div>
-            <p class="field-hint">This is just the starting point. The fuller experience begins once the owner lands in their own shop area.</p>
-        </div>
-    </aside>
+    </EditForm>
 </section>
 
 @code {
@@ -111,28 +63,22 @@
         {
             var workspace = await PlatformState.CreateMerchantAsync(
                 _form.DisplayName,
+                _form.TownOrCity,
+                _form.Postcode,
                 _form.ContactEmail,
-                _form.RewardItemLabel,
-                _form.RewardThreshold,
-                BuildRewardCopy(),
                 null,
                 BuildFallbackLogo(_form.DisplayName, DefaultPrimaryColor, DefaultAccentColor),
                 DefaultPrimaryColor,
                 DefaultAccentColor,
                 Navigation.BaseUri);
 
-            Navigation.NavigateTo($"/portal/merchant/{workspace.Merchant.MerchantId}?tab=brand");
+            Navigation.NavigateTo($"/portal/signup/billing/{workspace.Merchant.MerchantId}");
         }
         finally
         {
             _isSubmitting = false;
         }
     }
-
-    private string BuildRewardHeadline() =>
-        $"Buy {_form.RewardThreshold} {_form.RewardItemLabel.ToLowerInvariant()}, get one free";
-
-    private string BuildRewardCopy() => $"{BuildRewardHeadline()}.";
 
     private static string GetInitials(string name)
     {
@@ -179,10 +125,10 @@
         [Required, EmailAddress]
         public string ContactEmail { get; set; } = "owner@joscoffee.test";
 
-        [Required, StringLength(40)]
-        public string RewardItemLabel { get; set; } = "coffees";
+        [Required, StringLength(60)]
+        public string TownOrCity { get; set; } = "Bristol";
 
-        [Range(2, 20)]
-        public int RewardThreshold { get; set; } = 5;
+        [Required, StringLength(12)]
+        public string Postcode { get; set; } = "BS1 4DJ";
     }
 }

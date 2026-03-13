@@ -20,7 +20,17 @@
         {
             <div class="merchant-shell-bar">
                 <span class="merchant-shell-bar__powered">Powered by FIC</span>
-                <div class="merchant-shell-bar__actions">
+                <button class="merchant-shell-bar__menu button button--ghost button--compact"
+                        type="button"
+                        @onclick="ToggleMerchantUtilityMenu"
+                        aria-expanded="@_isMerchantUtilityMenuOpen"
+                        aria-label="Toggle merchant utilities">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="merchant-shell-bar__actions @(_isMerchantUtilityMenuOpen ? "merchant-shell-bar__actions--open" : string.Empty)">
+                    <button class="button button--ghost button--compact" type="button" disabled>Training &amp; Consultancy</button>
                     <button class="button button--ghost button--compact" type="button" disabled>Billing</button>
                     <button class="button button--ghost button--compact" type="button" disabled>Account</button>
                     <button class="button button--ghost button--compact" type="button" disabled>Log Out</button>
@@ -67,6 +77,37 @@
         <main class="shell__content">
             @Body
         </main>
+
+        @if (_shellContext.Agent is not null)
+        {
+            <div class="loyalty-agent">
+                @if (_isLoyaltyAgentOpen)
+                {
+                    <section class="loyalty-agent__panel">
+                        <div class="loyalty-agent__header">
+                            <div>
+                                <p class="eyebrow">@_shellContext.Agent.Kicker</p>
+                                <h3>@_shellContext.Agent.Title</h3>
+                            </div>
+                            <button class="button button--ghost button--compact" type="button" @onclick="ToggleLoyaltyAgent">Close</button>
+                        </div>
+                        <p class="lede">@_shellContext.Agent.Description</p>
+                        <div class="loyalty-agent__actions">
+                            <button class="button button--secondary button--compact" type="button" disabled>@_shellContext.Agent.PrimaryAction</button>
+                            <button class="button button--secondary button--compact" type="button" disabled>@_shellContext.Agent.SecondaryAction</button>
+                        </div>
+                    </section>
+                }
+
+                <button class="button button--primary loyalty-agent__launcher"
+                        type="button"
+                        @onclick="ToggleLoyaltyAgent"
+                        aria-label="@_shellContext.Agent.LaunchLabel"
+                        title="@_shellContext.Agent.LaunchLabel">
+                    <span class="loyalty-agent__glyph" aria-hidden="true">?</span>
+                </button>
+            </div>
+        }
     </div>
 </div>
 
@@ -81,6 +122,8 @@
     private ShellContext _shellContext = ShellContext.Default;
     private string _shellKind = string.Empty;
     private bool _isSidebarCollapsed;
+    private bool _isMerchantUtilityMenuOpen;
+    private bool _isLoyaltyAgentOpen;
 
     private MerchantThemeView CurrentTheme => _shellContext.Theme ?? _defaultTheme;
     private bool IsSidebarCollapsed => _isSidebarCollapsed;
@@ -99,6 +142,8 @@
 
     private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
     {
+        _isMerchantUtilityMenuOpen = false;
+        _isLoyaltyAgentOpen = false;
         RebuildShellContext();
         StateHasChanged();
     }
@@ -120,6 +165,11 @@
         }
 
         _shellContext = nextContext;
+        if (!_shellContext.ShowMerchantUtilityBar)
+        {
+            _isMerchantUtilityMenuOpen = false;
+            _isLoyaltyAgentOpen = false;
+        }
     }
 
     private ShellContext ResolveShellContext()
@@ -153,7 +203,14 @@
                     string.Empty,
                     [],
                     null,
-                    BrandPresentation.Build(workspace.BrandProfile));
+                    BrandPresentation.Build(workspace.BrandProfile),
+                    new AgentContext(
+                        "Support",
+                        "Speak with Loyalty Agent",
+                        "Quick support for programme setup, merchant guidance, and consultancy handoff.",
+                        "Open Loyalty Agent",
+                        "Ask a setup question",
+                        "Book consultancy"));
             }
         }
 
@@ -184,7 +241,14 @@
                         "Once issued, the pass updates as visits are awarded."
                     ],
                     experience.BrandProfile.LogoUrl,
-                    BrandPresentation.Build(experience.BrandProfile));
+                    BrandPresentation.Build(experience.BrandProfile),
+                    new AgentContext(
+                        "Support",
+                        "Get join help",
+                        "Use this discreet help surface if someone needs support during the join and Wallet handoff flow.",
+                        "Open join help",
+                        "Ask about joining",
+                        "Contact support"));
             }
         }
 
@@ -216,8 +280,23 @@
                         "The same brand tokens the merchant workspace uses."
                     ],
                     card.LogoUrl,
-                    BrandPresentation.Build(card));
+                    BrandPresentation.Build(card),
+                    new AgentContext(
+                        "Support",
+                        "Get Wallet help",
+                        "Use this discreet help surface for Wallet pass questions, refresh issues, or redemption support.",
+                        "Open Wallet help",
+                        "Ask about Wallet",
+                        "Contact support"));
             }
+        }
+
+        if (segments.Length >= 3
+            && string.Equals(segments[0], "portal", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "signup", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[2], "billing", StringComparison.OrdinalIgnoreCase))
+        {
+            return ShellContext.Billing;
         }
 
         return segments.Length >= 2
@@ -228,6 +307,10 @@
     }
 
     private void ToggleSidebar() => _isSidebarCollapsed = !_isSidebarCollapsed;
+
+    private void ToggleMerchantUtilityMenu() => _isMerchantUtilityMenuOpen = !_isMerchantUtilityMenuOpen;
+
+    private void ToggleLoyaltyAgent() => _isLoyaltyAgentOpen = !_isLoyaltyAgentOpen;
 
     public void Dispose()
     {
@@ -251,7 +334,8 @@
         string PanelTitle,
         IReadOnlyList<string> PanelPoints,
         string? LogoUrl,
-        MerchantThemeView? Theme)
+        MerchantThemeView? Theme,
+        AgentContext? Agent)
     {
         public static ShellContext Default { get; } = new(
             "FIC Loyalty",
@@ -260,7 +344,7 @@
             "default",
             false,
             false,
-            true,
+            false,
             false,
             false,
             "Self-Serve Setup",
@@ -273,7 +357,14 @@
                 "Brand, card template, and customers stay clearly separated."
             ],
             null,
-            null);
+            null,
+            new AgentContext(
+                "Sales",
+                "Speak with Sales",
+                "Use this discreet launcher for plan questions, onboarding guidance, or consultancy conversations before signup.",
+                "Open sales help",
+                "Ask about pricing",
+                "Talk to sales"));
 
         public static ShellContext Signup { get; } = new(
             "FIC Merchant Setup",
@@ -282,7 +373,7 @@
             "signup",
             false,
             false,
-            true,
+            false,
             false,
             false,
             "Merchant setup",
@@ -295,6 +386,50 @@
                 "Use Customers for join QR, scans, and issued cards."
             ],
             null,
-            null);
+            null,
+            new AgentContext(
+                "Setup",
+                "Get setup help",
+                "Use this discreet launcher if you need help creating the shop account before moving into billing and workspace setup.",
+                "Open setup help",
+                "Ask about setup",
+                "Contact support"));
+
+        public static ShellContext Billing { get; } = new(
+            "Billing setup",
+            "Complete mock billing",
+            "This step simulates commercial onboarding before the merchant lands in the live workspace.",
+            "billing",
+            false,
+            false,
+            false,
+            false,
+            false,
+            "Billing",
+            "Billing setup",
+            "Mock billing keeps the internal demo flow realistic without introducing a live payment system.",
+            "Billing step",
+            [
+                "Pick a demo plan.",
+                "Confirm billing contact details.",
+                "Continue into the merchant workspace."
+            ],
+            null,
+            null,
+            new AgentContext(
+                "Billing",
+                "Get billing help",
+                "Use this discreet launcher for plan, pricing, or mock billing questions during onboarding.",
+                "Open billing help",
+                "Ask about billing",
+                "Talk to sales"));
     }
+
+    public sealed record AgentContext(
+        string Kicker,
+        string Title,
+        string Description,
+        string LaunchLabel,
+        string PrimaryAction,
+        string SecondaryAction);
 }

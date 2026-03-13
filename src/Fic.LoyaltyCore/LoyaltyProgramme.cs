@@ -16,6 +16,8 @@ public sealed record LoyaltyProgramme(
     string RewardItemLabel,
     int RewardThreshold,
     string RewardCopy,
+    DateOnly StartsOn,
+    DateOnly EndsOn,
     string JoinCode,
     DateTimeOffset ConfiguredAtUtc);
 

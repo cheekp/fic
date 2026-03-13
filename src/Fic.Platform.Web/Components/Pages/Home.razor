@@ -1,108 +1,27 @@
 @page "/"
-@implements IDisposable
-@inject DemoPlatformState PlatformState
 
 <PageTitle>FIC Loyalty</PageTitle>
 
-<section class="hero-panel">
-    <div>
-        <p class="eyebrow">Independent coffee shop flow</p>
-        <h2>Set up your loyalty programme.</h2>
-        <p class="lede">A simple wallet loyalty system for independent coffee shops. No app. No customer accounts. Simple QR onboarding.</p>
+<section class="panel home-landing">
+    <div class="home-landing__utility">
+        <div class="home-landing__utility-links">
+            <a href="/account/login">Log In</a>
+            <a href="/account/forgot-password">Forgot password?</a>
+        </div>
     </div>
-    <div class="hero-panel__actions">
-        <a class="button button--primary" href="/portal/signup">Set Up Your Loyalty Programme</a>
-        <span class="chip">Apple Wallet first</span>
-        <span class="chip">No customer app required</span>
+
+    <div class="home-landing__media">
+        <img src="/images/home-hero.jpeg" alt="Customers sitting in a bright independent coffee shop." />
+    </div>
+
+    <div class="home-landing__content">
+        <p class="eyebrow">For independent coffee shops</p>
+        <h2>Set up your loyalty programme in minutes.</h2>
+
+        <blockquote class="home-landing__quote">
+            “Customer loyalty is not driven by rewards alone. It emerges from the combined influence of value, recognition, experience, and connection.”
+        </blockquote>
+
+        <a class="button button--primary" href="/portal/signup">Sign Up Now</a>
     </div>
 </section>
-
-<section class="metrics-grid">
-    <article class="metric-card">
-        <span class="metric-card__label">Step 1</span>
-        <strong class="metric-card__value">Set Up</strong>
-        <p class="metric-card__copy">Set up the shop with its name and starter loyalty rule.</p>
-    </article>
-    <article class="metric-card">
-        <span class="metric-card__label">Step 2</span>
-        <strong class="metric-card__value">Brand</strong>
-        <p class="metric-card__copy">Upload the logo, tune colours, and shape how the shop and wallet card feel.</p>
-    </article>
-    <article class="metric-card">
-        <span class="metric-card__label">Step 3</span>
-        <strong class="metric-card__value">Run</strong>
-        <p class="metric-card__copy">Publish the join QR, issue cards, scan visits, and manage customers in one place.</p>
-    </article>
-</section>
-
-@if (_latestMerchant is null)
-{
-    <section class="empty-state">
-        <h4>No loyalty programme set up yet.</h4>
-        <p>Start by setting up the shop’s loyalty programme. Once that exists, the owner can manage branding, the loyalty card, and issued customer cards from one place.</p>
-        <a class="button button--primary" href="/portal/signup">Set Up Your First Loyalty Programme</a>
-    </section>
-}
-else
-{
-    <section class="panel latest-workspace">
-        <div class="panel__header">
-            <div>
-                <p class="eyebrow">Continue where you left off</p>
-                <h3>@_latestMerchant.DisplayName</h3>
-            </div>
-            <span class="chip chip--accent">@_latestMerchant.RewardHeadline</span>
-        </div>
-        <dl class="resume-card__metrics">
-            <div>
-                <dt>Active cards</dt>
-                <dd>@_latestMerchant.ActiveCards</dd>
-            </div>
-            <div>
-                <dt>Rewards unlocked</dt>
-                <dd>@_latestMerchant.RewardsUnlocked</dd>
-            </div>
-            <div>
-                <dt>Join code</dt>
-                <dd>@_latestMerchant.JoinCode</dd>
-            </div>
-        </dl>
-        <div class="resume-card__actions">
-            <a class="button button--primary" href="/portal/merchant/@_latestMerchant.MerchantId?tab=brand">Open Your Loyalty Programme</a>
-            <a class="button button--ghost" href="/portal/signup">Set Up Another Loyalty Programme</a>
-        </div>
-        <p class="field-hint">
-            Local demo-only tools:
-            <a class="inline-link" href="/dev/workspaces">browse all local workspaces</a>.
-        </p>
-    </section>
-}
-
-@code {
-    private IReadOnlyList<MerchantSummarySnapshot> _merchants = [];
-    private MerchantSummarySnapshot? _latestMerchant;
-
-    protected override void OnInitialized()
-    {
-        LoadState();
-        PlatformState.Changed += HandleStateChanged;
-    }
-
-    private void LoadState()
-    {
-        _merchants = PlatformState.GetMerchantSummaries();
-        _latestMerchant = _merchants.FirstOrDefault();
-    }
-
-    private void HandleStateChanged() =>
-        _ = InvokeAsync(() =>
-        {
-            LoadState();
-            StateHasChanged();
-        });
-
-    public void Dispose()
-    {
-        PlatformState.Changed -= HandleStateChanged;
-    }
-}

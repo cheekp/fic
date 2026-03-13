@@ -13,6 +13,7 @@ This repo keeps raw business inputs separate from technical decisions and implem
 - `plans/planned/` queued work that is not active
 - `plans/completed/` closed work records
 - `specs/` buildable slices with requirements and acceptance
+  - specs stay flat by slice; status belongs in `plans/`, not under `specs/`
 - `../scripts/` validation scripts and workflow helpers
 
 ## Naming
@@ -26,3 +27,4 @@ The engineering harness describes how the repo stays coherent as it grows.
 Architecture documents describe how the system should work.
 RFCs describe what decision is being proposed.
 Specs describe what must be built and how it will be accepted.
+Plans describe whether a slice is active, queued, or done.

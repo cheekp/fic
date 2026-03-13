@@ -34,6 +34,7 @@ else
                 <div>
                     <p class="wallet-pass__copy">@_card.RewardCopy</p>
                     <p class="wallet-pass__progress">@_card.ProgressDisplayText</p>
+                    <p class="field-hint">Valid @FormatDate(_card.StartsOn) to @FormatDate(_card.EndsOn)</p>
                 </div>
                 <div class="stamp-track" aria-label="stamp progress">
                     @for (var i = 0; i < _card.TargetCount; i++)
@@ -77,6 +78,14 @@ else
                     <dt>Last updated</dt>
                     <dd>@_card.LastUpdatedUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</dd>
                 </div>
+                <div>
+                    <dt>Valid from</dt>
+                    <dd>@FormatDate(_card.StartsOn)</dd>
+                </div>
+                <div>
+                    <dt>Expires on</dt>
+                    <dd>@FormatDate(_card.EndsOn)</dd>
+                </div>
             </dl>
         </article>
     </section>
@@ -107,10 +116,16 @@ else
 
     private string BuildStatusText() => _card?.RewardState switch
     {
+        _ when _card is not null && DateOnly.FromDateTime(DateTime.UtcNow) < _card.StartsOn
+            => $"This card becomes active on {FormatDate(_card.StartsOn)}.",
+        _ when _card is not null && DateOnly.FromDateTime(DateTime.UtcNow) > _card.EndsOn
+            => $"This card expired on {FormatDate(_card.EndsOn)}.",
         RewardState.Unlocked => "Reward unlocked. Offer the free item on the next vendor redemption.",
         RewardState.Redeemed => "Reward redeemed. The card is ready to start a new cycle.",
         _ => "Keep scanning the pass at each visit to advance the count."
     };
+
+    private static string FormatDate(DateOnly date) => date.ToString("dd MMM yyyy");
 
     private void HandleStateChanged() =>
         _ = InvokeAsync(() =>

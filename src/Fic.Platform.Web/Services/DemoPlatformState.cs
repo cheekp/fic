@@ -10,6 +10,10 @@ public sealed class DemoPlatformState(
     ILogger<DemoPlatformState> logger,
     IMerchantBrandAssetStore brandAssetStore)
 {
+    private const string StarterRewardItemLabel = "coffees";
+    private const int StarterRewardThreshold = 5;
+    private const int StarterProgrammeDurationDays = 365;
+
     private readonly Lock _gate = new();
     private readonly ConcurrentDictionary<Guid, MerchantAccount> _merchants = new();
     private readonly ConcurrentDictionary<Guid, BrandProfile> _brands = new();
@@ -30,7 +34,10 @@ public sealed class DemoPlatformState(
                 .OrderByDescending(x => x.CreatedAtUtc)
                 .Select(merchant =>
                 {
-                    var programme = _programmes.Values.Single(x => x.MerchantId == merchant.MerchantId);
+                    var programme = _programmes.Values
+                        .Where(x => x.MerchantId == merchant.MerchantId)
+                        .OrderByDescending(x => x.ConfiguredAtUtc)
+                        .First();
                     var brand = _brands[merchant.MerchantId];
                     var cards = _cards.Values.Where(x => x.MerchantId == merchant.MerchantId).ToArray();
                     var unlocked = cards.Count(card => _progress[card.CardId].RewardState == RewardState.Unlocked);
@@ -53,10 +60,9 @@ public sealed class DemoPlatformState(
 
     public async Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(
         string displayName,
+        string townOrCity,
+        string postcode,
         string contactEmail,
-        string rewardItemLabel,
-        int rewardThreshold,
-        string rewardCopy,
         MerchantLogoUpload? logoUpload,
         string fallbackLogoUrl,
         string primaryColor,
@@ -65,7 +71,13 @@ public sealed class DemoPlatformState(
         CancellationToken cancellationToken = default)
     {
         var now = DateTimeOffset.UtcNow;
-        var merchant = new MerchantAccount(Guid.NewGuid(), displayName.Trim(), contactEmail.Trim(), now);
+        var merchant = new MerchantAccount(
+            Guid.NewGuid(),
+            displayName.Trim(),
+            townOrCity.Trim(),
+            postcode.Trim(),
+            contactEmail.Trim(),
+            now);
         var logoMetadata = logoUpload is null
             ? new MerchantLogoMetadata(160, 160)
             : MerchantBrandAssetInspector.ReadLogoMetadata(logoUpload.Bytes);
@@ -78,29 +90,23 @@ public sealed class DemoPlatformState(
             NormalizeColor(accentColor),
             logoMetadata.Width,
             logoMetadata.Height);
-        var joinCode = $"join-{Guid.NewGuid():N}"[..13];
-        var programme = new LoyaltyProgramme(
-            Guid.NewGuid(),
-            merchant.MerchantId,
-            rewardItemLabel.Trim(),
-            rewardThreshold,
-            rewardCopy.Trim(),
-            joinCode,
-            now);
+        var programme = BuildStarterProgramme(merchant.MerchantId, now);
 
         lock (_gate)
         {
             _merchants[merchant.MerchantId] = merchant;
             _brands[merchant.MerchantId] = brand;
             _programmes[programme.ProgrammeId] = programme;
-            _joinCodes[joinCode] = programme.ProgrammeId;
+            _joinCodes[programme.JoinCode] = programme.ProgrammeId;
 
             AppendEvent(new MerchantAccountCreated(
                 merchant.MerchantId,
                 merchant.DisplayName,
+                merchant.TownOrCity,
+                merchant.Postcode,
                 merchant.ContactEmail,
                 now),
-                $"{merchant.DisplayName} onboarded for the internal demo.");
+                $"{merchant.DisplayName} onboarded for the internal demo in {merchant.TownOrCity}.");
 
             AppendEvent(new ProgrammeConfigured(
                 merchant.MerchantId,
@@ -108,7 +114,7 @@ public sealed class DemoPlatformState(
                 programme.RewardItemLabel,
                 programme.RewardThreshold,
                 now),
-                $"Configured loyalty card: buy {programme.RewardThreshold} {programme.RewardItemLabel}, get 1 free.");
+                $"Created starter loyalty card: buy {programme.RewardThreshold} {programme.RewardItemLabel}, get 1 free.");
 
             logger.LogInformation(
                 "merchant_created merchant_id={MerchantId} programme_id={ProgrammeId} threshold={RewardThreshold} logo_source={LogoSource}",
@@ -117,15 +123,15 @@ public sealed class DemoPlatformState(
                 programme.RewardThreshold,
                 logoUpload is null ? "fallback" : "stored");
 
-            return BuildWorkspaceSnapshot(merchant.MerchantId, baseUri);
+            return BuildWorkspaceSnapshot(merchant.MerchantId, baseUri, programme.ProgrammeId);
         }
     }
 
-    public MerchantWorkspaceSnapshot? GetMerchantWorkspace(Guid merchantId, string baseUri)
+    public MerchantWorkspaceSnapshot? GetMerchantWorkspace(Guid merchantId, string baseUri, Guid? selectedProgrammeId = null)
     {
         lock (_gate)
         {
-            return !_merchants.ContainsKey(merchantId) ? null : BuildWorkspaceSnapshot(merchantId, baseUri);
+            return !_merchants.ContainsKey(merchantId) ? null : BuildWorkspaceSnapshot(merchantId, baseUri, selectedProgrammeId);
         }
     }
 
@@ -154,6 +160,15 @@ public sealed class DemoPlatformState(
         {
             if (!_joinCodes.TryGetValue(joinCode, out var programmeId) || !_programmes.TryGetValue(programmeId, out var programme))
             {
+                return null;
+            }
+
+            if (!IsProgrammeActiveOn(programme, GetTodayUtc()))
+            {
+                logger.LogWarning(
+                    "customer_join_rejected programme_id={ProgrammeId} reason=inactive_window join_code={JoinCode}",
+                    programme.ProgrammeId,
+                    joinCode);
                 return null;
             }
 
@@ -208,9 +223,13 @@ public sealed class DemoPlatformState(
     public async Task<MerchantWorkspaceSnapshot?> UpdateMerchantBrandAsync(
         Guid merchantId,
         string displayName,
+        string townOrCity,
+        string postcode,
+        string contactEmail,
         string primaryColor,
         string accentColor,
         MerchantLogoUpload? logoUpload,
+        Guid? selectedProgrammeId,
         string baseUri,
         CancellationToken cancellationToken = default)
     {
@@ -239,7 +258,10 @@ public sealed class DemoPlatformState(
 
         var updatedMerchant = merchant with
         {
-            DisplayName = displayName.Trim()
+            DisplayName = displayName.Trim(),
+            TownOrCity = townOrCity.Trim(),
+            Postcode = postcode.Trim(),
+            ContactEmail = contactEmail.Trim()
         };
         var updatedBrand = brand with
         {
@@ -267,23 +289,57 @@ public sealed class DemoPlatformState(
                 updatedMerchant.DisplayName,
                 logoUpload is not null);
 
-            return BuildWorkspaceSnapshot(merchantId, baseUri);
+            return BuildWorkspaceSnapshot(merchantId, baseUri, selectedProgrammeId);
+        }
+    }
+
+    public MerchantWorkspaceSnapshot? CreateProgramme(Guid merchantId, string baseUri)
+    {
+        lock (_gate)
+        {
+            if (!_merchants.ContainsKey(merchantId))
+            {
+                return null;
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var programme = BuildStarterProgramme(merchantId, now);
+
+            _programmes[programme.ProgrammeId] = programme;
+            _joinCodes[programme.JoinCode] = programme.ProgrammeId;
+
+            AppendEvent(new ProgrammeConfigured(
+                merchantId,
+                programme.ProgrammeId,
+                programme.RewardItemLabel,
+                programme.RewardThreshold,
+                now),
+                $"Added loyalty card {programme.ProgrammeId.ToString()[..8]} with {programme.RewardThreshold} {programme.RewardItemLabel} before reward.");
+
+            return BuildWorkspaceSnapshot(merchantId, baseUri, programme.ProgrammeId);
         }
     }
 
     public MerchantWorkspaceSnapshot? UpdateProgramme(
         Guid merchantId,
+        Guid programmeId,
         string rewardItemLabel,
         int rewardThreshold,
         string rewardCopy,
+        DateOnly startsOn,
+        DateOnly endsOn,
         string baseUri)
     {
         lock (_gate)
         {
-            var programme = _programmes.Values.SingleOrDefault(x => x.MerchantId == merchantId);
-            if (programme is null)
+            if (!_programmes.TryGetValue(programmeId, out var programme) || programme.MerchantId != merchantId)
             {
                 return null;
+            }
+
+            if (endsOn < startsOn)
+            {
+                throw new InvalidOperationException("Expiry date must be on or after the begin date.");
             }
 
             var updatedProgramme = programme with
@@ -291,6 +347,8 @@ public sealed class DemoPlatformState(
                 RewardItemLabel = rewardItemLabel.Trim(),
                 RewardThreshold = rewardThreshold,
                 RewardCopy = rewardCopy.Trim(),
+                StartsOn = startsOn,
+                EndsOn = endsOn,
                 ConfiguredAtUtc = DateTimeOffset.UtcNow
             };
 
@@ -334,24 +392,38 @@ public sealed class DemoPlatformState(
                 programme.ProgrammeId,
                 updatedProgramme.RewardThreshold);
 
-            return BuildWorkspaceSnapshot(merchantId, baseUri);
+            return BuildWorkspaceSnapshot(merchantId, baseUri, programmeId);
         }
     }
 
-    public MerchantWorkspaceSnapshot? AwardVisit(Guid merchantId, string scannedCode, string baseUri)
+    public MerchantWorkspaceSnapshot? AwardVisit(Guid merchantId, Guid programmeId, string scannedCode, string baseUri)
     {
         lock (_gate)
         {
-            if (!_cardCodes.TryGetValue(scannedCode.Trim(), out var cardId) || !_cards.TryGetValue(cardId, out var card) || card.MerchantId != merchantId)
+            if (!_cardCodes.TryGetValue(scannedCode.Trim(), out var cardId)
+                || !_cards.TryGetValue(cardId, out var card)
+                || card.MerchantId != merchantId
+                || card.ProgrammeId != programmeId)
             {
                 logger.LogWarning(
-                    "visit_award_rejected merchant_id={MerchantId} scanned_code={ScannedCode}",
+                    "visit_award_rejected merchant_id={MerchantId} programme_id={ProgrammeId} scanned_code={ScannedCode}",
                     merchantId,
+                    programmeId,
                     scannedCode);
                 return null;
             }
 
             var programme = _programmes[card.ProgrammeId];
+            if (!IsProgrammeActiveOn(programme, GetTodayUtc()))
+            {
+                logger.LogWarning(
+                    "visit_award_rejected merchant_id={MerchantId} programme_id={ProgrammeId} reason=inactive_window scanned_code={ScannedCode}",
+                    merchantId,
+                    programmeId,
+                    scannedCode);
+                return null;
+            }
+
             var current = _progress[card.CardId];
             var nextCount = Math.Min(current.CurrentCount + 1, current.TargetCount);
             var nextState = nextCount >= current.TargetCount ? RewardState.Unlocked : RewardState.Locked;
@@ -380,15 +452,15 @@ public sealed class DemoPlatformState(
                 updated.CurrentCount,
                 updated.TargetCount);
 
-            return BuildWorkspaceSnapshot(merchantId, baseUri);
+            return BuildWorkspaceSnapshot(merchantId, baseUri, programmeId);
         }
     }
 
-    public MerchantWorkspaceSnapshot? RedeemReward(Guid merchantId, Guid cardId, string baseUri)
+    public MerchantWorkspaceSnapshot? RedeemReward(Guid merchantId, Guid programmeId, Guid cardId, string baseUri)
     {
         lock (_gate)
         {
-            if (!_cards.TryGetValue(cardId, out var card) || card.MerchantId != merchantId)
+            if (!_cards.TryGetValue(cardId, out var card) || card.MerchantId != merchantId || card.ProgrammeId != programmeId)
             {
                 return null;
             }
@@ -396,7 +468,7 @@ public sealed class DemoPlatformState(
             var current = _progress[card.CardId];
             if (current.RewardState != RewardState.Unlocked)
             {
-                return BuildWorkspaceSnapshot(merchantId, baseUri);
+                return BuildWorkspaceSnapshot(merchantId, baseUri, programmeId);
             }
 
             var programme = _programmes[card.ProgrammeId];
@@ -421,7 +493,7 @@ public sealed class DemoPlatformState(
                 merchantId,
                 cardId);
 
-            return BuildWorkspaceSnapshot(merchantId, baseUri);
+            return BuildWorkspaceSnapshot(merchantId, baseUri, programmeId);
         }
     }
 
@@ -445,19 +517,45 @@ public sealed class DemoPlatformState(
         }
     }
 
-    private MerchantWorkspaceSnapshot BuildWorkspaceSnapshot(Guid merchantId, string baseUri)
+    private MerchantWorkspaceSnapshot BuildWorkspaceSnapshot(Guid merchantId, string baseUri, Guid? selectedProgrammeId = null)
     {
         var merchant = _merchants[merchantId];
         var brand = _brands[merchantId];
-        var programme = _programmes.Values.Single(x => x.MerchantId == merchantId);
-        var joinUrl = new Uri(new Uri(baseUri, UriKind.Absolute), $"join/{programme.JoinCode}").ToString();
-        var cards = _cards.Values
+        var merchantProgrammes = _programmes.Values
             .Where(x => x.MerchantId == merchantId)
+            .OrderByDescending(x => x.ConfiguredAtUtc)
+            .ToArray();
+        var selectedProgramme = merchantProgrammes.FirstOrDefault(x => x.ProgrammeId == selectedProgrammeId) ?? merchantProgrammes.First();
+        var selectedJoinUrl = new Uri(new Uri(baseUri, UriKind.Absolute), $"join/{selectedProgramme.JoinCode}").ToString();
+        var selectedCards = _cards.Values
+            .Where(x => x.ProgrammeId == selectedProgramme.ProgrammeId)
             .OrderByDescending(x => x.JoinedAtUtc)
             .Select(x => BuildWalletCardSnapshot(x.CardId)!)
             .ToArray();
+        var allCards = _cards.Values
+            .Where(x => x.MerchantId == merchantId)
+            .Select(x => BuildWalletCardSnapshot(x.CardId)!)
+            .ToArray();
+        var programmeSummaries = merchantProgrammes
+            .Select(programme =>
+            {
+                var programmeCards = allCards.Where(card => card.ProgrammeId == programme.ProgrammeId).ToArray();
+                return new ProgrammeSummarySnapshot(
+                    programme.ProgrammeId,
+                    BuildRewardHeadline(programme.RewardThreshold, programme.RewardItemLabel),
+                    programme.RewardItemLabel,
+                    programme.RewardThreshold,
+                    programme.StartsOn,
+                    programme.EndsOn,
+                    programme.JoinCode,
+                    programmeCards.Length,
+                    programmeCards.Count(card => card.RewardState == RewardState.Unlocked));
+            })
+            .ToArray();
         var timeline = _timeline
-            .Where(x => cards.Any(card => x.Summary.Contains(card.CardCode, StringComparison.OrdinalIgnoreCase)) || x.Summary.Contains(merchant.DisplayName, StringComparison.OrdinalIgnoreCase))
+            .Where(x =>
+                selectedCards.Any(card => x.Summary.Contains(card.CardCode, StringComparison.OrdinalIgnoreCase))
+                || x.Summary.Contains(merchant.DisplayName, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.OccurredAtUtc)
             .Take(12)
             .ToArray();
@@ -465,9 +563,15 @@ public sealed class DemoPlatformState(
         return new MerchantWorkspaceSnapshot(
             ToMerchantSnapshot(merchant),
             ToBrandSnapshot(brand),
-            ToProgrammeSnapshot(programme),
-            joinUrl,
-            cards,
+            BuildSetupChecklist(merchant, brand, programmeSummaries),
+            new MerchantInsightsSnapshot(
+                programmeSummaries.Length,
+                allCards.Length,
+                allCards.Count(card => card.RewardState == RewardState.Unlocked)),
+            programmeSummaries,
+            ToProgrammeSnapshot(selectedProgramme),
+            selectedJoinUrl,
+            selectedCards,
             timeline);
     }
 
@@ -492,6 +596,8 @@ public sealed class DemoPlatformState(
             brand.LogoUrl,
             programme.RewardItemLabel,
             programme.RewardCopy,
+            programme.StartsOn,
+            programme.EndsOn,
             brand.PrimaryColor,
             brand.AccentColor,
             brand.LogoWidth,
@@ -513,13 +619,56 @@ public sealed class DemoPlatformState(
     }
 
     private MerchantAccountSnapshot ToMerchantSnapshot(MerchantAccount merchant) =>
-        new(merchant.MerchantId, merchant.DisplayName, merchant.ContactEmail, merchant.CreatedAtUtc);
+        new(merchant.MerchantId, merchant.DisplayName, merchant.TownOrCity, merchant.Postcode, merchant.ContactEmail, merchant.CreatedAtUtc);
 
     private BrandProfileSnapshot ToBrandSnapshot(BrandProfile brand) =>
         new(brand.LogoUrl, brand.PrimaryColor, brand.AccentColor, brand.LogoWidth, brand.LogoHeight);
 
     private LoyaltyProgrammeSnapshot ToProgrammeSnapshot(LoyaltyProgramme programme) =>
-        new(programme.ProgrammeId, programme.RewardItemLabel, programme.RewardThreshold, programme.RewardCopy, programme.JoinCode);
+        new(programme.ProgrammeId, programme.RewardItemLabel, programme.RewardThreshold, programme.RewardCopy, programme.StartsOn, programme.EndsOn, programme.JoinCode);
+
+    private MerchantSetupChecklistSnapshot BuildSetupChecklist(
+        MerchantAccount merchant,
+        BrandProfile brand,
+        IReadOnlyList<ProgrammeSummarySnapshot> programmeSummaries) =>
+        new(
+            !string.IsNullOrWhiteSpace(merchant.DisplayName)
+            && !string.IsNullOrWhiteSpace(merchant.TownOrCity)
+            && !string.IsNullOrWhiteSpace(merchant.Postcode)
+            && !string.IsNullOrWhiteSpace(merchant.ContactEmail),
+            !string.IsNullOrWhiteSpace(brand.LogoUrl)
+            && !string.IsNullOrWhiteSpace(brand.PrimaryColor)
+            && !string.IsNullOrWhiteSpace(brand.AccentColor),
+            programmeSummaries.Count > 0,
+            programmeSummaries.Any(summary => !string.IsNullOrWhiteSpace(summary.JoinCode)));
+
+    private static string BuildRewardCopy(int rewardThreshold, string rewardItemLabel) =>
+        $"Buy {rewardThreshold} {rewardItemLabel}, get one free.";
+
+    private static string BuildRewardHeadline(int rewardThreshold, string rewardItemLabel) =>
+        $"Buy {rewardThreshold} {rewardItemLabel}, get one free";
+
+    private LoyaltyProgramme BuildStarterProgramme(Guid merchantId, DateTimeOffset configuredAtUtc)
+    {
+        var startsOn = DateOnly.FromDateTime(configuredAtUtc.UtcDateTime.Date);
+        var endsOn = startsOn.AddDays(StarterProgrammeDurationDays);
+
+        return new LoyaltyProgramme(
+            Guid.NewGuid(),
+            merchantId,
+            StarterRewardItemLabel,
+            StarterRewardThreshold,
+            BuildRewardCopy(StarterRewardThreshold, StarterRewardItemLabel),
+            startsOn,
+            endsOn,
+            $"join-{Guid.NewGuid():N}"[..13],
+            configuredAtUtc);
+    }
+
+    private static DateOnly GetTodayUtc() => DateOnly.FromDateTime(DateTime.UtcNow);
+
+    private static bool IsProgrammeActiveOn(LoyaltyProgramme programme, DateOnly onDate) =>
+        onDate >= programme.StartsOn && onDate <= programme.EndsOn;
 
     private void AppendEvent(Fic.BuildingBlocks.DomainEvent domainEvent, string summary)
     {

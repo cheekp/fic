@@ -1,0 +1,102 @@
+@page "/portal/signup/billing/{MerchantId:guid}"
+@using System.ComponentModel.DataAnnotations
+@inject DemoPlatformState PlatformState
+@inject NavigationManager Navigation
+
+<PageTitle>Billing Setup</PageTitle>
+
+@if (_workspace is null)
+{
+    <section class="empty-state">
+        <h2>Shop setup not found.</h2>
+        <p>The shop may not exist in the current demo instance.</p>
+        <a class="button button--primary" href="/portal/signup">Back to shop signup</a>
+    </section>
+}
+else
+{
+    <section class="panel signup-panel">
+        <div class="panel__header">
+            <div>
+                <p class="eyebrow">Step 2 of 2</p>
+                <h2>Confirm billing for @_workspace.Merchant.DisplayName</h2>
+                <p class="lede">This is a demo billing step before the merchant lands in the workspace.</p>
+            </div>
+        </div>
+
+        <EditForm Model="_form" OnValidSubmit="HandleSubmit" FormName="mock-billing" class="form-stack">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
+
+            <div class="form-grid">
+                <label class="field">
+                    <span>Plan</span>
+                    <InputSelect @bind-Value="_form.Plan" class="input">
+                        <option value="founding">Founding coffee shop</option>
+                        <option value="growth">Growth coffee shop</option>
+                    </InputSelect>
+                </label>
+
+                <label class="field">
+                    <span>Billing email</span>
+                    <InputText @bind-Value="_form.BillingEmail" class="input" />
+                </label>
+
+                <label class="field">
+                    <span>Cardholder name</span>
+                    <InputText @bind-Value="_form.CardholderName" class="input" />
+                </label>
+
+                <label class="field">
+                    <span>Card number</span>
+                    <InputText @bind-Value="_form.CardNumber" class="input" />
+                </label>
+            </div>
+
+            <p class="field-hint">Shop: @_workspace.Merchant.DisplayName, @_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
+
+            <div class="form-actions">
+                <button class="button button--primary" type="submit">Continue to Workspace</button>
+                <a class="button button--ghost" href="/portal/signup">Back to shop signup</a>
+            </div>
+        </EditForm>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public Guid MerchantId { get; set; }
+
+    private MerchantWorkspaceSnapshot? _workspace;
+    private readonly BillingFormModel _form = new();
+
+    protected override void OnParametersSet()
+    {
+        _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri);
+        if (_workspace is not null)
+        {
+            _form.BillingEmail = _workspace.Merchant.ContactEmail;
+            _form.CardholderName = _workspace.Merchant.DisplayName;
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        Navigation.NavigateTo($"/portal/merchant/{MerchantId}?tab=brand");
+    }
+
+    private sealed class BillingFormModel
+    {
+        [Required]
+        public string Plan { get; set; } = "founding";
+
+        [Required, EmailAddress]
+        public string BillingEmail { get; set; } = "owner@joscoffee.test";
+
+        [Required, StringLength(80)]
+        public string CardholderName { get; set; } = "Jo's Coffee";
+
+        [Required, StringLength(24)]
+        public string CardNumber { get; set; } = "4242 4242 4242 4242";
+    }
+}

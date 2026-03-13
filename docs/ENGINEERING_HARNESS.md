@@ -47,9 +47,11 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 - `docs/rfcs/`
   - decision proposals and records
 - `docs/plans/`
-  - active or archived delivery planning
+  - delivery status and sequencing
+  - this is where `active`, `planned`, and `completed` live
 - `docs/specs/`
   - slice requirements and acceptance criteria
+  - specs are not a status board
 - `scripts/`
   - validator and workflow helpers tied to slices
 
@@ -57,11 +59,25 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 
 1. Start from business intent or a concrete founder need.
 2. Update architecture or RFC material if the slice changes product or system shape.
-3. Write or revise the slice spec in `docs/specs/<slice>/`.
-4. Implement the minimum code needed for the slice.
-5. Add or update a repo validator script for that slice.
-6. Prove the slice with the validator before handing it off.
-7. Update harness or runbooks if the working method has changed.
+3. Make sure the slice is represented in `docs/plans/` with the right status.
+4. Write or revise the slice spec in `docs/specs/<slice>/`.
+5. Implement the minimum code needed for the slice.
+6. Add or update a repo validator script for that slice.
+7. Add targeted automated tests for domain/state-heavy behavior when the slice introduces meaningful logic.
+8. Prove the slice with the validator before handing it off.
+9. Move the plan record when the slice status changes, and update harness or runbooks if the working method has changed.
+
+## Plan Vs Spec
+
+- `plans` own workflow status
+  - use `active/`, `planned/`, and `completed/` there
+  - if you prefer the word `open`, treat current `planned/` as that concept unless we do a repo-wide rename
+- `specs` own implementation detail for a slice
+  - one slice folder per implemented or implementation-ready slice
+  - do not add `active/`, `open/`, or `completed/` folders under `docs/specs/`
+- a spec can stay in place after the slice lands
+  - it becomes the historical contract for what was built
+  - status still belongs to the corresponding plan record, PR, and merge state
 
 ## Invariants
 
@@ -139,6 +155,8 @@ Current high-value local loops:
 
 - validator-first:
   - run the slice validator before claiming a slice is done
+- targeted test loop:
+  - run the focused xUnit suite for state-heavy behavior before trusting UI-only changes
 - direct web preview:
   - run the Blazor app with the local profile for browser and LAN demos
 - wallet demo:
@@ -152,6 +170,10 @@ Current high-value local loops:
 - avoid duplicating architecture decisions inside specs
 - avoid burying business assumptions inside code comments or UI copy
 - prefer one current doc per concern over multiple partially-correct versions
+- keep only one active plan at a time unless we intentionally decide to run stacked slices
+- avoid creating a spec until the slice is concrete enough to build in the current horizon
+- if a spec becomes abandoned before implementation, either delete it or fold the intent back into architecture or plans
+- before starting a new slice, prune stale placeholders, old screenshots, and validator text that no longer describe the product truth
 
 ## Review Triggers
 

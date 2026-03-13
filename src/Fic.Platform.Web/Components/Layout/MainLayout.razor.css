@@ -73,6 +73,23 @@
     padding: 0.2rem 0 1rem;
 }
 
+.merchant-shell-bar__menu {
+    display: none;
+    width: 2.4rem;
+    min-width: 2.4rem;
+    padding: 0;
+    gap: 0.2rem;
+    flex-direction: column;
+}
+
+.merchant-shell-bar__menu span {
+    display: block;
+    width: 0.95rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
 .merchant-shell-bar__powered {
     display: inline-flex;
     align-items: center;
@@ -90,6 +107,57 @@
     flex-wrap: wrap;
     gap: 0.6rem;
     align-items: center;
+}
+
+.loyalty-agent {
+    position: fixed;
+    right: clamp(1rem, 2vw, 1.6rem);
+    bottom: clamp(1rem, 2vw, 1.6rem);
+    z-index: 20;
+    display: grid;
+    justify-items: end;
+    gap: 0.75rem;
+}
+
+.loyalty-agent__panel {
+    width: min(24rem, calc(100vw - 2rem));
+    padding: 1rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface-strong) 92%, white 8%);
+    box-shadow: 0 22px 44px var(--brand-shadow);
+}
+
+.loyalty-agent__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+}
+
+.loyalty-agent__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.loyalty-agent__launcher {
+    width: 3.15rem;
+    min-width: 3.15rem;
+    height: 3.15rem;
+    min-height: 3.15rem;
+    padding: 0;
+    border-radius: 999px;
+    display: inline-grid;
+    place-items: center;
+    box-shadow: 0 18px 36px var(--brand-shadow);
+}
+
+.loyalty-agent__glyph {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .shell__header {
@@ -289,8 +357,8 @@
     }
 
     .merchant-shell-bar {
-        flex-direction: column;
-        align-items: start;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .shell__header::after {
@@ -308,10 +376,45 @@
 }
 
 @media (max-width: 760px) {
+    .merchant-shell-bar {
+        align-items: start;
+        gap: 0.7rem;
+    }
+
+    .merchant-shell-bar__menu {
+        display: inline-flex;
+        align-self: end;
+    }
+
+    .merchant-shell-bar__actions {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .merchant-shell-bar__actions--open {
+        display: flex;
+    }
+
     .shell__header-meta,
     .shell__compact-meta {
         flex-direction: column;
         align-items: start;
+    }
+
+    .loyalty-agent {
+        right: 0.75rem;
+        left: 0.75rem;
+        justify-items: stretch;
+    }
+
+    .loyalty-agent__panel {
+        width: auto;
+    }
+
+    .loyalty-agent__launcher {
+        width: 100%;
     }
 }
 

@@ -1,0 +1,58 @@
+@page "/account/login"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Log In</PageTitle>
+
+<section class="panel account-panel">
+    <div class="panel__header">
+        <div>
+            <p class="eyebrow">Account access</p>
+            <h2>Log in to your shop</h2>
+            <p class="lede">Standard account entry for merchants. Authentication is still a stub in this internal MVP.</p>
+        </div>
+    </div>
+
+    <EditForm Model="_form" OnValidSubmit="HandleSubmit" FormName="log-in" class="form-stack">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="validation-summary" />
+
+        <div class="form-grid">
+            <label class="field">
+                <span>Email</span>
+                <InputText @bind-Value="_form.Email" class="input" />
+            </label>
+
+            <label class="field">
+                <span>Password</span>
+                <InputText @bind-Value="_form.Password" class="input" type="password" />
+            </label>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <p class="field-hint">@_message</p>
+        }
+
+        <div class="form-actions">
+            <button class="button button--primary" type="submit">Log In</button>
+            <a class="button button--ghost" href="/account/forgot-password">Forgot password?</a>
+        </div>
+    </EditForm>
+</section>
+
+@code {
+    private readonly LoginFormModel _form = new();
+    private string? _message;
+
+    private void HandleSubmit() =>
+        _message = "Authentication is not wired in this slice yet. This page is the standard merchant login stub.";
+
+    private sealed class LoginFormModel
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = "owner@joscoffee.test";
+
+        [Required]
+        public string Password { get; set; } = "password";
+    }
+}

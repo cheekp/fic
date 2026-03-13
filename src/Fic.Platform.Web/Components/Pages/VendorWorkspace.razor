@@ -9,12 +9,12 @@
 @inject IAppleWalletPassService WalletPasses
 @inject MerchantBrandPresentationService BrandPresentation
 
-<PageTitle>Merchant Workspace</PageTitle>
+<PageTitle>Your Loyalty Programme</PageTitle>
 
 @if (_workspace is null)
 {
     <section class="empty-state">
-        <h2>Merchant workspace not found.</h2>
+        <h2>Shop area not found.</h2>
         <p>The merchant account may not exist in the current demo instance.</p>
         <a class="button button--primary" href="/">Back to FIC Home</a>
     </section>
@@ -23,86 +23,79 @@ else
 {
     var workspaceTheme = BrandPresentation.Build(_workspace.BrandProfile);
     var brandPreviewTheme = BuildBrandPreviewTheme();
+    var selectedProgrammeSummary = SelectedProgrammeSummary;
 
     <div class="workspace-stage @workspaceTheme.ThemeClass" style="@workspaceTheme.CssVariables">
         <section class="workspace-header">
             <div class="workspace-brand">
                 <div class="brand-lockup brand-lockup--merchant">
-                    <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_brandForm.DisplayName logo" />
+                    <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName logo" />
                 </div>
                 <div class="workspace-brand__copy">
-                    <p class="eyebrow">Merchant workspace</p>
+                    <p class="eyebrow">Your shop</p>
                     <h2>@_workspace.Merchant.DisplayName</h2>
-                    <p class="lede">Manage your brand, loyalty card template, and issued customer passes from one place.</p>
+                    <p class="field-hint">@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
+                    <p class="lede">Run the shop, manage loyalty cards, and view customer activity from one merchant-owned area.</p>
                 </div>
             </div>
-            <div class="workspace-actions">
-                <span class="chip chip--accent">@BuildRewardHeadline(_workspace.Programme.RewardThreshold, _workspace.Programme.RewardItemLabel)</span>
-                <span class="chip @(WalletCapability.SupportsAppleWalletPass ? "chip--success" : string.Empty)">
-                    @(WalletCapability.SupportsAppleWalletPass ? "Signed Apple Wallet ready" : "Preview fallback")
-                </span>
-                <a class="button button--secondary" href="@_workspace.JoinUrl" target="_blank">Open Customer Join</a>
-            </div>
-        </section>
-
-        <section class="metrics-grid workspace-summary-grid">
-            <article class="metric-card">
-                <span class="metric-card__label">Brand</span>
-                <strong class="metric-card__value">@(string.IsNullOrWhiteSpace(_workspace.BrandProfile.LogoUrl) ? "Pending" : "Ready")</strong>
-                <p class="metric-card__copy">Business name, logo, and site colours live in the workspace brand profile.</p>
-            </article>
-            <article class="metric-card">
-                <span class="metric-card__label">Card Template</span>
-                <strong class="metric-card__value">@_workspace.Programme.RewardThreshold</strong>
-                <p class="metric-card__copy">@_workspace.Programme.RewardItemLabel before reward. Wallet cards inherit this template by default.</p>
-            </article>
-            <article class="metric-card">
-                <span class="metric-card__label">Customers</span>
-                <strong class="metric-card__value">@_workspace.Cards.Count</strong>
-                <p class="metric-card__copy">Issued customer cards currently enrolled in this merchant programme.</p>
-            </article>
-            <article class="metric-card">
-                <span class="metric-card__label">Unlocked</span>
-                <strong class="metric-card__value">@_workspace.Cards.Count(x => x.RewardState == RewardState.Unlocked)</strong>
-                <p class="metric-card__copy">Rewards currently available to redeem from the scanned customer cards.</p>
-            </article>
+            @if (WalletCapability.SupportsAppleWalletPass)
+            {
+                <div class="workspace-actions">
+                    <span class="chip chip--success">Signed Apple Wallet ready</span>
+                </div>
+            }
         </section>
 
         <nav class="workspace-tabs" aria-label="Workspace sections">
-            <a class="workspace-tabs__item @(IsTab("brand") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("brand")">Brand</a>
-            <a class="workspace-tabs__item @(IsTab("card") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("card")">Loyalty Card</a>
+            <a class="workspace-tabs__item @(IsTab("shop") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("shop")">Shop</a>
+            <a class="workspace-tabs__item @(IsTab("cards") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("cards")">Loyalty Cards</a>
             <a class="workspace-tabs__item @(IsTab("customers") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("customers")">Customers</a>
+            <a class="workspace-tabs__item @(IsTab("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("insights")">Insights</a>
         </nav>
 
-        @if (IsTab("brand"))
+        @if (IsTab("shop"))
         {
             <section class="workspace-detail-grid">
                 <article class="panel">
                     <div class="panel__header">
                         <div>
-                            <p class="eyebrow">Brand profile</p>
-                            <h3>Make this workspace feel like the merchant</h3>
+                            <p class="eyebrow">Shop details</p>
+                            <h3>Edit your shop</h3>
                         </div>
-                        <span class="chip">Site-level brand</span>
                     </div>
-                    <EditForm Model="_brandForm" OnValidSubmit="HandleBrandSaveAsync" FormName="update-workspace-brand" class="form-stack">
+                    <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="validation-summary" />
 
                         <div class="form-grid">
                             <label class="field">
-                                <span>Business name</span>
-                                <InputText @bind-Value="_brandForm.DisplayName" class="input" />
+                                <span>Coffee shop name</span>
+                                <InputText @bind-Value="_shopForm.DisplayName" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Owner email</span>
+                                <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Town or city</span>
+                                <InputText @bind-Value="_shopForm.TownOrCity" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Postcode</span>
+                                <InputText @bind-Value="_shopForm.Postcode" class="input" />
                             </label>
 
                             <label class="field">
                                 <span>Site primary colour</span>
-                                <InputText @bind-Value="_brandForm.PrimaryColor" class="input" />
+                                <InputText @bind-Value="_shopForm.PrimaryColor" class="input" />
                             </label>
 
                             <label class="field">
                                 <span>Site accent colour</span>
-                                <InputText @bind-Value="_brandForm.AccentColor" class="input" />
+                                <InputText @bind-Value="_shopForm.AccentColor" class="input" />
                             </label>
 
                             <div class="field field--full">
@@ -114,126 +107,284 @@ else
                             </div>
                         </div>
 
-                        @if (!string.IsNullOrWhiteSpace(_brandMessage))
+                        @if (!string.IsNullOrWhiteSpace(_shopMessage))
                         {
-                            <p class="field-hint">@_brandMessage</p>
+                            <p class="field-hint">@_shopMessage</p>
                         }
 
                         <div class="form-actions">
-                            <button class="button button--primary" type="submit" disabled="@_isSavingBrand">Save Brand Profile</button>
+                            <button class="button button--primary" type="submit" disabled="@_isSavingShop">Save Shop</button>
                         </div>
                     </EditForm>
                 </article>
 
-                <article class="panel workspace-preview-panel @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
-                    <div class="panel__header">
-                        <div>
-                            <p class="eyebrow">Workspace preview</p>
-                            <h3>@_brandForm.DisplayName</h3>
+                <div class="workspace-stack">
+                    <article class="panel">
+                        <div class="panel__header">
+                            <div>
+                                <p class="eyebrow">Setup checklist</p>
+                                <h3>Completed setup</h3>
+                            </div>
                         </div>
-                        <span class="chip chip--accent">Merchant site first</span>
-                    </div>
-                    <div class="workspace-preview-card">
-                        <div class="brand-lockup brand-lockup--merchant">
-                            <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_brandForm.DisplayName logo preview" />
+                        <div class="checklist">
+                            <div class="checklist__item">
+                                <span>Shop details</span>
+                                <span class="chip @(_workspace.SetupChecklist.ShopDetailsComplete ? "chip--success" : string.Empty)">
+                                    @(_workspace.SetupChecklist.ShopDetailsComplete ? "Complete" : "Pending")
+                                </span>
+                            </div>
+                            <div class="checklist__item">
+                                <span>Branding</span>
+                                <span class="chip @(_workspace.SetupChecklist.BrandComplete ? "chip--success" : string.Empty)">
+                                    @(_workspace.SetupChecklist.BrandComplete ? "Complete" : "Pending")
+                                </span>
+                            </div>
+                            <div class="checklist__item">
+                                <span>Loyalty card created</span>
+                                <span class="chip @(_workspace.SetupChecklist.HasAnyProgramme ? "chip--success" : string.Empty)">
+                                    @(_workspace.SetupChecklist.HasAnyProgramme ? "Complete" : "Pending")
+                                </span>
+                            </div>
+                            <div class="checklist__item">
+                                <span>Customer join ready</span>
+                                <span class="chip @(_workspace.SetupChecklist.JoinReady ? "chip--success" : string.Empty)">
+                                    @(_workspace.SetupChecklist.JoinReady ? "Ready" : "Pending")
+                                </span>
+                            </div>
                         </div>
-                        <div>
-                            <p class="field-hint">The merchant workspace owns the brand. The wallet card inherits this logo and palette by default.</p>
-                            <p class="workspace-preview-copy">@BuildRewardHeadline(_cardForm.RewardThreshold, _cardForm.RewardItemLabel)</p>
+                    </article>
+
+                    <article class="panel workspace-preview-panel @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
+                        <div class="panel__header">
+                            <div>
+                                <p class="eyebrow">Shop preview</p>
+                                <h3>@_shopForm.DisplayName</h3>
+                            </div>
+                            <span class="chip chip--accent">Cards inherit this brand</span>
                         </div>
-                    </div>
-                </article>
+                        <div class="workspace-preview-card">
+                            <div class="brand-lockup brand-lockup--merchant">
+                                <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName logo preview" />
+                            </div>
+                            <div>
+                                <p class="field-hint">The shop brand is the source of truth. Each loyalty card inherits this look by default.</p>
+                                <p class="workspace-preview-copy">@selectedProgrammeSummary.RewardHeadline</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
             </section>
         }
-        else if (IsTab("card"))
+        else if (IsTab("cards"))
+        {
+            <section class="workspace-detail-grid workspace-detail-grid--card-editor">
+                <article class="panel">
+                    <div class="panel__header">
+                        <div>
+                            <p class="eyebrow">Loyalty cards</p>
+                            <h3>Manage programmes</h3>
+                        </div>
+                        <button class="button button--secondary" type="button" @onclick="HandleCreateProgrammeAsync">Add Loyalty Card</button>
+                    </div>
+                    <div class="programme-list">
+                        @foreach (var programme in _workspace.Programmes)
+                        {
+                            <a class="programme-list__item @(programme.ProgrammeId == _workspace.SelectedProgramme.ProgrammeId ? "programme-list__item--active" : string.Empty)"
+                               href="@GetProgrammeUrl(programme.ProgrammeId)">
+                                <div>
+                                    <p class="eyebrow">Loyalty card</p>
+                                    <h4>@programme.RewardHeadline</h4>
+                                    <p class="field-hint">@programme.StartsOn.ToString("dd MMM yyyy") to @programme.EndsOn.ToString("dd MMM yyyy")</p>
+                                </div>
+                                <div class="programme-list__meta">
+                                    <span>@programme.ActiveCards active</span>
+                                    <span>@programme.RewardsUnlocked unlocked</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </article>
+
+                <div class="workspace-stack">
+                    <article class="panel">
+                        <div class="panel__header">
+                            <div>
+                                <p class="eyebrow">Selected loyalty card</p>
+                                <h3>Configure the programme</h3>
+                            </div>
+                            <span class="chip">@BuildProgrammeWindowBadge(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn)</span>
+                        </div>
+                        <EditForm Model="_cardForm" OnValidSubmit="HandleCardSaveAsync" FormName="update-card-template" class="form-stack">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="validation-summary" />
+
+                            <div class="form-grid">
+                                <label class="field">
+                                    <span>Reward item</span>
+                                    <InputText @bind-Value="_cardForm.RewardItemLabel" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Visits before reward</span>
+                                    <InputNumber @bind-Value="_cardForm.RewardThreshold" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Begins on</span>
+                                    <InputDate @bind-Value="_cardForm.StartsOn" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Expires on</span>
+                                    <InputDate @bind-Value="_cardForm.EndsOn" class="input" />
+                                </label>
+
+                                <label class="field field--full">
+                                    <span>Wallet card copy</span>
+                                    <InputText @bind-Value="_cardForm.RewardCopy" class="input" />
+                                </label>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(_cardMessage))
+                            {
+                                <p class="field-hint">@_cardMessage</p>
+                            }
+
+                            <p class="field-hint">Cards can only be joined and stamped between the begin and expiry dates.</p>
+
+                            <div class="form-actions">
+                                <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Loyalty Card</button>
+                                @if (SelectedProgrammeIsActive)
+                                {
+                                    <a class="button button--secondary" href="@_workspace.SelectedJoinUrl" target="_blank">Open Customer Join</a>
+                                }
+                                else
+                                {
+                                    <button class="button button--secondary" type="button" disabled>Open Customer Join</button>
+                                }
+                            </div>
+                        </EditForm>
+                    </article>
+
+                    <article class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
+                        <header class="wallet-pass__header">
+                            <div>
+                                <p class="wallet-pass__label">Wallet card preview</p>
+                                <h2>@_shopForm.DisplayName</h2>
+                            </div>
+                            <div class="wallet-pass__mark">
+                                <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName wallet logo" />
+                            </div>
+                        </header>
+
+                        <div class="wallet-pass__body">
+                            <div>
+                                <p class="wallet-pass__copy">@_cardForm.RewardCopy</p>
+                                <p class="wallet-pass__progress">2/@_cardForm.RewardThreshold</p>
+                                <p class="field-hint">Valid @FormatDate(_cardForm.StartsOn) to @FormatDate(_cardForm.EndsOn)</p>
+                            </div>
+                            <div class="stamp-track" aria-label="wallet template preview">
+                                @for (var i = 0; i < _cardForm.RewardThreshold; i++)
+                                {
+                                    <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
+                                }
+                            </div>
+                            <p class="wallet-pass__status">Customer join and Wallet updates belong to this selected loyalty card.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        }
+        else if (IsTab("insights"))
         {
             <section class="workspace-detail-grid">
                 <article class="panel">
                     <div class="panel__header">
                         <div>
-                            <p class="eyebrow">Loyalty card template</p>
-                            <h3>Define what customers collect</h3>
+                            <p class="eyebrow">Shop insights</p>
+                            <h3>Across the whole shop</h3>
                         </div>
-                        <span class="chip">Inherited by wallet cards</span>
                     </div>
-                    <EditForm Model="_cardForm" OnValidSubmit="HandleCardSaveAsync" FormName="update-card-template" class="form-stack">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="validation-summary" />
-
-                        <div class="form-grid">
-                            <label class="field">
-                                <span>Reward item</span>
-                                <InputText @bind-Value="_cardForm.RewardItemLabel" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Visits before reward</span>
-                                <InputNumber @bind-Value="_cardForm.RewardThreshold" class="input" />
-                            </label>
-
-                            <label class="field field--full">
-                                <span>Wallet card copy</span>
-                                <InputText @bind-Value="_cardForm.RewardCopy" class="input" />
-                            </label>
-                        </div>
-
-                        @if (!string.IsNullOrWhiteSpace(_cardMessage))
-                        {
-                            <p class="field-hint">@_cardMessage</p>
-                        }
-
-                        <div class="form-actions">
-                            <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Card Template</button>
-                        </div>
-                    </EditForm>
+                    <div class="metrics-grid">
+                        <article class="metric-card">
+                            <span class="metric-card__label">Programmes</span>
+                            <strong class="metric-card__value">@_workspace.ShopInsights.ProgrammesCount</strong>
+                            <p class="metric-card__copy">Loyalty cards configured for this shop.</p>
+                        </article>
+                        <article class="metric-card">
+                            <span class="metric-card__label">Customers</span>
+                            <strong class="metric-card__value">@_workspace.ShopInsights.ActiveCards</strong>
+                            <p class="metric-card__copy">Customer cards currently live across every loyalty programme.</p>
+                        </article>
+                        <article class="metric-card">
+                            <span class="metric-card__label">Unlocked</span>
+                            <strong class="metric-card__value">@_workspace.ShopInsights.RewardsUnlocked</strong>
+                            <p class="metric-card__copy">Rewards available to redeem across the whole shop.</p>
+                        </article>
+                    </div>
                 </article>
 
-                <article class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
-                    <header class="wallet-pass__header">
+                <article class="panel">
+                    <div class="panel__header">
                         <div>
-                            <p class="wallet-pass__label">Wallet card template preview</p>
-                            <h2>@_brandForm.DisplayName</h2>
+                            <p class="eyebrow">Selected card insights</p>
+                            <h3>@selectedProgrammeSummary.RewardHeadline</h3>
                         </div>
-                        <div class="wallet-pass__mark">
-                            <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_brandForm.DisplayName wallet logo" />
-                        </div>
-                    </header>
-
-                    <div class="wallet-pass__body">
-                        <div>
-                            <p class="wallet-pass__copy">@_cardForm.RewardCopy</p>
-                            <p class="wallet-pass__progress">2/@_cardForm.RewardThreshold</p>
-                        </div>
-                        <div class="stamp-track" aria-label="wallet template preview">
-                            @for (var i = 0; i < _cardForm.RewardThreshold; i++)
-                            {
-                                <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
-                            }
-                        </div>
-                        <p class="wallet-pass__status">This card preview inherits the merchant site brand by default.</p>
+                        <span class="chip">Card level</span>
+                    </div>
+                    <div class="metrics-grid">
+                        <article class="metric-card">
+                            <span class="metric-card__label">Customers</span>
+                            <strong class="metric-card__value">@selectedProgrammeSummary.ActiveCards</strong>
+                            <p class="metric-card__copy">Customer cards issued from this loyalty card.</p>
+                        </article>
+                        <article class="metric-card">
+                            <span class="metric-card__label">Unlocked</span>
+                            <strong class="metric-card__value">@selectedProgrammeSummary.RewardsUnlocked</strong>
+                            <p class="metric-card__copy">Rewards currently unlocked on this loyalty card.</p>
+                        </article>
+                        <article class="metric-card">
+                            <span class="metric-card__label">Validity</span>
+                            <strong class="metric-card__value">@selectedProgrammeSummary.StartsOn.ToString("dd MMM")</strong>
+                            <p class="metric-card__copy">Runs until @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy").</p>
+                        </article>
                     </div>
                 </article>
             </section>
         }
         else
         {
-            <section class="workspace-grid">
+            <section class="workspace-detail-grid">
                 <article class="panel">
                     <div class="panel__header">
                         <div>
-                            <p class="eyebrow">Customer signup</p>
-                            <h3>Your join QR</h3>
+                            <p class="eyebrow">Customer join</p>
+                            <h3>@selectedProgrammeSummary.RewardHeadline</h3>
                         </div>
-                        <span class="chip">Poster or counter card</span>
+                        <span class="chip">Card specific</span>
                     </div>
                     <div class="qr-panel">
                         <div class="qr-panel__graphic">
                             @((MarkupString)_joinQrSvg)
                         </div>
                         <div class="qr-panel__meta">
-                            <p>Customers scan this from their own phone, complete the short web join, and save the card to Apple Wallet.</p>
-                            <p class="field-hint">@WalletCapability.HelperText</p>
-                            <code>@_workspace.JoinUrl</code>
+                            <p>Customers scan this QR for the selected loyalty card, then keep progress in Apple Wallet.</p>
+                            <p class="field-hint">Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</p>
+                            <code>@_workspace.SelectedJoinUrl</code>
+                            @if (!SelectedProgrammeIsActive)
+                            {
+                                <p class="field-hint">@BuildProgrammeWindowMessage(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn)</p>
+                            }
+                            <div class="form-actions">
+                                @if (SelectedProgrammeIsActive)
+                                {
+                                    <a class="button button--secondary" href="@_workspace.SelectedJoinUrl" target="_blank">Open Customer Join</a>
+                                }
+                                else
+                                {
+                                    <button class="button button--secondary" type="button" disabled>Open Customer Join</button>
+                                }
+                            </div>
                         </div>
                     </div>
                 </article>
@@ -244,7 +395,7 @@ else
                             <p class="eyebrow">Till-side stamping</p>
                             <h3>Scan a customer pass</h3>
                         </div>
-                        <span class="chip">Issued customer cards</span>
+                        <span class="chip">@_workspace.SelectedProgrammeCards.Count active cards</span>
                     </div>
                     <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
                         <label class="field">
@@ -252,10 +403,14 @@ else
                             <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
                         </label>
                         <div class="form-actions">
-                            <button class="button button--primary" type="submit" disabled="@string.IsNullOrWhiteSpace(_scanCode)">Award visit</button>
+                            <button class="button button--primary" type="submit" disabled="@(!SelectedProgrammeIsActive || string.IsNullOrWhiteSpace(_scanCode))">Award visit</button>
                             <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
                         </div>
                     </EditForm>
+                    @if (!SelectedProgrammeIsActive)
+                    {
+                        <p class="field-hint">@BuildProgrammeWindowMessage(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn)</p>
+                    }
                     @if (!string.IsNullOrWhiteSpace(_scanMessage))
                     {
                         <p class="field-hint">@_scanMessage</p>
@@ -263,30 +418,23 @@ else
                 </article>
             </section>
 
-            <section class="section-header">
-                <div>
-                    <p class="eyebrow">Issued customer cards</p>
-                    <h3>Manage enrolled passes</h3>
-                </div>
-                <span class="chip">@_workspace.Cards.Count active cards</span>
-            </section>
-
-            @if (_workspace.Cards.Count == 0)
+            @if (_workspace.SelectedProgrammeCards.Count == 0)
             {
                 <section class="empty-state">
                     <h4>No customer cards issued yet.</h4>
-                    <p>Share the join QR first. Once someone joins and saves the card, their pass and progress will appear here.</p>
+                    <p>Share the join QR for this selected loyalty card first. Once someone joins, their pass and progress will appear here.</p>
                 </section>
             }
             else
             {
                 <section class="card-list">
-                    @foreach (var card in _workspace.Cards)
+                    @foreach (var card in _workspace.SelectedProgrammeCards)
                     {
                         <article class="card-row">
                             <div>
                                 <p class="eyebrow">Issued customer card</p>
                                 <h4>@card.ProgressDisplayText</h4>
+                                <p class="field-hint">Valid @FormatDate(card.StartsOn) to @FormatDate(card.EndsOn)</p>
                                 <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
                             </div>
                             <div class="card-row__meta">
@@ -308,9 +456,8 @@ else
                 <div class="panel__header">
                     <div>
                         <p class="eyebrow">Recent activity</p>
-                        <h3>What changed across issued cards</h3>
+                        <h3>Selected loyalty card timeline</h3>
                     </div>
-                    <span class="chip">Shared card state</span>
                 </div>
                 <div class="timeline">
                     @foreach (var entry in _workspace.Timeline)
@@ -337,15 +484,18 @@ else
     [SupplyParameterFromQuery(Name = "tab")]
     public string? Tab { get; set; }
 
+    [SupplyParameterFromQuery(Name = "programme")]
+    public Guid? ProgrammeId { get; set; }
+
     private MerchantWorkspaceSnapshot? _workspace;
     private string _joinQrSvg = string.Empty;
     private string _scanCode = string.Empty;
     private string? _scanMessage;
-    private string? _brandMessage;
+    private string? _shopMessage;
     private string? _cardMessage;
-    private bool _isSavingBrand;
+    private bool _isSavingShop;
     private bool _isSavingCard;
-    private readonly WorkspaceBrandForm _brandForm = new();
+    private readonly ShopForm _shopForm = new();
     private readonly CardTemplateForm _cardForm = new();
     private byte[]? _pendingLogoUploadBytes;
     private string? _pendingLogoPreviewUri;
@@ -353,6 +503,10 @@ else
     private MerchantLogoMetadata _pendingLogoMetadata = new(160, 160);
 
     private WalletPassCapability WalletCapability => WalletPasses.GetCapability();
+    private ProgrammeSummarySnapshot SelectedProgrammeSummary =>
+        _workspace!.Programmes.First(x => x.ProgrammeId == _workspace.SelectedProgramme.ProgrammeId);
+    private bool SelectedProgrammeIsActive =>
+        _workspace is not null && IsProgrammeActiveOn(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn);
 
     protected override void OnInitialized()
     {
@@ -366,17 +520,24 @@ else
 
     private void LoadWorkspace(bool refreshForms)
     {
-        _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri);
-        _joinQrSvg = _workspace is null ? string.Empty : QrCodes.RenderSvg(_workspace.JoinUrl);
+        _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri, ProgrammeId);
+        _joinQrSvg = _workspace is null ? string.Empty : QrCodes.RenderSvg(_workspace.SelectedJoinUrl);
 
         if (_workspace is not null && refreshForms)
         {
-            _brandForm.DisplayName = _workspace.Merchant.DisplayName;
-            _brandForm.PrimaryColor = _workspace.BrandProfile.PrimaryColor;
-            _brandForm.AccentColor = _workspace.BrandProfile.AccentColor;
-            _cardForm.RewardItemLabel = _workspace.Programme.RewardItemLabel;
-            _cardForm.RewardThreshold = _workspace.Programme.RewardThreshold;
-            _cardForm.RewardCopy = _workspace.Programme.RewardCopy;
+            _shopForm.DisplayName = _workspace.Merchant.DisplayName;
+            _shopForm.TownOrCity = _workspace.Merchant.TownOrCity;
+            _shopForm.Postcode = _workspace.Merchant.Postcode;
+            _shopForm.ContactEmail = _workspace.Merchant.ContactEmail;
+            _shopForm.PrimaryColor = _workspace.BrandProfile.PrimaryColor;
+            _shopForm.AccentColor = _workspace.BrandProfile.AccentColor;
+
+            _cardForm.RewardItemLabel = _workspace.SelectedProgramme.RewardItemLabel;
+            _cardForm.RewardThreshold = _workspace.SelectedProgramme.RewardThreshold;
+            _cardForm.RewardCopy = _workspace.SelectedProgramme.RewardCopy;
+            _cardForm.StartsOn = _workspace.SelectedProgramme.StartsOn;
+            _cardForm.EndsOn = _workspace.SelectedProgramme.EndsOn;
+
             _pendingLogoUploadBytes = null;
             _pendingLogoPreviewUri = null;
             _pendingLogoFileName = "logo.png";
@@ -386,8 +547,8 @@ else
 
     private MerchantThemeView BuildBrandPreviewTheme() =>
         BrandPresentation.BuildPreview(
-            NormalizeColor(_brandForm.PrimaryColor),
-            NormalizeColor(_brandForm.AccentColor),
+            NormalizeColor(_shopForm.PrimaryColor),
+            NormalizeColor(_shopForm.AccentColor),
             _pendingLogoMetadata.Width,
             _pendingLogoMetadata.Height);
 
@@ -395,14 +556,29 @@ else
 
     private string GetActiveTab() => NormalizeTab(Tab);
 
-    private string GetTabUrl(string tab) => Navigation.GetUriWithQueryParameter("tab", tab);
+    private string GetTabUrl(string tab) =>
+        Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["tab"] = tab,
+            ["programme"] = _workspace?.SelectedProgramme.ProgrammeId
+        });
+
+    private string GetProgrammeUrl(Guid programmeId) =>
+        Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["tab"] = "cards",
+            ["programme"] = programmeId
+        });
 
     private static string NormalizeTab(string? value) => value?.Trim().ToLowerInvariant() switch
     {
-        "brand" => "brand",
-        "card" => "card",
+        "shop" => "shop",
+        "brand" => "shop",
+        "cards" => "cards",
+        "card" => "cards",
         "customers" => "customers",
-        _ => "brand"
+        "insights" => "insights",
+        _ => "shop"
     };
 
     private async Task HandleBrandLogoSelectedAsync(InputFileChangeEventArgs args)
@@ -420,7 +596,7 @@ else
             _pendingLogoMetadata = _workspace is null
                 ? new MerchantLogoMetadata(160, 160)
                 : new MerchantLogoMetadata(_workspace.BrandProfile.LogoWidth, _workspace.BrandProfile.LogoHeight);
-            _brandMessage = "Please upload a PNG logo for the merchant brand profile.";
+            _shopMessage = "Please upload a PNG logo for the shop profile.";
             return;
         }
 
@@ -433,62 +609,89 @@ else
         _pendingLogoFileName = file.Name;
         _pendingLogoPreviewUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(_pendingLogoUploadBytes)}";
         await SuggestPaletteFromLogoAsync(_pendingLogoPreviewUri);
-        _brandMessage = $"{file.Name} loaded. Suggested site colours have been updated from the logo.";
+        _shopMessage = $"{file.Name} loaded. Suggested site colours have been updated from the logo.";
     }
 
-    private async Task HandleBrandSaveAsync()
+    private async Task HandleShopSaveAsync()
     {
         if (_workspace is null)
         {
             return;
         }
 
-        _isSavingBrand = true;
+        _isSavingShop = true;
 
         try
         {
             var updated = await PlatformState.UpdateMerchantBrandAsync(
                 MerchantId,
-                _brandForm.DisplayName,
-                _brandForm.PrimaryColor,
-                _brandForm.AccentColor,
+                _shopForm.DisplayName,
+                _shopForm.TownOrCity,
+                _shopForm.Postcode,
+                _shopForm.ContactEmail,
+                _shopForm.PrimaryColor,
+                _shopForm.AccentColor,
                 _pendingLogoUploadBytes is null ? null : new MerchantLogoUpload(_pendingLogoUploadBytes, "image/png", _pendingLogoFileName),
+                _workspace.SelectedProgramme.ProgrammeId,
                 Navigation.BaseUri);
 
             if (updated is not null)
             {
-                _brandMessage = "Workspace brand updated.";
+                _shopMessage = "Shop updated.";
                 LoadWorkspace(refreshForms: true);
             }
         }
         catch (InvalidOperationException ex)
         {
-            _brandMessage = ex.Message;
+            _shopMessage = ex.Message;
         }
         finally
         {
-            _isSavingBrand = false;
+            _isSavingShop = false;
         }
+    }
+
+    private Task HandleCreateProgrammeAsync()
+    {
+        var updated = PlatformState.CreateProgramme(MerchantId, Navigation.BaseUri);
+        if (updated is not null)
+        {
+            Navigation.NavigateTo($"/portal/merchant/{MerchantId}?tab=cards&programme={updated.SelectedProgramme.ProgrammeId}");
+        }
+
+        return Task.CompletedTask;
     }
 
     private Task HandleCardSaveAsync()
     {
+        if (_workspace is null)
+        {
+            return Task.CompletedTask;
+        }
+
         _isSavingCard = true;
 
         try
         {
             var updated = PlatformState.UpdateProgramme(
                 MerchantId,
+                _workspace.SelectedProgramme.ProgrammeId,
                 _cardForm.RewardItemLabel,
                 _cardForm.RewardThreshold,
                 _cardForm.RewardCopy,
+                _cardForm.StartsOn,
+                _cardForm.EndsOn,
                 Navigation.BaseUri);
 
             if (updated is not null)
             {
-                _cardMessage = "Loyalty card template updated.";
+                _cardMessage = "Loyalty card updated.";
                 LoadWorkspace(refreshForms: true);
             }
+        }
+        catch (InvalidOperationException ex)
+        {
+            _cardMessage = ex.Message;
         }
         finally
         {
@@ -500,10 +703,15 @@ else
 
     private Task HandleAwardVisitAsync()
     {
-        var updated = PlatformState.AwardVisit(MerchantId, _scanCode, Navigation.BaseUri);
+        if (_workspace is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var updated = PlatformState.AwardVisit(MerchantId, _workspace.SelectedProgramme.ProgrammeId, _scanCode, Navigation.BaseUri);
         _scanMessage = updated is null
-            ? "That pass code does not belong to this business."
-            : $"Visit stamped. The customer card now shows {updated.Cards.First(x => x.CardCode == _scanCode.Trim()).ProgressDisplayText}.";
+            ? "That pass code does not belong to this loyalty card, or the card is outside its active dates."
+            : $"Visit stamped. The customer card now shows {updated.SelectedProgrammeCards.First(x => x.CardCode == _scanCode.Trim()).ProgressDisplayText}.";
 
         _scanCode = string.Empty;
         LoadWorkspace(refreshForms: false);
@@ -512,7 +720,12 @@ else
 
     private Task HandleRedeemAsync(Guid cardId)
     {
-        var updated = PlatformState.RedeemReward(MerchantId, cardId, Navigation.BaseUri);
+        if (_workspace is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var updated = PlatformState.RedeemReward(MerchantId, _workspace.SelectedProgramme.ProgrammeId, cardId, Navigation.BaseUri);
         _scanMessage = updated is null ? "The reward could not be marked as redeemed." : "Reward redeemed and the card has reset for the next cycle.";
         LoadWorkspace(refreshForms: false);
         return Task.CompletedTask;
@@ -537,8 +750,8 @@ else
             var palette = await JS.InvokeAsync<string[]>("ficBranding.extractPaletteFromDataUrl", logoPreviewUri);
             if (palette.Length >= 2)
             {
-                _brandForm.PrimaryColor = NormalizeColor(palette[0]);
-                _brandForm.AccentColor = NormalizeColor(palette[1]);
+                _shopForm.PrimaryColor = NormalizeColor(palette[0]);
+                _shopForm.AccentColor = NormalizeColor(palette[1]);
             }
         }
         catch (JSException)
@@ -553,6 +766,41 @@ else
     private static string BuildRewardHeadline(int rewardThreshold, string rewardItemLabel) =>
         $"Buy {rewardThreshold} {rewardItemLabel.ToLowerInvariant()}, get one free";
 
+    private static string FormatDate(DateOnly date) => date.ToString("dd MMM yyyy");
+
+    private static bool IsProgrammeActiveOn(DateOnly startsOn, DateOnly endsOn)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        return today >= startsOn && today <= endsOn;
+    }
+
+    private static string BuildProgrammeWindowBadge(DateOnly startsOn, DateOnly endsOn)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (today < startsOn)
+        {
+            return "Scheduled";
+        }
+
+        return today > endsOn ? "Expired" : "Active";
+    }
+
+    private static string BuildProgrammeWindowMessage(DateOnly startsOn, DateOnly endsOn)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (today < startsOn)
+        {
+            return $"This loyalty card opens on {FormatDate(startsOn)}.";
+        }
+
+        if (today > endsOn)
+        {
+            return $"This loyalty card expired on {FormatDate(endsOn)}.";
+        }
+
+        return $"This loyalty card is live until {FormatDate(endsOn)}.";
+    }
+
     private void HandleStateChanged() =>
         _ = InvokeAsync(() =>
         {
@@ -565,10 +813,19 @@ else
         PlatformState.Changed -= HandleStateChanged;
     }
 
-    private sealed class WorkspaceBrandForm
+    private sealed class ShopForm
     {
         [Required, StringLength(80)]
         public string DisplayName { get; set; } = string.Empty;
+
+        [Required, StringLength(60)]
+        public string TownOrCity { get; set; } = string.Empty;
+
+        [Required, StringLength(12)]
+        public string Postcode { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string ContactEmail { get; set; } = string.Empty;
 
         [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
         public string PrimaryColor { get; set; } = "#1f3731";
@@ -577,7 +834,7 @@ else
         public string AccentColor { get; set; } = "#f4c15d";
     }
 
-    private sealed class CardTemplateForm
+    private sealed class CardTemplateForm : IValidatableObject
     {
         [Required, StringLength(40)]
         public string RewardItemLabel { get; set; } = "coffees";
@@ -587,5 +844,21 @@ else
 
         [Required, StringLength(120)]
         public string RewardCopy { get; set; } = string.Empty;
+
+        [Required]
+        public DateOnly StartsOn { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+        [Required]
+        public DateOnly EndsOn { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddYears(1));
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (EndsOn < StartsOn)
+            {
+                yield return new ValidationResult(
+                    "Expiry date must be on or after the begin date.",
+                    [nameof(EndsOn)]);
+            }
+        }
     }
 }

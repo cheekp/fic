@@ -18,10 +18,22 @@ Refactor the internal demo flow so it feels like a merchant product rather than 
 
 ### Merchant Journey
 
-- `/` should behave as the FIC landing and launch surface.
+- `/` should behave as a clean FIC landing page with a single primary path into signup.
+- The home page should present:
+  - a primary `Sign Up Now` call to action
+  - the business-plan quote about value, recognition, experience, and connection
+  - a supporting hero image
+  - standard account entry links for `Log In` and `Forgot password`
 - Merchant signup should create the merchant workspace behind the scenes, but the public language should be shop-owner oriented rather than internal platform jargon.
-- Merchant signup should stay intentionally thin and defer richer brand/card editing to the workspace itself.
-- After signup, the merchant should land directly in their workspace.
+- Merchant signup should stay intentionally thin and collect only shop/account basics.
+- Merchant signup should capture at least:
+  - coffee shop name
+  - town or city
+  - postcode
+  - owner email
+- Loyalty programme or card-template fields must not be configured during merchant signup.
+- Merchant signup may create a starter default programme behind the scenes for demo speed, but richer brand/card editing must happen in the workspace itself.
+- After shop signup, the merchant should pass through a mock billing step before landing in their workspace.
 
 ### Workspace Information Architecture
 
@@ -29,6 +41,7 @@ Refactor the internal demo flow so it feels like a merchant product rather than 
   - `Brand`
   - `Loyalty Card`
   - `Customers`
+  - `Insights`
 - Brand should be the default workspace section.
 - The workspace should make it obvious that:
   - brand is the merchant-level source of truth
@@ -49,7 +62,10 @@ Refactor the internal demo flow so it feels like a merchant product rather than 
   - reward item label
   - reward threshold
   - reward copy
+  - begin date
+  - expiry date
 - The wallet card preview should reflect the current merchant brand plus the current loyalty card template.
+- Customer join and till-side stamping must respect the configured begin and expiry dates.
 - Existing demo customer cards should be adjusted to the updated template consistently enough for internal demo purposes.
 
 ### Customer Card Operations
@@ -67,7 +83,13 @@ Refactor the internal demo flow so it feels like a merchant product rather than 
 
 - `FIC` should remain the acquisition and product-level shell for home and signup.
 - The live merchant workspace should switch to a lightweight merchant-owned frame rather than a persistent left rail.
-- Platform-level concerns such as `Billing`, `Account`, and `Log Out` should be available as subtle workspace utility actions, not as dominant navigation.
+- Platform-level concerns such as `Training & Consultancy`, `Billing`, `Account`, and `Log Out` should be available as subtle workspace utility actions, not as dominant navigation.
+- A discreet floating agent launcher should be available across the site, with context-specific behavior:
+  - home and account entry routes: sales/help context
+  - signup: setup help context
+  - billing: billing help context
+  - merchant workspace: loyalty/help context
+- `Speak with Loyalty Agent` should behave like a floating support/contact surface rather than a primary page tab or dominant button.
 
 ## Non-Goals
 
