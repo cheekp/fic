@@ -16,35 +16,67 @@ public sealed class VendorWorkspaceComponentTests
     private const string FallbackLogoUrl = "data:image/svg+xml;base64,ZmFrZQ==";
 
     [Fact]
-    public async Task ShopTab_ShowsSetupChecklist()
+    public async Task ShopOverview_ShowsCollapsedRoadmapByDefault_WhenSetupIsComplete()
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "overview");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Setup checklist", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Completed setup", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Onboarding roadmap", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Show setup", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Next best step:", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task CardsTab_DoesNotShowCustomerJoinAction()
+    public async Task ShopOverview_DismissesRoadmapWhenRequested()
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "cards");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "overview");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Save Loyalty Card", cut.Markup, StringComparison.Ordinal);
+        cut.FindAll("button")
+            .Single(button => button.TextContent.Contains("Dismiss", StringComparison.Ordinal))
+            .Click();
+
+        Assert.DoesNotContain("Onboarding roadmap", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ShopEdit_ShowsShopEditorAndNotProgrammeOperations()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "edit");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Save Shop", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task CustomersTab_DisablesJoinAction_WhenProgrammeIsScheduled()
+    public async Task ProgrammesConfigure_ShowsProgrammeFormAndNotCustomerJoinAction()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "configure");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Save Programme", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesOperate_DisablesJoinAction_WhenProgrammeIsScheduled()
     {
         var state = CreateState();
         using var context = CreateContext();
@@ -63,12 +95,12 @@ public sealed class VendorWorkspaceComponentTests
             endsOn,
             BaseUri);
         Assert.NotNull(updated);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "customers", updated!.SelectedProgramme.ProgrammeId);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "operate", updated!.SelectedProgramme.ProgrammeId);
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains($"This loyalty card opens on {startsOn:dd MMM yyyy}.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains($"This programme opens on {startsOn:dd MMM yyyy}.", cut.Markup, StringComparison.Ordinal);
 
         var disabledJoinButton = cut.FindAll("button")
             .Single(button => button.TextContent.Contains("Open Customer Join", StringComparison.Ordinal));
@@ -77,7 +109,7 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
-    public async Task CustomersTab_UsesSelectedProgrammeContext()
+    public async Task ProgrammesOperate_UsesSelectedProgrammeContext()
     {
         var state = CreateState();
         using var context = CreateContext();
@@ -97,13 +129,42 @@ public sealed class VendorWorkspaceComponentTests
             BaseUri);
 
         Assert.NotNull(updatedProgramme);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "customers", updatedProgramme!.SelectedProgramme.ProgrammeId);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "operate", updatedProgramme!.SelectedProgramme.ProgrammeId);
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains(updatedProgramme.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain(workspace.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ShopInsights_ShowsShopLevelMetricsOnly()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "shop", "insights");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Across every programme in the shop", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Programme insights", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesInsights_ShowsSelectedProgrammeMetrics()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, "programmes", "insights");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Programme insights", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(workspace.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Across every programme in the shop", cut.Markup, StringComparison.Ordinal);
     }
 
     private static BunitContext CreateContext() => new();
@@ -123,13 +184,27 @@ public sealed class VendorWorkspaceComponentTests
         context.Services.AddSingleton<IAppleWalletPassService>(new FakeAppleWalletPassService());
     }
 
-    private static void NavigateToWorkspace(BunitContext context, Guid merchantId, string tab, Guid? programmeId = null)
+    private static void NavigateToWorkspace(BunitContext context, Guid merchantId, string? tab = null, string? section = null, Guid? programmeId = null)
     {
         var navigation = context.Services.GetRequiredService<NavigationManager>();
-        var query = programmeId.HasValue
-            ? $"?tab={tab}&programme={programmeId.Value}"
-            : $"?tab={tab}";
+        var queryParts = new List<string>();
 
+        if (!string.IsNullOrWhiteSpace(tab))
+        {
+            queryParts.Add($"tab={tab}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(section))
+        {
+            queryParts.Add($"section={section}");
+        }
+
+        if (programmeId.HasValue)
+        {
+            queryParts.Add($"programme={programmeId.Value}");
+        }
+
+        var query = queryParts.Count == 0 ? string.Empty : $"?{string.Join("&", queryParts)}";
         navigation.NavigateTo($"/portal/merchant/{merchantId}{query}");
     }
 
@@ -156,7 +231,7 @@ public sealed class VendorWorkspaceComponentTests
                 "Open Card Preview",
                 "Preview only for component tests.");
 
-        public Task<WalletPassPackage> CreatePackageAsync(Fic.Contracts.WalletCardSnapshot card, CancellationToken cancellationToken = default) =>
+        public Task<WalletPassPackage> CreatePackageAsync(WalletCardSnapshot card, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("Component tests do not issue Apple Wallet packages.");
     }
 
