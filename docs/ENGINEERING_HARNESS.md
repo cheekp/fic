@@ -96,6 +96,9 @@ Completed slice chain to date:
 - `F06`
   - merchant brand engine
   - validator: `scripts/validate-f06-merchant-brand-engine.sh`
+- `F07`
+  - merchant-first workspace information architecture
+  - validator: `scripts/validate-f07-merchant-workspace-ia.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
@@ -104,7 +107,11 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 The repo now supports:
 
 - self-serve merchant signup
+- merchant-owned workspace flow after signup
 - merchant reward configuration
+- merchant brand editing inside the workspace
+- loyalty card template editing inside the workspace
+- issued customer card management separated from template editing
 - PNG logo upload for merchant branding
 - blob/local brand asset storage seam
 - join QR generation
@@ -120,6 +127,7 @@ The repo does not yet represent finished production behavior for:
 - billing
 - production privacy/legal review
 - merchant self-service brand editing after onboarding
+- production-grade workspace/auth model
 
 ## Local Proof Loop
 
@@ -155,6 +163,6 @@ Review the harness when:
 The next likely product slices are:
 
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
-- merchant brand editing after onboarding
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries
+- production auth/session flow that removes the remaining demo assumptions

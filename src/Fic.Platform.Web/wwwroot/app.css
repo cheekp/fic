@@ -49,6 +49,11 @@ a {
     color: inherit;
 }
 
+.inline-link {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
 code {
     font-family: "SFMono-Regular", Consolas, monospace;
     font-size: 0.92em;
@@ -270,6 +275,7 @@ textarea {
 .metrics-grid,
 .merchant-grid,
 .resume-grid,
+.workspace-detail-grid,
 .workspace-grid,
 .wallet-view {
     display: grid;
@@ -578,6 +584,60 @@ textarea {
     gap: 1rem;
 }
 
+.workspace-summary-grid {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.workspace-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.workspace-tabs__item {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.7rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--brand-line);
+    background: var(--brand-surface);
+    text-decoration: none;
+    color: var(--brand-ink);
+}
+
+.workspace-tabs__item--active {
+    background: var(--brand-button);
+    border-color: transparent;
+    color: var(--brand-button-ink);
+}
+
+.workspace-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+}
+
+.workspace-preview-panel {
+    min-height: 100%;
+}
+
+.workspace-preview-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: var(--brand-surface-strong);
+    border: 1px solid var(--brand-line);
+}
+
+.workspace-preview-copy {
+    margin: 0.2rem 0 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
 .qr-panel {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
@@ -750,6 +810,11 @@ textarea {
     box-shadow: var(--shadow-soft);
 }
 
+.latest-workspace {
+    display: grid;
+    gap: 1rem;
+}
+
 .resume-card__metrics {
     display: grid;
     gap: 0.75rem;
@@ -803,6 +868,7 @@ textarea {
 
 @media (max-width: 1100px) {
     .hero-panel,
+    .workspace-detail-grid,
     .workspace-grid,
     .wallet-view,
     .join-hero,
@@ -823,6 +889,7 @@ textarea {
     .merchant-card__brand,
     .resume-card__head,
     .resume-card__brand,
+    .workspace-preview-card,
     .workspace-header,
     .workspace-brand,
     .panel__header,

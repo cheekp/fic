@@ -1,0 +1,89 @@
+@page "/dev/workspaces"
+@implements IDisposable
+@inject DemoPlatformState PlatformState
+
+<PageTitle>Local Workspaces</PageTitle>
+
+<section class="section-header">
+    <div>
+        <p class="eyebrow">Developer sandbox</p>
+        <h2>Local merchant workspaces</h2>
+        <p class="lede">This is the internal demo index. It exists for local testing and should not be part of the normal merchant journey.</p>
+    </div>
+    <a class="button button--secondary" href="/">Back to FIC Home</a>
+</section>
+
+@if (_merchants.Count == 0)
+{
+    <section class="empty-state">
+        <h4>No local workspaces yet.</h4>
+        <p>Create a merchant workspace first, then come back here if you need to jump across demo setups.</p>
+    </section>
+}
+else
+{
+    <section class="resume-grid">
+        @foreach (var merchant in _merchants)
+        {
+            <article class="resume-card">
+                <div class="resume-card__head">
+                    <div class="resume-card__brand">
+                        <div class="brand-lockup brand-lockup--resume">
+                            <img src="@merchant.LogoUrl" alt="@merchant.DisplayName logo" />
+                        </div>
+                        <div>
+                            <p class="merchant-card__kicker">Merchant workspace</p>
+                            <h4>@merchant.DisplayName</h4>
+                            <p class="field-hint">@merchant.RewardHeadline</p>
+                        </div>
+                    </div>
+                </div>
+                <dl class="resume-card__metrics">
+                    <div>
+                        <dt>Active cards</dt>
+                        <dd>@merchant.ActiveCards</dd>
+                    </div>
+                    <div>
+                        <dt>Rewards unlocked</dt>
+                        <dd>@merchant.RewardsUnlocked</dd>
+                    </div>
+                    <div>
+                        <dt>Join code</dt>
+                        <dd>@merchant.JoinCode</dd>
+                    </div>
+                </dl>
+                <div class="resume-card__actions">
+                    <a class="button button--secondary" href="/portal/merchant/@merchant.MerchantId?tab=brand">Open Workspace</a>
+                    <a class="button button--ghost" href="/join/@merchant.JoinCode" target="_blank">Preview Customer Join</a>
+                </div>
+            </article>
+        }
+    </section>
+}
+
+@code {
+    private IReadOnlyList<MerchantSummarySnapshot> _merchants = [];
+
+    protected override void OnInitialized()
+    {
+        LoadState();
+        PlatformState.Changed += HandleStateChanged;
+    }
+
+    private void LoadState()
+    {
+        _merchants = PlatformState.GetMerchantSummaries();
+    }
+
+    private void HandleStateChanged() =>
+        _ = InvokeAsync(() =>
+        {
+            LoadState();
+            StateHasChanged();
+        });
+
+    public void Dispose()
+    {
+        PlatformState.Changed -= HandleStateChanged;
+    }
+}

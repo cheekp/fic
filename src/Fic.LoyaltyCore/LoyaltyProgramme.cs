@@ -42,6 +42,13 @@ public sealed record ProgrammeConfigured(
     int RewardThreshold,
     DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(ProgrammeConfigured), OccurredAtUtc);
 
+public sealed record CardTemplateUpdated(
+    Guid MerchantId,
+    Guid ProgrammeId,
+    string RewardItemLabel,
+    int RewardThreshold,
+    DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(CardTemplateUpdated), OccurredAtUtc);
+
 public sealed record CustomerJoined(
     Guid MerchantId,
     Guid ProgrammeId,

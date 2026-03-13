@@ -205,6 +205,139 @@ public sealed class DemoPlatformState(
         }
     }
 
+    public async Task<MerchantWorkspaceSnapshot?> UpdateMerchantBrandAsync(
+        Guid merchantId,
+        string displayName,
+        string primaryColor,
+        string accentColor,
+        MerchantLogoUpload? logoUpload,
+        string baseUri,
+        CancellationToken cancellationToken = default)
+    {
+        MerchantAccount merchant;
+        BrandProfile brand;
+
+        lock (_gate)
+        {
+            if (!_merchants.TryGetValue(merchantId, out merchant!) || !_brands.TryGetValue(merchantId, out brand!))
+            {
+                return null;
+            }
+        }
+
+        var nextLogoUrl = brand.LogoUrl;
+        var nextLogoWidth = brand.LogoWidth;
+        var nextLogoHeight = brand.LogoHeight;
+
+        if (logoUpload is not null)
+        {
+            var logoMetadata = MerchantBrandAssetInspector.ReadLogoMetadata(logoUpload.Bytes);
+            nextLogoUrl = await brandAssetStore.SaveLogoAsync(merchantId, logoUpload, cancellationToken);
+            nextLogoWidth = logoMetadata.Width;
+            nextLogoHeight = logoMetadata.Height;
+        }
+
+        var updatedMerchant = merchant with
+        {
+            DisplayName = displayName.Trim()
+        };
+        var updatedBrand = brand with
+        {
+            LogoUrl = nextLogoUrl,
+            PrimaryColor = NormalizeColor(primaryColor),
+            AccentColor = NormalizeColor(accentColor),
+            LogoWidth = nextLogoWidth,
+            LogoHeight = nextLogoHeight
+        };
+
+        lock (_gate)
+        {
+            _merchants[merchantId] = updatedMerchant;
+            _brands[merchantId] = updatedBrand;
+
+            AppendEvent(new MerchantBrandUpdated(
+                merchantId,
+                updatedMerchant.DisplayName,
+                DateTimeOffset.UtcNow),
+                $"Updated workspace branding for {updatedMerchant.DisplayName}.");
+
+            logger.LogInformation(
+                "merchant_brand_updated merchant_id={MerchantId} display_name={DisplayName} logo_updated={LogoUpdated}",
+                merchantId,
+                updatedMerchant.DisplayName,
+                logoUpload is not null);
+
+            return BuildWorkspaceSnapshot(merchantId, baseUri);
+        }
+    }
+
+    public MerchantWorkspaceSnapshot? UpdateProgramme(
+        Guid merchantId,
+        string rewardItemLabel,
+        int rewardThreshold,
+        string rewardCopy,
+        string baseUri)
+    {
+        lock (_gate)
+        {
+            var programme = _programmes.Values.SingleOrDefault(x => x.MerchantId == merchantId);
+            if (programme is null)
+            {
+                return null;
+            }
+
+            var updatedProgramme = programme with
+            {
+                RewardItemLabel = rewardItemLabel.Trim(),
+                RewardThreshold = rewardThreshold,
+                RewardCopy = rewardCopy.Trim(),
+                ConfiguredAtUtc = DateTimeOffset.UtcNow
+            };
+
+            _programmes[programme.ProgrammeId] = updatedProgramme;
+
+            foreach (var card in _cards.Values.Where(x => x.ProgrammeId == programme.ProgrammeId))
+            {
+                var current = _progress[card.CardId];
+                var adjustedCount = Math.Min(current.CurrentCount, rewardThreshold);
+                var adjustedState = current.RewardState switch
+                {
+                    RewardState.Redeemed => RewardState.Redeemed,
+                    _ when adjustedCount >= rewardThreshold => RewardState.Unlocked,
+                    _ => RewardState.Locked
+                };
+
+                _progress[card.CardId] = current with
+                {
+                    CurrentCount = adjustedState == RewardState.Redeemed ? 0 : adjustedCount,
+                    TargetCount = rewardThreshold,
+                    RewardState = adjustedState,
+                    ProgressDisplayText = BuildProgressText(
+                        adjustedState == RewardState.Redeemed ? 0 : adjustedCount,
+                        rewardThreshold,
+                        updatedProgramme.RewardItemLabel),
+                    LastUpdatedUtc = DateTimeOffset.UtcNow
+                };
+            }
+
+            AppendEvent(new CardTemplateUpdated(
+                merchantId,
+                programme.ProgrammeId,
+                updatedProgramme.RewardItemLabel,
+                updatedProgramme.RewardThreshold,
+                updatedProgramme.ConfiguredAtUtc),
+                $"Updated loyalty card template: buy {updatedProgramme.RewardThreshold} {updatedProgramme.RewardItemLabel}, get 1 free.");
+
+            logger.LogInformation(
+                "card_template_updated merchant_id={MerchantId} programme_id={ProgrammeId} threshold={RewardThreshold}",
+                merchantId,
+                programme.ProgrammeId,
+                updatedProgramme.RewardThreshold);
+
+            return BuildWorkspaceSnapshot(merchantId, baseUri);
+        }
+    }
+
     public MerchantWorkspaceSnapshot? AwardVisit(Guid merchantId, string scannedCode, string baseUri)
     {
         lock (_gate)

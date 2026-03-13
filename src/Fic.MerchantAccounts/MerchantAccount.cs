@@ -13,3 +13,8 @@ public sealed record MerchantAccountCreated(
     string DisplayName,
     string ContactEmail,
     DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(MerchantAccountCreated), OccurredAtUtc);
+
+public sealed record MerchantBrandUpdated(
+    Guid MerchantId,
+    string DisplayName,
+    DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(MerchantBrandUpdated), OccurredAtUtc);

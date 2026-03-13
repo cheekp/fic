@@ -7,13 +7,13 @@
 @inject NavigationManager Navigation
 @inject MerchantBrandPresentationService BrandPresentation
 
-<PageTitle>Create Your Loyalty Card</PageTitle>
+<PageTitle>Create Merchant Workspace</PageTitle>
 
 <section class="section-header">
     <div>
-        <p class="eyebrow">Set up your programme</p>
-        <h2>Create the loyalty card your customers will join</h2>
-        <p class="lede">This is the self-serve setup flow: add your business name, reward offer, and brand assets, then publish the join QR and start stamping visits.</p>
+        <p class="eyebrow">Merchant onboarding</p>
+        <h2>Create the workspace your team will run the loyalty programme from</h2>
+        <p class="lede">Set up the merchant brand and first loyalty card template now. After signup, you land in the workspace to manage brand, card settings, join QR, and issued customer cards.</p>
     </div>
 </section>
 
@@ -124,7 +124,7 @@
         </div>
 
         <div class="form-actions">
-            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create My Loyalty Card</button>
+            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create My Merchant Workspace</button>
             <a class="button button--ghost" href="/">Back to start</a>
         </div>
     </EditForm>
@@ -186,7 +186,7 @@
                 _form.AccentColor,
                 Navigation.BaseUri);
 
-            Navigation.NavigateTo($"/portal/merchant/{workspace.Merchant.MerchantId}");
+            Navigation.NavigateTo($"/portal/merchant/{workspace.Merchant.MerchantId}?tab=brand");
         }
         catch (InvalidOperationException ex)
         {

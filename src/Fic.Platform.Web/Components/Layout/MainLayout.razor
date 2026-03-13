@@ -85,15 +85,15 @@
                 _shellContext = new ShellContext(
                     "Your live merchant workspace",
                     workspace.Merchant.DisplayName,
-                    $"Your QR join flow, till-side stamping, and wallet view are now carrying the same brand system.",
+                    $"Brand the workspace, define the loyalty card template, and manage issued customer cards from one merchant-owned area.",
                     "Merchant brand live",
                     workspace.Merchant.DisplayName,
                     $"Buy {workspace.Programme.RewardThreshold} {workspace.Programme.RewardItemLabel}, get one free.",
                     "In this workspace",
                     [
-                        "Customers join from your QR and land in your brand, not ours.",
-                        "Staff scan the same card code the wallet pass exposes.",
-                        "The pass preview and vendor console read the same progress state."
+                        "Brand is the merchant-level source of truth.",
+                        "The loyalty card template inherits from that workspace brand.",
+                        "Issued customer cards are managed separately from the template."
                     ],
                     workspace.BrandProfile.LogoUrl,
                     BrandPresentation.Build(workspace.BrandProfile));
@@ -180,33 +180,33 @@
         MerchantThemeView? Theme)
     {
         public static ShellContext Default { get; } = new(
-            "Self-serve Apple Wallet loyalty",
-            "Launch your own wallet loyalty card.",
-            "Set the reward, add the logo, share one QR, and let customers keep progress in Apple Wallet.",
+            "Self-serve merchant loyalty",
+            "Create a merchant workspace and launch a wallet loyalty card.",
+            "FIC is the product shell. Merchants should feel like they step into their own workspace after signup.",
             "Self-Serve Setup",
             "FIC Loyalty",
             "Create your card, brand it, share the join QR, and stamp visits from your phone or till-side device.",
             "What this setup gives you",
             [
-                "Your customers do not need an app.",
-                "Your staff can scan and stamp from the web.",
-                "Your branding now has a real path through the merchant surfaces."
+                "FIC stays the product-level shell.",
+                "Merchants get their own workspace after signup.",
+                "Brand, card template, and customers stay clearly separated."
             ],
             null,
             null);
 
         public static ShellContext Signup { get; } = new(
-            "Create your loyalty card",
-            "Build the branded experience before you publish it.",
-            "We take one logo and two colours, then turn them into a cleaner merchant shell and wallet treatment.",
+            "Create merchant workspace",
+            "Start with the merchant, not the customer card list.",
+            "The first job is to create the merchant workspace and its default loyalty card template. Issued customer cards come later.",
             "Brand studio",
             "Your merchant setup",
-            "Use the live preview to see how the workspace and wallet pass can inherit the same brand system.",
+            "Use the live preview to see how the merchant workspace and wallet pass inherit the same brand system.",
             "What to upload",
             [
                 "Use a clean PNG logo where possible.",
-                "Primary and accent colours shape the full UI treatment.",
-                "The preview now aims for a polished brand feel, not logo tiling."
+                "Primary and accent colours shape the merchant workspace by default.",
+                "The wallet card inherits from the merchant brand unless explicitly overridden later."
             ],
             null,
             null);

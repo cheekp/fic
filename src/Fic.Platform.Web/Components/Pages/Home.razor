@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @implements IDisposable
 @inject DemoPlatformState PlatformState
 
@@ -6,99 +6,81 @@
 
 <section class="hero-panel">
     <div>
-        <p class="eyebrow">Self-serve loyalty</p>
-        <h2>Set up a branded loyalty card your customers keep in Apple Wallet.</h2>
-        <p class="lede">Choose the reward, upload your brand assets, share a join QR, and stamp visits from your own browser-based workspace.</p>
+        <p class="eyebrow">FIC merchant onboarding</p>
+        <h2>Create a merchant workspace, brand it, publish the join QR, and manage issued wallet cards.</h2>
+        <p class="lede">This should feel like the vendor experience: set up the brand and loyalty card once, then run the programme from the workspace instead of bouncing through a demo console.</p>
     </div>
     <div class="hero-panel__actions">
-        <a class="button button--primary" href="/portal/signup">Create Your Loyalty Card</a>
-        <span class="chip">No customer app required</span>
+        <a class="button button--primary" href="/portal/signup">Create Merchant Workspace</a>
         <span class="chip">Apple Wallet first</span>
+        <span class="chip">No customer app required</span>
     </div>
 </section>
 
 <section class="metrics-grid">
     <article class="metric-card">
-        <span class="metric-card__label">Step 1</span>
-        <strong class="metric-card__value">Brand It</strong>
-        <p class="metric-card__copy">Add your name, colours, logo, and reward rule so the card feels like your business.</p>
+        <span class="metric-card__label">Workspace</span>
+        <strong class="metric-card__value">Brand</strong>
+        <p class="metric-card__copy">Set the business name, logo, and colours that define the merchant-facing experience.</p>
     </article>
     <article class="metric-card">
-        <span class="metric-card__label">Step 2</span>
-        <strong class="metric-card__value">Share It</strong>
-        <p class="metric-card__copy">Put one QR code on the counter or receipt so customers can join from their phone in seconds.</p>
+        <span class="metric-card__label">Template</span>
+        <strong class="metric-card__value">Card</strong>
+        <p class="metric-card__copy">Configure the loyalty rule and customer-facing wallet card copy.</p>
     </article>
     <article class="metric-card">
-        <span class="metric-card__label">Step 3</span>
-        <strong class="metric-card__value">Stamp It</strong>
-        <p class="metric-card__copy">Scan the customer’s wallet pass from your own device and let the card update with the new count.</p>
+        <span class="metric-card__label">Operations</span>
+        <strong class="metric-card__value">Customers</strong>
+        <p class="metric-card__copy">Issue passes, scan visits, and manage customer card state inside the same workspace.</p>
     </article>
 </section>
 
-<section class="section-header">
-    <div>
-        <p class="eyebrow">Recent demo workspaces</p>
-        <h3>Jump back into a merchant setup</h3>
-    </div>
-    <a class="button button--secondary" href="/portal/signup">Create Another Card</a>
-</section>
-
-@if (_merchants.Count == 0)
+@if (_latestMerchant is null)
 {
     <section class="empty-state">
-        <h4>No loyalty card created yet.</h4>
-        <p>Start by setting your reward, colours, and logo. The next screen will generate the customer join QR for you.</p>
-        <a class="button button--primary" href="/portal/signup">Create Your First Card</a>
+        <h4>No merchant workspace created yet.</h4>
+        <p>Start by creating a merchant workspace. Once that exists, the merchant can manage brand, card template, and issued customer cards from one place.</p>
+        <a class="button button--primary" href="/portal/signup">Create Your First Merchant Workspace</a>
     </section>
 }
 else
 {
-    <section class="resume-grid">
-        @foreach (var merchant in _merchants.Take(3))
-        {
-            <article class="resume-card">
-                <div class="resume-card__head">
-                    <div class="resume-card__brand">
-                        <div class="brand-lockup brand-lockup--resume">
-                            <img src="@merchant.LogoUrl" alt="@merchant.DisplayName logo" />
-                        </div>
-                        <div>
-                            <p class="merchant-card__kicker">Merchant site</p>
-                            <h4>@merchant.DisplayName</h4>
-                            <p class="field-hint">@merchant.RewardHeadline</p>
-                        </div>
-                    </div>
-                </div>
-                <dl class="resume-card__metrics">
-                    <div>
-                        <dt>Active cards</dt>
-                        <dd>@merchant.ActiveCards</dd>
-                    </div>
-                    <div>
-                        <dt>Rewards unlocked</dt>
-                        <dd>@merchant.RewardsUnlocked</dd>
-                    </div>
-                    <div>
-                        <dt>Join code</dt>
-                        <dd>@merchant.JoinCode</dd>
-                    </div>
-                </dl>
-                <div class="resume-card__actions">
-                    <a class="button button--secondary" href="/portal/merchant/@merchant.MerchantId">Open My Workspace</a>
-                    <a class="button button--ghost" href="/join/@merchant.JoinCode" target="_blank">Preview Customer Join</a>
-                </div>
-            </article>
-        }
+    <section class="panel latest-workspace">
+        <div class="panel__header">
+            <div>
+                <p class="eyebrow">Continue where you left off</p>
+                <h3>@_latestMerchant.DisplayName</h3>
+            </div>
+            <span class="chip chip--accent">@_latestMerchant.RewardHeadline</span>
+        </div>
+        <dl class="resume-card__metrics">
+            <div>
+                <dt>Active cards</dt>
+                <dd>@_latestMerchant.ActiveCards</dd>
+            </div>
+            <div>
+                <dt>Rewards unlocked</dt>
+                <dd>@_latestMerchant.RewardsUnlocked</dd>
+            </div>
+            <div>
+                <dt>Join code</dt>
+                <dd>@_latestMerchant.JoinCode</dd>
+            </div>
+        </dl>
+        <div class="resume-card__actions">
+            <a class="button button--primary" href="/portal/merchant/@_latestMerchant.MerchantId?tab=brand">Open Merchant Workspace</a>
+            <a class="button button--ghost" href="/portal/signup">Create Another Workspace</a>
+        </div>
+        <p class="field-hint">
+            Local demo-only tools:
+            <a class="inline-link" href="/dev/workspaces">browse all local workspaces</a>.
+        </p>
     </section>
-
-    @if (_merchants.Count > 3)
-    {
-        <p class="field-hint">Showing the three most recent local demo workspaces.</p>
-    }
 }
 
 @code {
     private IReadOnlyList<MerchantSummarySnapshot> _merchants = [];
+    private MerchantSummarySnapshot? _latestMerchant;
 
     protected override void OnInitialized()
     {
@@ -109,6 +91,7 @@ else
     private void LoadState()
     {
         _merchants = PlatformState.GetMerchantSummaries();
+        _latestMerchant = _merchants.FirstOrDefault();
     }
 
     private void HandleStateChanged() =>

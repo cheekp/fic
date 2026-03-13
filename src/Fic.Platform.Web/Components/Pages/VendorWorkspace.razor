@@ -1,39 +1,43 @@
 @page "/portal/merchant/{MerchantId:guid}"
 @implements IDisposable
+@using System.ComponentModel.DataAnnotations
+@using Fic.MerchantAccounts
 @inject DemoPlatformState PlatformState
 @inject JoinQrCodeService QrCodes
+@inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject IAppleWalletPassService WalletPasses
 @inject MerchantBrandPresentationService BrandPresentation
 
-<PageTitle>Your Loyalty Workspace</PageTitle>
+<PageTitle>Merchant Workspace</PageTitle>
 
 @if (_workspace is null)
 {
     <section class="empty-state">
-        <h2>Vendor workspace not found.</h2>
+        <h2>Merchant workspace not found.</h2>
         <p>The merchant account may not exist in the current demo instance.</p>
-        <a class="button button--primary" href="/">Back to overview</a>
+        <a class="button button--primary" href="/">Back to FIC Home</a>
     </section>
 }
 else
 {
     var workspaceTheme = BrandPresentation.Build(_workspace.BrandProfile);
+    var brandPreviewTheme = BuildBrandPreviewTheme();
 
     <div class="workspace-stage @workspaceTheme.ThemeClass" style="@workspaceTheme.CssVariables">
         <section class="workspace-header">
             <div class="workspace-brand">
                 <div class="brand-lockup brand-lockup--merchant">
-                    <img src="@_workspace.BrandProfile.LogoUrl" alt="@_workspace.Merchant.DisplayName logo" />
+                    <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_brandForm.DisplayName logo" />
                 </div>
                 <div class="workspace-brand__copy">
-                    <p class="eyebrow">Your loyalty workspace</p>
+                    <p class="eyebrow">Merchant workspace</p>
                     <h2>@_workspace.Merchant.DisplayName</h2>
-                    <p class="lede">Buy @_workspace.Programme.RewardThreshold @_workspace.Programme.RewardItemLabel, get one free.</p>
+                    <p class="lede">Manage your brand, loyalty card template, and issued customer passes from one place.</p>
                 </div>
             </div>
             <div class="workspace-actions">
-                <span class="chip chip--accent">Join code: @_workspace.Programme.JoinCode</span>
+                <span class="chip chip--accent">@BuildRewardHeadline(_workspace.Programme.RewardThreshold, _workspace.Programme.RewardItemLabel)</span>
                 <span class="chip @(WalletCapability.SupportsAppleWalletPass ? "chip--success" : string.Empty)">
                     @(WalletCapability.SupportsAppleWalletPass ? "Signed Apple Wallet ready" : "Preview fallback")
                 </span>
@@ -41,115 +45,288 @@ else
             </div>
         </section>
 
-        <section class="workspace-grid">
-            <article class="panel">
-                <div class="panel__header">
-                    <div>
-                        <p class="eyebrow">Customer signup</p>
-                        <h3>Your join QR</h3>
-                    </div>
-                    <span class="chip">Poster or counter card</span>
-                </div>
-                <div class="qr-panel">
-                    <div class="qr-panel__graphic">
-                        @((MarkupString)_joinQrSvg)
-                    </div>
-                    <div class="qr-panel__meta">
-                        <p>Customers scan this from their own phone, complete the short web join, and save the card to Apple Wallet.</p>
-                        <p class="field-hint">@WalletCapability.HelperText</p>
-                        <code>@_workspace.JoinUrl</code>
-                    </div>
-                </div>
+        <section class="metrics-grid workspace-summary-grid">
+            <article class="metric-card">
+                <span class="metric-card__label">Brand</span>
+                <strong class="metric-card__value">@(string.IsNullOrWhiteSpace(_workspace.BrandProfile.LogoUrl) ? "Pending" : "Ready")</strong>
+                <p class="metric-card__copy">Business name, logo, and site colours live in the workspace brand profile.</p>
             </article>
-
-            <article class="panel">
-                <div class="panel__header">
-                    <div>
-                        <p class="eyebrow">Till-side stamping</p>
-                        <h3>Scan a customer pass</h3>
-                    </div>
-                    <span class="chip">Phone, scanner, or paste</span>
-                </div>
-                <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
-                    <label class="field">
-                        <span>Customer pass code</span>
-                        <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
-                    </label>
-                    <div class="form-actions">
-                        <button class="button button--primary" type="submit" disabled="@string.IsNullOrWhiteSpace(_scanCode)">Award visit</button>
-                        <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
-                    </div>
-                </EditForm>
-                @if (!string.IsNullOrWhiteSpace(_scanMessage))
-                {
-                    <p class="field-hint">@_scanMessage</p>
-                }
+            <article class="metric-card">
+                <span class="metric-card__label">Card Template</span>
+                <strong class="metric-card__value">@_workspace.Programme.RewardThreshold</strong>
+                <p class="metric-card__copy">@_workspace.Programme.RewardItemLabel before reward. Wallet cards inherit this template by default.</p>
+            </article>
+            <article class="metric-card">
+                <span class="metric-card__label">Customers</span>
+                <strong class="metric-card__value">@_workspace.Cards.Count</strong>
+                <p class="metric-card__copy">Issued customer cards currently enrolled in this merchant programme.</p>
+            </article>
+            <article class="metric-card">
+                <span class="metric-card__label">Unlocked</span>
+                <strong class="metric-card__value">@_workspace.Cards.Count(x => x.RewardState == RewardState.Unlocked)</strong>
+                <p class="metric-card__copy">Rewards currently available to redeem from the scanned customer cards.</p>
             </article>
         </section>
 
-        <section class="section-header">
-            <div>
-                <p class="eyebrow">Joined customers</p>
-                <h3>Cards in your programme</h3>
-            </div>
-            <span class="chip">@_workspace.Cards.Count active cards</span>
-        </section>
+        <nav class="workspace-tabs" aria-label="Workspace sections">
+            <a class="workspace-tabs__item @(IsTab("brand") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("brand")">Brand</a>
+            <a class="workspace-tabs__item @(IsTab("card") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("card")">Loyalty Card</a>
+            <a class="workspace-tabs__item @(IsTab("customers") ? "workspace-tabs__item--active" : string.Empty)" href="@GetTabUrl("customers")">Customers</a>
+        </nav>
 
-        @if (_workspace.Cards.Count == 0)
+        @if (IsTab("brand"))
         {
-            <section class="empty-state">
-                <h4>No customers joined yet.</h4>
-                <p>Share the QR code first. Once someone joins and saves the card, their progress will appear here.</p>
+            <section class="workspace-detail-grid">
+                <article class="panel">
+                    <div class="panel__header">
+                        <div>
+                            <p class="eyebrow">Brand profile</p>
+                            <h3>Make this workspace feel like the merchant</h3>
+                        </div>
+                        <span class="chip">Site-level brand</span>
+                    </div>
+                    <EditForm Model="_brandForm" OnValidSubmit="HandleBrandSaveAsync" FormName="update-workspace-brand" class="form-stack">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-summary" />
+
+                        <div class="form-grid">
+                            <label class="field">
+                                <span>Business name</span>
+                                <InputText @bind-Value="_brandForm.DisplayName" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Site primary colour</span>
+                                <InputText @bind-Value="_brandForm.PrimaryColor" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Site accent colour</span>
+                                <InputText @bind-Value="_brandForm.AccentColor" class="input" />
+                            </label>
+
+                            <div class="field field--full">
+                                <span>Replace logo</span>
+                                <label class="upload-control">
+                                    <InputFile OnChange="HandleBrandLogoSelectedAsync" accept=".png" />
+                                    <span>Upload a PNG logo. We will suggest colours from it, but you can still override them manually.</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(_brandMessage))
+                        {
+                            <p class="field-hint">@_brandMessage</p>
+                        }
+
+                        <div class="form-actions">
+                            <button class="button button--primary" type="submit" disabled="@_isSavingBrand">Save Brand Profile</button>
+                        </div>
+                    </EditForm>
+                </article>
+
+                <article class="panel workspace-preview-panel @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
+                    <div class="panel__header">
+                        <div>
+                            <p class="eyebrow">Workspace preview</p>
+                            <h3>@_brandForm.DisplayName</h3>
+                        </div>
+                        <span class="chip chip--accent">Merchant site first</span>
+                    </div>
+                    <div class="workspace-preview-card">
+                        <div class="brand-lockup brand-lockup--merchant">
+                            <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_brandForm.DisplayName logo preview" />
+                        </div>
+                        <div>
+                            <p class="field-hint">The merchant workspace owns the brand. The wallet card inherits this logo and palette by default.</p>
+                            <p class="workspace-preview-copy">@BuildRewardHeadline(_cardForm.RewardThreshold, _cardForm.RewardItemLabel)</p>
+                        </div>
+                    </div>
+                </article>
+            </section>
+        }
+        else if (IsTab("card"))
+        {
+            <section class="workspace-detail-grid">
+                <article class="panel">
+                    <div class="panel__header">
+                        <div>
+                            <p class="eyebrow">Loyalty card template</p>
+                            <h3>Define what customers collect</h3>
+                        </div>
+                        <span class="chip">Inherited by wallet cards</span>
+                    </div>
+                    <EditForm Model="_cardForm" OnValidSubmit="HandleCardSaveAsync" FormName="update-card-template" class="form-stack">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-summary" />
+
+                        <div class="form-grid">
+                            <label class="field">
+                                <span>Reward item</span>
+                                <InputText @bind-Value="_cardForm.RewardItemLabel" class="input" />
+                            </label>
+
+                            <label class="field">
+                                <span>Visits before reward</span>
+                                <InputNumber @bind-Value="_cardForm.RewardThreshold" class="input" />
+                            </label>
+
+                            <label class="field field--full">
+                                <span>Wallet card copy</span>
+                                <InputText @bind-Value="_cardForm.RewardCopy" class="input" />
+                            </label>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(_cardMessage))
+                        {
+                            <p class="field-hint">@_cardMessage</p>
+                        }
+
+                        <div class="form-actions">
+                            <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Card Template</button>
+                        </div>
+                    </EditForm>
+                </article>
+
+                <article class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
+                    <header class="wallet-pass__header">
+                        <div>
+                            <p class="wallet-pass__label">Wallet card template preview</p>
+                            <h2>@_brandForm.DisplayName</h2>
+                        </div>
+                        <div class="wallet-pass__mark">
+                            <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_brandForm.DisplayName wallet logo" />
+                        </div>
+                    </header>
+
+                    <div class="wallet-pass__body">
+                        <div>
+                            <p class="wallet-pass__copy">@_cardForm.RewardCopy</p>
+                            <p class="wallet-pass__progress">2/@_cardForm.RewardThreshold</p>
+                        </div>
+                        <div class="stamp-track" aria-label="wallet template preview">
+                            @for (var i = 0; i < _cardForm.RewardThreshold; i++)
+                            {
+                                <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
+                            }
+                        </div>
+                        <p class="wallet-pass__status">This card preview inherits the merchant site brand by default.</p>
+                    </div>
+                </article>
             </section>
         }
         else
         {
-            <section class="card-list">
-                @foreach (var card in _workspace.Cards)
-                {
-                    <article class="card-row">
+            <section class="workspace-grid">
+                <article class="panel">
+                    <div class="panel__header">
                         <div>
-                            <p class="eyebrow">Customer card</p>
-                            <h4>@card.ProgressDisplayText</h4>
-                            <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
+                            <p class="eyebrow">Customer signup</p>
+                            <h3>Your join QR</h3>
                         </div>
-                        <div class="card-row__meta">
-                            <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
-                            <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Open Preview</a>
-                            @if (WalletCapability.SupportsAppleWalletPass)
-                            {
-                                <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Download Wallet Pass</a>
-                            }
-                            <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Pass Code</button>
-                            <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Mark Reward Redeemed</button>
+                        <span class="chip">Poster or counter card</span>
+                    </div>
+                    <div class="qr-panel">
+                        <div class="qr-panel__graphic">
+                            @((MarkupString)_joinQrSvg)
                         </div>
-                    </article>
-                }
+                        <div class="qr-panel__meta">
+                            <p>Customers scan this from their own phone, complete the short web join, and save the card to Apple Wallet.</p>
+                            <p class="field-hint">@WalletCapability.HelperText</p>
+                            <code>@_workspace.JoinUrl</code>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel__header">
+                        <div>
+                            <p class="eyebrow">Till-side stamping</p>
+                            <h3>Scan a customer pass</h3>
+                        </div>
+                        <span class="chip">Issued customer cards</span>
+                    </div>
+                    <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
+                        <label class="field">
+                            <span>Customer pass code</span>
+                            <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
+                        </label>
+                        <div class="form-actions">
+                            <button class="button button--primary" type="submit" disabled="@string.IsNullOrWhiteSpace(_scanCode)">Award visit</button>
+                            <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
+                        </div>
+                    </EditForm>
+                    @if (!string.IsNullOrWhiteSpace(_scanMessage))
+                    {
+                        <p class="field-hint">@_scanMessage</p>
+                    }
+                </article>
+            </section>
+
+            <section class="section-header">
+                <div>
+                    <p class="eyebrow">Issued customer cards</p>
+                    <h3>Manage enrolled passes</h3>
+                </div>
+                <span class="chip">@_workspace.Cards.Count active cards</span>
+            </section>
+
+            @if (_workspace.Cards.Count == 0)
+            {
+                <section class="empty-state">
+                    <h4>No customer cards issued yet.</h4>
+                    <p>Share the join QR first. Once someone joins and saves the card, their pass and progress will appear here.</p>
+                </section>
+            }
+            else
+            {
+                <section class="card-list">
+                    @foreach (var card in _workspace.Cards)
+                    {
+                        <article class="card-row">
+                            <div>
+                                <p class="eyebrow">Issued customer card</p>
+                                <h4>@card.ProgressDisplayText</h4>
+                                <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
+                            </div>
+                            <div class="card-row__meta">
+                                <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
+                                <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Open Preview</a>
+                                @if (WalletCapability.SupportsAppleWalletPass)
+                                {
+                                    <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Download Wallet Pass</a>
+                                }
+                                <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Pass Code</button>
+                                <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Mark Reward Redeemed</button>
+                            </div>
+                        </article>
+                    }
+                </section>
+            }
+
+            <section class="panel">
+                <div class="panel__header">
+                    <div>
+                        <p class="eyebrow">Recent activity</p>
+                        <h3>What changed across issued cards</h3>
+                    </div>
+                    <span class="chip">Shared card state</span>
+                </div>
+                <div class="timeline">
+                    @foreach (var entry in _workspace.Timeline)
+                    {
+                        <article class="timeline__entry">
+                            <div class="timeline__dot"></div>
+                            <div>
+                                <p class="timeline__event">@entry.EventType</p>
+                                <p>@entry.Summary</p>
+                                <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                            </div>
+                        </article>
+                    }
+                </div>
             </section>
         }
-
-        <section class="panel">
-            <div class="panel__header">
-                <div>
-                    <p class="eyebrow">Recent activity</p>
-                    <h3>What changed on your card</h3>
-                </div>
-                <span class="chip">Shared card state</span>
-            </div>
-            <div class="timeline">
-                @foreach (var entry in _workspace.Timeline)
-                {
-                    <article class="timeline__entry">
-                        <div class="timeline__dot"></div>
-                        <div>
-                            <p class="timeline__event">@entry.EventType</p>
-                            <p>@entry.Summary</p>
-                            <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
-                        </div>
-                    </article>
-                }
-            </div>
-        </section>
     </div>
 }
 
@@ -157,10 +334,24 @@ else
     [Parameter]
     public Guid MerchantId { get; set; }
 
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? Tab { get; set; }
+
     private MerchantWorkspaceSnapshot? _workspace;
     private string _joinQrSvg = string.Empty;
     private string _scanCode = string.Empty;
     private string? _scanMessage;
+    private string? _brandMessage;
+    private string? _cardMessage;
+    private bool _isSavingBrand;
+    private bool _isSavingCard;
+    private readonly WorkspaceBrandForm _brandForm = new();
+    private readonly CardTemplateForm _cardForm = new();
+    private byte[]? _pendingLogoUploadBytes;
+    private string? _pendingLogoPreviewUri;
+    private string _pendingLogoFileName = "logo.png";
+    private MerchantLogoMetadata _pendingLogoMetadata = new(160, 160);
+
     private WalletPassCapability WalletCapability => WalletPasses.GetCapability();
 
     protected override void OnInitialized()
@@ -170,13 +361,141 @@ else
 
     protected override void OnParametersSet()
     {
-        LoadWorkspace();
+        LoadWorkspace(refreshForms: true);
     }
 
-    private void LoadWorkspace()
+    private void LoadWorkspace(bool refreshForms)
     {
         _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri);
         _joinQrSvg = _workspace is null ? string.Empty : QrCodes.RenderSvg(_workspace.JoinUrl);
+
+        if (_workspace is not null && refreshForms)
+        {
+            _brandForm.DisplayName = _workspace.Merchant.DisplayName;
+            _brandForm.PrimaryColor = _workspace.BrandProfile.PrimaryColor;
+            _brandForm.AccentColor = _workspace.BrandProfile.AccentColor;
+            _cardForm.RewardItemLabel = _workspace.Programme.RewardItemLabel;
+            _cardForm.RewardThreshold = _workspace.Programme.RewardThreshold;
+            _cardForm.RewardCopy = _workspace.Programme.RewardCopy;
+            _pendingLogoUploadBytes = null;
+            _pendingLogoPreviewUri = null;
+            _pendingLogoFileName = "logo.png";
+            _pendingLogoMetadata = new MerchantLogoMetadata(_workspace.BrandProfile.LogoWidth, _workspace.BrandProfile.LogoHeight);
+        }
+    }
+
+    private MerchantThemeView BuildBrandPreviewTheme() =>
+        BrandPresentation.BuildPreview(
+            NormalizeColor(_brandForm.PrimaryColor),
+            NormalizeColor(_brandForm.AccentColor),
+            _pendingLogoMetadata.Width,
+            _pendingLogoMetadata.Height);
+
+    private bool IsTab(string tab) => string.Equals(GetActiveTab(), tab, StringComparison.OrdinalIgnoreCase);
+
+    private string GetActiveTab() => NormalizeTab(Tab);
+
+    private string GetTabUrl(string tab) => Navigation.GetUriWithQueryParameter("tab", tab);
+
+    private static string NormalizeTab(string? value) => value?.Trim().ToLowerInvariant() switch
+    {
+        "brand" => "brand",
+        "card" => "card",
+        "customers" => "customers",
+        _ => "brand"
+    };
+
+    private async Task HandleBrandLogoSelectedAsync(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        if (!string.Equals(file.ContentType, "image/png", StringComparison.OrdinalIgnoreCase))
+        {
+            _pendingLogoUploadBytes = null;
+            _pendingLogoPreviewUri = null;
+            _pendingLogoMetadata = _workspace is null
+                ? new MerchantLogoMetadata(160, 160)
+                : new MerchantLogoMetadata(_workspace.BrandProfile.LogoWidth, _workspace.BrandProfile.LogoHeight);
+            _brandMessage = "Please upload a PNG logo for the merchant brand profile.";
+            return;
+        }
+
+        await using var stream = file.OpenReadStream(2 * 1024 * 1024);
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer);
+
+        _pendingLogoUploadBytes = buffer.ToArray();
+        _pendingLogoMetadata = MerchantBrandAssetInspector.ReadLogoMetadata(_pendingLogoUploadBytes);
+        _pendingLogoFileName = file.Name;
+        _pendingLogoPreviewUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(_pendingLogoUploadBytes)}";
+        await SuggestPaletteFromLogoAsync(_pendingLogoPreviewUri);
+        _brandMessage = $"{file.Name} loaded. Suggested site colours have been updated from the logo.";
+    }
+
+    private async Task HandleBrandSaveAsync()
+    {
+        if (_workspace is null)
+        {
+            return;
+        }
+
+        _isSavingBrand = true;
+
+        try
+        {
+            var updated = await PlatformState.UpdateMerchantBrandAsync(
+                MerchantId,
+                _brandForm.DisplayName,
+                _brandForm.PrimaryColor,
+                _brandForm.AccentColor,
+                _pendingLogoUploadBytes is null ? null : new MerchantLogoUpload(_pendingLogoUploadBytes, "image/png", _pendingLogoFileName),
+                Navigation.BaseUri);
+
+            if (updated is not null)
+            {
+                _brandMessage = "Workspace brand updated.";
+                LoadWorkspace(refreshForms: true);
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            _brandMessage = ex.Message;
+        }
+        finally
+        {
+            _isSavingBrand = false;
+        }
+    }
+
+    private Task HandleCardSaveAsync()
+    {
+        _isSavingCard = true;
+
+        try
+        {
+            var updated = PlatformState.UpdateProgramme(
+                MerchantId,
+                _cardForm.RewardItemLabel,
+                _cardForm.RewardThreshold,
+                _cardForm.RewardCopy,
+                Navigation.BaseUri);
+
+            if (updated is not null)
+            {
+                _cardMessage = "Loyalty card template updated.";
+                LoadWorkspace(refreshForms: true);
+            }
+        }
+        finally
+        {
+            _isSavingCard = false;
+        }
+
+        return Task.CompletedTask;
     }
 
     private Task HandleAwardVisitAsync()
@@ -187,7 +506,7 @@ else
             : $"Visit stamped. The customer card now shows {updated.Cards.First(x => x.CardCode == _scanCode.Trim()).ProgressDisplayText}.";
 
         _scanCode = string.Empty;
-        LoadWorkspace();
+        LoadWorkspace(refreshForms: false);
         return Task.CompletedTask;
     }
 
@@ -195,7 +514,7 @@ else
     {
         var updated = PlatformState.RedeemReward(MerchantId, cardId, Navigation.BaseUri);
         _scanMessage = updated is null ? "The reward could not be marked as redeemed." : "Reward redeemed and the card has reset for the next cycle.";
-        LoadWorkspace();
+        LoadWorkspace(refreshForms: false);
         return Task.CompletedTask;
     }
 
@@ -210,15 +529,63 @@ else
         _scanCode = string.Empty;
         _scanMessage = null;
     }
+
+    private async Task SuggestPaletteFromLogoAsync(string logoPreviewUri)
+    {
+        try
+        {
+            var palette = await JS.InvokeAsync<string[]>("ficBranding.extractPaletteFromDataUrl", logoPreviewUri);
+            if (palette.Length >= 2)
+            {
+                _brandForm.PrimaryColor = NormalizeColor(palette[0]);
+                _brandForm.AccentColor = NormalizeColor(palette[1]);
+            }
+        }
+        catch (JSException)
+        {
+            // Keep manual colours if local JS palette extraction is unavailable.
+        }
+    }
+
+    private static string NormalizeColor(string value) =>
+        value.StartsWith('#') ? value : $"#{value}";
+
+    private static string BuildRewardHeadline(int rewardThreshold, string rewardItemLabel) =>
+        $"Buy {rewardThreshold} {rewardItemLabel.ToLowerInvariant()}, get one free";
+
     private void HandleStateChanged() =>
         _ = InvokeAsync(() =>
         {
-            LoadWorkspace();
+            LoadWorkspace(refreshForms: false);
             StateHasChanged();
         });
 
     public void Dispose()
     {
         PlatformState.Changed -= HandleStateChanged;
+    }
+
+    private sealed class WorkspaceBrandForm
+    {
+        [Required, StringLength(80)]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
+        public string PrimaryColor { get; set; } = "#1f3731";
+
+        [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
+        public string AccentColor { get; set; } = "#f4c15d";
+    }
+
+    private sealed class CardTemplateForm
+    {
+        [Required, StringLength(40)]
+        public string RewardItemLabel { get; set; } = "coffees";
+
+        [Range(2, 20)]
+        public int RewardThreshold { get; set; } = 5;
+
+        [Required, StringLength(120)]
+        public string RewardCopy { get; set; } = string.Empty;
     }
 }
