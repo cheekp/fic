@@ -1,16 +1,40 @@
 @using Fic.Platform.Web.Components.Layout
 
-<div class="nav-shell">
-    <div class="nav-brand">
-        <p class="nav-brand__kicker">FIC Platform</p>
-        <a class="nav-brand__name" href="">FIC Loyalty</a>
-        <p class="nav-brand__copy">Create the merchant experience, publish the join QR, and prove the wallet flow from a clean self-serve workspace.</p>
+<div class="nav-shell @(IsCollapsed ? "nav-shell--collapsed" : string.Empty)">
+    <div class="nav-shell__top">
+        <button class="nav-toggle"
+                type="button"
+                @onclick="HandleToggleAsync"
+                aria-expanded="@(!IsCollapsed)"
+                aria-label="@(IsCollapsed ? "Expand platform rail" : "Collapse platform rail")">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </div>
 
-    <nav class="nav-links">
-        <NavLink class="nav-links__item" href="" Match="NavLinkMatch.All">FIC Home</NavLink>
-        <NavLink class="nav-links__item" href="portal/signup">New Workspace</NavLink>
-    </nav>
+    <div class="nav-brand">
+        <p class="nav-brand__kicker">FIC Platform</p>
+        <a class="nav-brand__name" href="">@(IsCollapsed ? "FIC" : "FIC Loyalty")</a>
+        <p class="nav-brand__copy">Platform-level space for onboarding, billing, account, and demo tooling. The merchant workspace itself should feel owned by the shop.</p>
+    </div>
+
+    <div class="nav-section">
+        <p class="nav-section__title">Platform</p>
+        <nav class="nav-links">
+            <NavLink class="nav-links__item" href="" Match="NavLinkMatch.All" title="FIC Home">@Label("FIC Home", "Home")</NavLink>
+            <NavLink class="nav-links__item" href="portal/signup" title="Create Merchant Workspace">@Label("Create Merchant", "New")</NavLink>
+        </nav>
+    </div>
+
+    <div class="nav-section nav-section--account">
+        <p class="nav-section__title">Account</p>
+        <div class="nav-links">
+            <button class="nav-links__stub" type="button" title="Billing stub" disabled>@Label("Billing", "Bill")</button>
+            <button class="nav-links__stub" type="button" title="Account stub" disabled>@Label("Account", "Acct")</button>
+            <button class="nav-links__stub" type="button" title="Log out stub" disabled>@Label("Log Out", "Out")</button>
+        </div>
+    </div>
 
     <div class="nav-panel">
         <p class="nav-panel__title">@ShellContext.PanelTitle</p>
@@ -26,4 +50,14 @@
 @code {
     [Parameter]
     public MainLayout.ShellContext ShellContext { get; set; } = MainLayout.ShellContext.Default;
+
+    [Parameter]
+    public bool IsCollapsed { get; set; }
+
+    [Parameter]
+    public EventCallback OnToggle { get; set; }
+
+    private string Label(string full, string compact) => IsCollapsed ? compact : full;
+
+    private Task HandleToggleAsync() => OnToggle.InvokeAsync();
 }

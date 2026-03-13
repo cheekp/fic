@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Turn the merchant-first workspace flow into a stronger founder demo: finish real signed Apple Wallet setup, then add pass-update lifecycle support and stronger merchant auth/session handling.
+Strengthen the merchant workspace from here: add multi-card-template support inside one merchant, then finish real signed Apple Wallet setup, pass updates, and stronger merchant auth/session handling.

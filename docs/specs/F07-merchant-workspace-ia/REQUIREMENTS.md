@@ -28,11 +28,19 @@ Refactor the internal demo flow so it feels like a merchant product rather than 
   - `Brand`
   - `Loyalty Card`
   - `Customers`
+- The merchant workspace should sit inside a collapsible `FIC` platform shell rather than a dominant fixed platform console.
 - Brand should be the default workspace section.
 - The workspace should make it obvious that:
   - brand is the merchant-level source of truth
   - the loyalty card template inherits from that brand by default
   - issued customer cards are separate runtime instances of that template
+- The platform shell should hold only platform-level concerns:
+  - `FIC Home`
+  - `Create Merchant`
+  - `Billing` stub
+  - `Account` stub
+  - `Log Out` stub
+- Merchant card and customer operations must not be represented as top-level `FIC` navigation.
 
 ### Brand Management
 
@@ -59,6 +67,11 @@ Refactor the internal demo flow so it feels like a merchant product rather than 
 
 - Browsing multiple local demo workspaces should move to a separate dev-oriented route.
 - That route must not dominate the default merchant-facing home experience.
+
+### Platform Chrome
+
+- The left rail should be collapsible from the live merchant workspace.
+- Merchant workspace pages should reduce duplicate platform framing so the merchant area remains the visual focus.
 
 ## Non-Goals
 

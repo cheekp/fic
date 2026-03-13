@@ -5,28 +5,58 @@
 @inject DemoPlatformState PlatformState
 @inject MerchantBrandPresentationService BrandPresentation
 
-<div class="shell">
-    <aside class="shell__sidebar">
-        <NavMenu ShellContext="_shellContext" />
+<div class="shell @(IsSidebarCollapsed ? "shell--sidebar-collapsed" : string.Empty)">
+    <aside class="shell__sidebar @(IsSidebarCollapsed ? "shell__sidebar--collapsed" : string.Empty)">
+        <NavMenu ShellContext="_shellContext"
+                 IsCollapsed="IsSidebarCollapsed"
+                 OnToggle="ToggleSidebar" />
     </aside>
 
-    <div class="shell__body @CurrentTheme.ThemeClass" style="@CurrentTheme.CssVariables">
-        <header class="shell__header">
-            <div class="shell__headline">
-                <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
-                <h1 class="shell__title">@_shellContext.Title</h1>
-            </div>
-
-            <div class="shell__header-meta">
-                @if (!string.IsNullOrWhiteSpace(_shellContext.LogoUrl))
-                {
-                    <div class="shell__mark">
-                        <img src="@_shellContext.LogoUrl" alt="@_shellContext.Title logo" />
+    <div class="shell__body @CurrentTheme.ThemeClass @(_shellContext.UseCompactHeader ? "shell__body--compact" : string.Empty)" style="@CurrentTheme.CssVariables">
+        @if (_shellContext.UseCompactHeader)
+        {
+            <header class="shell__compact-header">
+                <div class="shell__compact-headline">
+                    <button class="shell__rail-toggle"
+                            type="button"
+                            @onclick="ToggleSidebar"
+                            aria-expanded="@(!IsSidebarCollapsed)"
+                            aria-label="@(IsSidebarCollapsed ? "Expand platform rail" : "Collapse platform rail")">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <div class="shell__headline">
+                        <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
+                        <h1 class="shell__compact-title">@_shellContext.Title</h1>
                     </div>
-                }
-                <p class="shell__subtitle">@_shellContext.Subtitle</p>
-            </div>
-        </header>
+                </div>
+
+                <div class="shell__compact-meta">
+                    <span class="chip">Powered by FIC</span>
+                    <p class="shell__compact-subtitle">@_shellContext.Subtitle</p>
+                </div>
+            </header>
+        }
+        else
+        {
+            <header class="shell__header">
+                <div class="shell__headline">
+                    <p class="shell__eyebrow">@_shellContext.Eyebrow</p>
+                    <h1 class="shell__title">@_shellContext.Title</h1>
+                </div>
+
+                <div class="shell__header-meta">
+                    @if (!string.IsNullOrWhiteSpace(_shellContext.LogoUrl))
+                    {
+                        <div class="shell__mark">
+                            <img src="@_shellContext.LogoUrl" alt="@_shellContext.Title logo" />
+                        </div>
+                    }
+                    <p class="shell__subtitle">@_shellContext.Subtitle</p>
+                </div>
+            </header>
+        }
 
         <main class="shell__content">
             @Body
@@ -43,8 +73,11 @@
 @code {
     private MerchantThemeView _defaultTheme = default!;
     private ShellContext _shellContext = ShellContext.Default;
+    private string _shellKind = string.Empty;
+    private bool _isSidebarCollapsed;
 
     private MerchantThemeView CurrentTheme => _shellContext.Theme ?? _defaultTheme;
+    private bool IsSidebarCollapsed => _isSidebarCollapsed;
 
     protected override void OnInitialized()
     {
@@ -69,6 +102,18 @@
 
     private void RebuildShellContext()
     {
+        var nextContext = ResolveShellContext();
+        if (!string.Equals(_shellKind, nextContext.Kind, StringComparison.Ordinal))
+        {
+            _shellKind = nextContext.Kind;
+            _isSidebarCollapsed = nextContext.DefaultRailCollapsed;
+        }
+
+        _shellContext = nextContext;
+    }
+
+    private ShellContext ResolveShellContext()
+    {
         var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri)
             .Split('?', '#')[0]
             .Trim('/');
@@ -82,22 +127,24 @@
             var workspace = PlatformState.GetMerchantWorkspace(merchantId, Navigation.BaseUri);
             if (workspace is not null)
             {
-                _shellContext = new ShellContext(
-                    "Your live merchant workspace",
-                    workspace.Merchant.DisplayName,
-                    $"Brand the workspace, define the loyalty card template, and manage issued customer cards from one merchant-owned area.",
-                    "Merchant brand live",
-                    workspace.Merchant.DisplayName,
-                    $"Buy {workspace.Programme.RewardThreshold} {workspace.Programme.RewardItemLabel}, get one free.",
-                    "In this workspace",
+                return new ShellContext(
+                    "FIC platform shell",
+                    "Merchant workspace",
+                    "Collapse the FIC rail when you want focus. Billing, account, and auth live in the platform shell, while brand, card template, and customers stay inside the merchant workspace.",
+                    "merchant",
+                    true,
+                    true,
+                    "Platform shell",
+                    "FIC Loyalty",
+                    "Keep platform-level actions here. The merchant workspace stays focused on brand, card setup, and customer operations.",
+                    "Platform vs workspace",
                     [
-                        "Brand is the merchant-level source of truth.",
-                        "The loyalty card template inherits from that workspace brand.",
-                        "Issued customer cards are managed separately from the template."
+                        "Billing, account, and auth belong to FIC platform chrome.",
+                        "The merchant workspace owns brand, card template, and customer operations.",
+                        "Issued customer cards are still separate from the default loyalty card template."
                     ],
-                    workspace.BrandProfile.LogoUrl,
+                    null,
                     BrandPresentation.Build(workspace.BrandProfile));
-                return;
             }
         }
 
@@ -108,10 +155,13 @@
             var experience = PlatformState.GetJoinExperience(joinCode);
             if (experience is not null)
             {
-                _shellContext = new ShellContext(
+                return new ShellContext(
                     "Customer join flow",
                     $"Join {experience.Merchant.DisplayName}",
                     $"This page carries the merchant styling forward before the pass is issued.",
+                    "join",
+                    false,
+                    false,
                     "Join screen",
                     experience.Merchant.DisplayName,
                     experience.Programme.RewardCopy,
@@ -123,7 +173,6 @@
                     ],
                     experience.BrandProfile.LogoUrl,
                     BrandPresentation.Build(experience.BrandProfile));
-                return;
             }
         }
 
@@ -135,10 +184,13 @@
             var card = PlatformState.GetWalletCard(cardId);
             if (card is not null)
             {
-                _shellContext = new ShellContext(
+                return new ShellContext(
                     "Wallet pass preview",
                     card.VendorDisplayName,
                     $"Progress, reward state, and branded pass chrome stay in sync from the same projection.",
+                    "wallet",
+                    false,
+                    false,
                     "Wallet state",
                     card.VendorDisplayName,
                     card.ProgressDisplayText,
@@ -150,16 +202,17 @@
                     ],
                     card.LogoUrl,
                     BrandPresentation.Build(card));
-                return;
             }
         }
 
-        _shellContext = segments.Length >= 2
+        return segments.Length >= 2
             && string.Equals(segments[0], "portal", StringComparison.OrdinalIgnoreCase)
             && string.Equals(segments[1], "signup", StringComparison.OrdinalIgnoreCase)
             ? ShellContext.Signup
             : ShellContext.Default;
     }
+
+    private void ToggleSidebar() => _isSidebarCollapsed = !_isSidebarCollapsed;
 
     public void Dispose()
     {
@@ -171,6 +224,9 @@
         string Eyebrow,
         string Title,
         string Subtitle,
+        string Kind,
+        bool UseCompactHeader,
+        bool DefaultRailCollapsed,
         string SidebarKicker,
         string SidebarName,
         string SidebarCopy,
@@ -183,6 +239,9 @@
             "Self-serve merchant loyalty",
             "Create a merchant workspace and launch a wallet loyalty card.",
             "FIC is the product shell. Merchants should feel like they step into their own workspace after signup.",
+            "default",
+            false,
+            false,
             "Self-Serve Setup",
             "FIC Loyalty",
             "Create your card, brand it, share the join QR, and stamp visits from your phone or till-side device.",
@@ -199,6 +258,9 @@
             "Create merchant workspace",
             "Start with the merchant, not the customer card list.",
             "The first job is to create the merchant workspace and its default loyalty card template. Issued customer cards come later.",
+            "signup",
+            false,
+            false,
             "Brand studio",
             "Your merchant setup",
             "Use the live preview to see how the merchant workspace and wallet pass inherit the same brand system.",
