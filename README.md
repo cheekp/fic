@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Keep tightening the merchant workspace from here: make the selected-programme work surface calmer and more operational, then finish real signed Apple Wallet setup, pass updates, and stronger merchant auth/session handling.
+Keep tightening the merchant workspace from here: make the selected-programme area feel visually calmer and more app-like, then finish real signed Apple Wallet setup, pass updates, and stronger merchant auth/session handling.

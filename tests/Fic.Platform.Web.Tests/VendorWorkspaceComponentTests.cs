@@ -42,7 +42,7 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains("Stamp visits", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Open Customer Join", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("All programmes", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Programmes", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Run daily loyalty from here", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Operate for daily use", cut.Markup, StringComparison.Ordinal);
     }
@@ -143,9 +143,9 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Save Programme", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Current customer output", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Customer delivery", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("wallet loyalty card", cut.Markup, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Current output", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Current live output for this programme.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Current output and future room", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Choose how customers receive this programme", cut.Markup, StringComparison.Ordinal);
@@ -165,10 +165,10 @@ public sealed class VendorWorkspaceComponentTests
             .Single(button => button.TextContent.Contains("New programme", StringComparison.Ordinal))
             .Click();
 
-        Assert.Contains("New programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Choose output", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Current launch format", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Available now", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Launch format", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Live now", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public sealed class VendorWorkspaceComponentTests
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("All programmes", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Programmes", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("A programme defines the rule", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Run daily loyalty from here", cut.Markup, StringComparison.Ordinal);
     }
@@ -199,6 +199,8 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("Current programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Operate for daily use", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("0 customers", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("0 unlocked", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -229,8 +231,9 @@ public sealed class VendorWorkspaceComponentTests
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Customer-facing wallet card", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Wallet loyalty card.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet loyalty card preview", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Current delivery", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Uses the shop brand defaults for this programme.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Customer-facing view", cut.Markup, StringComparison.Ordinal);
     }
 
