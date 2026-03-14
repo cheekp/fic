@@ -11,6 +11,7 @@
 7. The loyalty agent wording changes by context and remains discreet.
 8. Merchant-owned shop/programme surfaces remain merchant-themed rather than being re-skinned into the company layer.
 9. The F12 validator passes.
+10. This slice may leave further product-entry simplification to a follow-on polish pass.
 
 ## Demo Walkthrough
 

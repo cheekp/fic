@@ -251,20 +251,28 @@ textarea {
     line-height: 0.95;
 }
 
+.company-home__signals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
 .company-home__quote {
     margin: 0;
     padding-left: 1rem;
     border-left: 2px solid var(--brand-accent);
     color: color-mix(in srgb, var(--brand-button-ink) 88%, var(--brand-muted) 12%);
     font-family: "Iowan Old Style", "Palatino Linotype", serif;
-    font-size: 1.08rem;
-    line-height: 1.8;
+    font-size: 0.96rem;
+    line-height: 1.7;
+    max-width: 38rem;
 }
 
 .company-home__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.85rem;
+    align-items: center;
 }
 
 .company-home__note {
@@ -272,6 +280,10 @@ textarea {
     max-width: 34rem;
     color: var(--brand-muted);
     line-height: 1.7;
+}
+
+.company-home__login-link {
+    color: var(--brand-button-ink);
 }
 
 .company-home__media {
@@ -601,6 +613,10 @@ textarea {
 .signup-panel {
     max-width: 760px;
     margin: 0 auto;
+}
+
+.signup-panel--entry {
+    max-width: 42rem;
 }
 
 .account-panel {

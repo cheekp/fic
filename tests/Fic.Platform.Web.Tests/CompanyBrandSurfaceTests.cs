@@ -22,10 +22,26 @@ public sealed class CompanyBrandSurfaceTests
         var cut = context.Render<Home>();
 
         Assert.Contains("North Star Customer Solutions", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Designing loyalty that actually works.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Launch your wallet loyalty programme in minutes.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Set Up Your Shop", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Already have an account?", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/portal/signup", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/consultancy", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("company-logo.png", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SignupPage_ReadsAsShortShopCreationStep()
+    {
+        using var context = new BunitContext();
+        context.Services.AddSingleton(new DemoPlatformState(NullLogger<DemoPlatformState>.Instance, new InMemoryMerchantBrandAssetStore()));
+
+        var cut = context.Render<PortalSignup>();
+
+        Assert.Contains("Create your shop account", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Billing is next", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Continue to Billing", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Next: confirm mock billing", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

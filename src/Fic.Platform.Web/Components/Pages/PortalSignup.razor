@@ -4,14 +4,14 @@
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
 
-<PageTitle>Create Your Shop</PageTitle>
+<PageTitle>Set Up Your Shop</PageTitle>
 
-<section class="panel signup-panel">
+<section class="panel signup-panel signup-panel--entry">
     <div class="panel__header">
         <div>
             <p class="eyebrow">Step 1 of 2</p>
-            <h2>Create your shop</h2>
-            <p class="lede">Enter the shop details first. The loyalty programme is configured later inside the workspace.</p>
+            <h2>Create your shop account</h2>
+            <p class="lede">This takes about a minute. Billing is next, then you land in the workspace to set up the first programme.</p>
         </div>
     </div>
 
@@ -42,10 +42,8 @@
 
         </div>
 
-        <p class="field-hint">Next: confirm mock billing, then continue into the workspace.</p>
-
         <div class="form-actions">
-            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Create My Shop</button>
+            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Continue to Billing</button>
             <a class="button button--ghost" href="/">Back to start</a>
         </div>
     </EditForm>

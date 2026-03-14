@@ -128,6 +128,9 @@ Completed slice chain to date:
 - `F11`
   - programme workspace polish and daily-use reduction of visual density
   - validator: `scripts/validate-f11-programme-workspace-polish.sh`
+- `F12`
+  - company brand surfaces and support-layer polish
+  - validator: `scripts/validate-f12-company-brand-surfaces.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
@@ -156,6 +159,7 @@ The repo now supports:
 - merchant-scoped brand theming across workspace, join flow, and wallet preview
 - platform-level concerns reduced to lightweight workspace utilities once inside a merchant-owned area
 - company-layer home, account, billing, and consultancy surfaces separated from merchant-owned workspace theming
+- product entry flow now separates company backing from the primary FIC product CTA
 
 The repo does not yet represent finished production behavior for:
 
@@ -207,6 +211,7 @@ Review the harness when:
 The next likely product slices are:
 
 - company brand surfaces and support-layer polish
+- entry-flow cleanup so the home page and signup path stay product-led and low-friction
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries

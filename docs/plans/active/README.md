@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F12-company-brand-surfaces.md`
+- `F13-entry-flow-polish.md`
