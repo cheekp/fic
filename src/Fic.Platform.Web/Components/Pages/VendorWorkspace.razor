@@ -47,10 +47,6 @@ else
                 </div>
             </div>
             <div class="workspace-header__actions">
-                @if (!IsShopSettingsOpen())
-                {
-                    <a class="button button--ghost button--compact" href="@GetShopSettingsUrl()">Shop settings</a>
-                }
                 @if (WalletCapability.SupportsAppleWalletPass)
                 {
                     <span class="chip chip--success">Signed Apple Wallet ready</span>
@@ -64,6 +60,10 @@ else
                 <a class="workspace-tabs__item @(IsWorkspaceSection("programmes") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("programmes")">Programmes</a>
                 <a class="workspace-tabs__item @(IsWorkspaceSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("insights")">Insights</a>
             </nav>
+            @if (!IsShopSettingsOpen())
+            {
+                <a class="button button--ghost button--compact workspace-tabs-bar__action" href="@GetShopSettingsUrl()">Shop settings</a>
+            }
         </div>
 
         @if (IsWorkspaceSection("overview"))
@@ -233,11 +233,11 @@ else
         else
         {
             <section class="workspace-detail-grid workspace-detail-grid--programme-shell">
-                <aside class="panel programme-sidebar programme-rail">
+                <aside class="programme-sidebar programme-rail">
                     <div class="programme-rail__header">
                         <div>
                             <p class="eyebrow">Programmes</p>
-                            <h3>All programmes</h3>
+                            <h3>Programmes</h3>
                         </div>
                         <button class="button button--secondary" type="button" @onclick="ToggleCreateProgrammeOptions">New programme</button>
                     </div>
@@ -246,15 +246,15 @@ else
                     {
                         <section class="programme-create-panel">
                             <div class="programme-create-panel__header">
-                                <p class="eyebrow">New programme</p>
+                                <p class="eyebrow">Choose output</p>
                                 <button class="button button--ghost button--compact" type="button" @onclick="ToggleCreateProgrammeOptions">Close</button>
                             </div>
                             <button class="programme-create-option" type="button" @onclick="HandleCreateWalletProgrammeAsync">
                                 <div class="programme-create-option__copy">
                                     <strong>Wallet loyalty card</strong>
-                                    <span>Current launch format</span>
+                                    <span>Live now</span>
                                 </div>
-                                <span class="chip chip--accent">Available now</span>
+                                <span class="chip chip--accent">Launch format</span>
                             </button>
                         </section>
                     }
@@ -276,11 +276,7 @@ else
                                                 <h4>@programme.RewardHeadline</h4>
                                                 <p class="field-hint">@BuildProgrammeWindowMessage(programme.StartsOn, programme.EndsOn)</p>
                                             </div>
-                                            <div class="programme-list__meta">
-                                                <span class="chip">@BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn)</span>
-                                                <span>@programme.ActiveCards customers</span>
-                                                <span>@programme.RewardsUnlocked unlocked</span>
-                                            </div>
+                                            <span class="chip">@BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn)</span>
                                         </a>
                                     }
                                 </div>
@@ -289,16 +285,16 @@ else
                     </div>
                 </aside>
 
-                <div class="workspace-stack workspace-stack--programme">
-                    <section class="panel programme-context-bar">
+                <div class="workspace-stack workspace-stack--programme programme-workpane">
+                    <section class="programme-context-bar">
                         <div class="programme-context-bar__title">
                             <p class="eyebrow">Current programme</p>
                             <h3>@selectedProgrammeSummary.RewardHeadline</h3>
                         </div>
                         <div class="programme-context-bar__meta">
                             <span class="chip">@selectedProgrammeBadge</span>
-                            <span>Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
-                            <span>Wallet loyalty card</span>
+                            <span>@selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") - @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
+                            <span class="chip">Wallet loyalty card</span>
                         </div>
                     </section>
 
@@ -455,7 +451,7 @@ else
 
                                     <section class="form-section">
                                         <div class="form-section__header">
-                                            <h4>Programme rule</h4>
+                                            <h4>Rule and schedule</h4>
                                             <p class="field-hint">Reward, threshold, and live window.</p>
                                         </div>
                                         <div class="form-grid">
@@ -483,8 +479,17 @@ else
 
                                     <section class="form-section">
                                         <div class="form-section__header">
-                                            <h4>Current customer output</h4>
-                                            <p class="field-hint">Wallet loyalty card.</p>
+                                            <h4>Customer delivery</h4>
+                                            <p class="field-hint">Choose how this programme reaches customers.</p>
+                                        </div>
+                                        <div class="delivery-options">
+                                            <article class="delivery-option delivery-option--selected">
+                                                <div class="delivery-option__copy">
+                                                    <strong>Wallet loyalty card</strong>
+                                                    <span>Current live output for this programme.</span>
+                                                </div>
+                                                <span class="chip chip--accent">Current</span>
+                                            </article>
                                         </div>
                                         <div class="form-grid">
                                             <label class="field field--full">
@@ -510,13 +515,13 @@ else
                                 <div class="panel__header">
                                     <div>
                                         <p class="eyebrow">Preview</p>
-                                        <h3>Customer-facing wallet card</h3>
+                                        <h3>Wallet loyalty card preview</h3>
                                     </div>
                                 </div>
                                 <div class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
                                     <header class="wallet-pass__header">
                                         <div>
-                                            <p class="wallet-pass__label">Current output</p>
+                                            <p class="wallet-pass__label">Current delivery</p>
                                             <h2>@_shopForm.DisplayName</h2>
                                         </div>
                                         <div class="wallet-pass__mark">
@@ -536,7 +541,7 @@ else
                                                 <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
                                             }
                                         </div>
-                                        <p class="wallet-pass__status">Inherits the shop brand and this programme rule.</p>
+                                        <p class="wallet-pass__status">Uses the shop brand defaults for this programme.</p>
                                     </div>
                                 </div>
                             </article>
