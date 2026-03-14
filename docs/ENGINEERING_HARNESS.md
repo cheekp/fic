@@ -140,6 +140,12 @@ Completed slice chain to date:
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
+## Current Active Slice
+
+- `F15`
+  - programme workspace focus so the merchant area reads as a tool rather than an explanation
+  - validator: `scripts/validate-f15-programme-workspace-focus.sh`
+
 ## Current Product Reality
 
 The repo now supports:
@@ -167,6 +173,8 @@ The repo now supports:
 - company-layer home, account, billing, and consultancy surfaces separated from merchant-owned workspace theming
 - product entry flow now separates company backing from the primary FIC product CTA
 - public entry now needs ongoing restraint so company positioning never overwhelms the product lane
+- programme workspace is organised under shop -> programmes, with one selected programme work surface at a time
+- shop settings now need to stay lightweight and secondary to daily programme operations
 
 The repo does not yet represent finished production behavior for:
 
@@ -220,6 +228,7 @@ The next likely product slices are:
 - company brand surfaces and support-layer polish
 - entry-flow cleanup so the home page and signup path stay product-led and low-friction
 - further reduction of narrative and competing signals in the public entry lane
+- merchant workspace focus so programmes feel like a rail plus one working surface
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries

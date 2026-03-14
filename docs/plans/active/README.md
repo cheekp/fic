@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F14-entry-lane-focus.md`
+- `F15-programme-workspace-focus.md`
