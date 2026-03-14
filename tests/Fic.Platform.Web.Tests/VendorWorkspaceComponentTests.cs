@@ -48,6 +48,20 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
+    public async Task Workspace_ShowsWalletDemoSetupLink_WhenSigningFallsBackToPreview()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId);
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Preview fallback", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("/support/wallet-demo", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ShopOverview_DismissesRoadmapWhenRequested()
     {
         using var context = CreateContext();

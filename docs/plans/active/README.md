@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F17-workspace-visual-polish.md`
+- `F18-real-wallet-demo.md`

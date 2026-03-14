@@ -31,6 +31,7 @@
                         <span></span>
                     </button>
                     <div class="merchant-shell-bar__actions @(_isMerchantUtilityMenuOpen ? "merchant-shell-bar__actions--open" : string.Empty)">
+                        <a class="button button--ghost button--compact" href="/support/wallet-demo">Wallet demo</a>
                         <a class="button button--ghost button--compact" href="/consultancy">Training &amp; Consultancy</a>
                         <a class="button button--ghost button--compact" href="/support/billing">Billing</a>
                         <a class="button button--ghost button--compact" href="/support/account">Account</a>
@@ -319,6 +320,13 @@
 
         if (segments.Length >= 2
             && string.Equals(segments[0], "support", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "wallet-demo", StringComparison.OrdinalIgnoreCase))
+        {
+            return ApplyCompanyTheme(ShellContext.CompanyWalletDemo);
+        }
+
+        if (segments.Length >= 2
+            && string.Equals(segments[0], "support", StringComparison.OrdinalIgnoreCase)
             && string.Equals(segments[1], "billing", StringComparison.OrdinalIgnoreCase))
         {
             return ApplyCompanyTheme(ShellContext.CompanyBilling);
@@ -550,6 +558,31 @@
                 "Use this discreet launcher for billing, plan, and commercial onboarding questions.",
                 "Open billing support",
                 "Ask about plans",
+                "Talk to North Star"));
+
+        public static ShellContext CompanyWalletDemo { get; } = new(
+            "North Star Wallet support",
+            "Apple Wallet demo readiness",
+            "Support for local Wallet signing setup, pass-delivery checks, and founder-demo troubleshooting.",
+            "company-wallet-demo",
+            false,
+            false,
+            false,
+            false,
+            false,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
+            null,
+            null,
+            new AgentContext(
+                "Wallet",
+                "Get Wallet demo support",
+                "Use this discreet launcher for Apple Wallet demo setup, signing, and pass-delivery questions.",
+                "Open Wallet demo support",
+                "Ask about Wallet demo",
                 "Talk to North Star"));
 
         public static ShellContext CompanyAccount { get; } = new(

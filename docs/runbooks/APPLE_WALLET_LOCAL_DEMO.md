@@ -71,6 +71,7 @@ cd /Users/paulcheek/dev/fic
 ```
 
 The script prints the URL to open from your Mac. Use that LAN URL, not `localhost`, so the generated QR points back to your machine.
+It also prints a Wallet demo readiness URL at `/support/wallet-demo`, which shows the current capability and any missing signing inputs.
 
 ## Demo Flow
 
@@ -91,7 +92,7 @@ The environment is still missing one of:
 - `.p12` file path
 - WWDR certificate path
 
-The join page and merchant workspace both surface the current capability message.
+The join page, merchant workspace, and `/support/wallet-demo` support page all surface the current capability message.
 
 ## If The iPhone Does Not Offer Wallet Add
 

@@ -20,6 +20,7 @@ LAN_IP="$(get_lan_ip)"
 echo "Starting FIC wallet demo host on the local network."
 if [[ -n "${LAN_IP}" ]]; then
   echo "Open on your Mac: http://${LAN_IP}:5276/portal/signup"
+  echo "Wallet readiness page: http://${LAN_IP}:5276/support/wallet-demo"
 else
   echo "Could not determine the LAN IP automatically. Open the app using your Mac's current LAN address."
 fi

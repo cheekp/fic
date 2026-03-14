@@ -1,0 +1,53 @@
+@page "/support/wallet-demo"
+@inject IAppleWalletPassService WalletPasses
+
+<PageTitle>Wallet Demo Support</PageTitle>
+
+@{
+    var capability = WalletPasses.GetCapability();
+}
+
+<section class="panel company-support">
+    <div class="panel__header">
+        <div>
+            <p class="eyebrow">North Star Wallet support</p>
+            <h2>Apple Wallet demo readiness</h2>
+            <p class="lede">
+                Check whether this environment will issue a real signed Apple Wallet pass or stay in preview mode.
+            </p>
+        </div>
+        <span class="chip @(capability.SupportsAppleWalletPass ? "chip--success" : string.Empty)">
+            @(capability.SupportsAppleWalletPass ? "Signed pass ready" : "Preview fallback")
+        </span>
+    </div>
+
+    <div class="company-support__summary">
+        <p>@capability.HelperText</p>
+        @if (capability.HasDiagnostics)
+        {
+            <ul>
+                @foreach (var issue in capability.DiagnosticItems!)
+                {
+                    <li>@issue</li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="company-support__summary">
+        <p>To complete the founder demo, make sure you have:</p>
+        <ul>
+            <li>a Wallet pass type identifier</li>
+            <li>a team identifier</li>
+            <li>a signing certificate exported as <code>.p12</code></li>
+            <li>the Apple WWDR certificate</li>
+            <li>local secrets configured for the web app</li>
+        </ul>
+        <p>Run <code>./scripts/run-wallet-demo-lan.sh</code> once the environment is ready.</p>
+    </div>
+
+    <div class="company-support__actions">
+        <a class="button button--primary" href="/portal/signup">Open merchant setup</a>
+        <a class="button button--ghost" href="/consultancy">Training &amp; Consultancy</a>
+    </div>
+</section>

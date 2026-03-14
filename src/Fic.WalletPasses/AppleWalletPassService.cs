@@ -24,24 +24,17 @@ public sealed class AppleWalletPassService(
 
     public WalletPassCapability GetCapability()
     {
-        return CanIssueSignedPass(out var reason)
-            ? new WalletPassCapability(
-                WalletPassDeliveryMode.AppleWalletPass,
-                "Add to Apple Wallet",
-                "Downloads a signed Apple Wallet pass from this join flow.")
-            : new WalletPassCapability(
-                WalletPassDeliveryMode.Preview,
-                "Open Card Preview",
-                reason ?? "Apple Wallet signing is not configured in this environment.");
+        return EvaluateCapability();
     }
 
     public async Task<WalletPassPackage> CreatePackageAsync(WalletCardSnapshot card, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!CanIssueSignedPass(out var reason))
+        var capability = EvaluateCapability();
+        if (!capability.SupportsAppleWalletPass)
         {
-            throw new InvalidOperationException(reason);
+            throw new InvalidOperationException(capability.HelperText);
         }
 
         var packageFiles = await BuildUnsignedPackageFilesAsync(card, cancellationToken);
@@ -57,35 +50,72 @@ public sealed class AppleWalletPassService(
             BuildZipArchive(packageFiles));
     }
 
-    private bool CanIssueSignedPass(out string? reason)
+    private WalletPassCapability EvaluateCapability()
     {
+        var diagnostics = new List<string>();
+
         if (!options.SigningConfigured)
         {
-            reason = "Apple Wallet signing is turned off, so this environment stays in preview mode.";
-            return false;
+            diagnostics.Add("Apple Wallet signing is turned off for this environment.");
         }
 
         if (string.IsNullOrWhiteSpace(options.PassTypeIdentifier)
             || string.IsNullOrWhiteSpace(options.TeamIdentifier))
         {
-            reason = "Pass type identifier and team identifier must be configured before issuing a real pass.";
-            return false;
+            if (string.IsNullOrWhiteSpace(options.PassTypeIdentifier))
+            {
+                diagnostics.Add("Pass type identifier is missing.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.TeamIdentifier))
+            {
+                diagnostics.Add("Team identifier is missing.");
+            }
         }
 
-        if (string.IsNullOrWhiteSpace(options.P12CertificatePath) || !File.Exists(options.P12CertificatePath))
+        if (string.IsNullOrWhiteSpace(options.P12CertificatePath))
         {
-            reason = "The Apple Wallet signing certificate path is missing or invalid.";
-            return false;
+            diagnostics.Add("Signing certificate path is missing.");
         }
-
-        if (string.IsNullOrWhiteSpace(options.WwdrCertificatePath) || !File.Exists(options.WwdrCertificatePath))
+        else if (!File.Exists(options.P12CertificatePath))
         {
-            reason = "The Apple WWDR certificate path is missing or invalid.";
-            return false;
+            diagnostics.Add("Signing certificate file was not found.");
+        }
+        else if (!TryLoadSigningCertificate(out _, out var signingIssue))
+        {
+            diagnostics.Add(signingIssue!);
         }
 
-        reason = null;
-        return true;
+        if (string.IsNullOrWhiteSpace(options.WwdrCertificatePath))
+        {
+            diagnostics.Add("Apple WWDR certificate path is missing.");
+        }
+        else if (!File.Exists(options.WwdrCertificatePath))
+        {
+            diagnostics.Add("Apple WWDR certificate file was not found.");
+        }
+        else if (!TryLoadWwdrCertificate(out _, out var wwdrIssue))
+        {
+            diagnostics.Add(wwdrIssue!);
+        }
+
+        if (diagnostics.Count == 0)
+        {
+            return new WalletPassCapability(
+                WalletPassDeliveryMode.AppleWalletPass,
+                "Add to Apple Wallet",
+                "Downloads a signed Apple Wallet pass from this join flow.");
+        }
+
+        var helperText = options.SigningConfigured
+            ? "Finish the Apple Wallet signing checklist to issue a real pass."
+            : "Apple Wallet signing is turned off, so this environment stays in preview mode.";
+
+        return new WalletPassCapability(
+            WalletPassDeliveryMode.Preview,
+            "Open Card Preview",
+            helperText,
+            diagnostics);
     }
 
     private async Task<Dictionary<string, byte[]>> BuildUnsignedPackageFilesAsync(WalletCardSnapshot card, CancellationToken cancellationToken)
@@ -255,11 +285,8 @@ public sealed class AppleWalletPassService(
 
     private byte[] BuildSignature(byte[] manifestBytes)
     {
-        var signingCertificate = X509CertificateLoader.LoadPkcs12FromFile(
-            options.P12CertificatePath,
-            options.P12CertificatePassword,
-            X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet);
-        var wwdrCertificate = X509CertificateLoader.LoadCertificateFromFile(options.WwdrCertificatePath);
+        var signingCertificate = LoadSigningCertificate();
+        var wwdrCertificate = LoadWwdrCertificate();
 
         var signedCms = new SignedCms(new ContentInfo(manifestBytes), detached: true);
         var signer = new CmsSigner(SubjectIdentifierType.IssuerAndSerialNumber, signingCertificate)
@@ -271,6 +298,113 @@ public sealed class AppleWalletPassService(
 
         signedCms.ComputeSignature(signer);
         return signedCms.Encode();
+    }
+
+    private X509Certificate2 LoadSigningCertificate()
+    {
+        if (!TryLoadSigningCertificate(out var certificate, out var issue))
+        {
+            throw new InvalidOperationException(issue);
+        }
+
+        return certificate!;
+    }
+
+    private bool TryLoadSigningCertificate(out X509Certificate2? certificate, out string? issue)
+    {
+        try
+        {
+            certificate = LoadPkcs12Certificate(
+                options.P12CertificatePath,
+                options.P12CertificatePassword);
+
+            if (!certificate.HasPrivateKey)
+            {
+                issue = "Signing certificate does not include a private key.";
+                certificate.Dispose();
+                certificate = null;
+                return false;
+            }
+
+            issue = null;
+            return true;
+        }
+        catch (CryptographicException)
+        {
+            certificate = null;
+            issue = "Signing certificate could not be opened. Check the .p12 path and password.";
+            return false;
+        }
+        catch (IOException)
+        {
+            certificate = null;
+            issue = "Signing certificate could not be opened. Check the .p12 path and password.";
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            certificate = null;
+            issue = "Signing certificate could not be opened. Check the .p12 path and password.";
+            return false;
+        }
+    }
+
+    private X509Certificate2 LoadWwdrCertificate()
+    {
+        if (!TryLoadWwdrCertificate(out var certificate, out var issue))
+        {
+            throw new InvalidOperationException(issue);
+        }
+
+        return certificate!;
+    }
+
+    private bool TryLoadWwdrCertificate(out X509Certificate2? certificate, out string? issue)
+    {
+        try
+        {
+            certificate = X509CertificateLoader.LoadCertificateFromFile(options.WwdrCertificatePath);
+            issue = null;
+            return true;
+        }
+        catch (CryptographicException)
+        {
+            certificate = null;
+            issue = "Apple WWDR certificate could not be opened.";
+            return false;
+        }
+        catch (IOException)
+        {
+            certificate = null;
+            issue = "Apple WWDR certificate could not be opened.";
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            certificate = null;
+            issue = "Apple WWDR certificate could not be opened.";
+            return false;
+        }
+    }
+
+    private static X509Certificate2 LoadPkcs12Certificate(string path, string password)
+    {
+        const X509KeyStorageFlags baseFlags = X509KeyStorageFlags.Exportable;
+
+        try
+        {
+            return X509CertificateLoader.LoadPkcs12FromFile(
+                path,
+                password,
+                baseFlags | X509KeyStorageFlags.EphemeralKeySet);
+        }
+        catch (PlatformNotSupportedException)
+        {
+            return X509CertificateLoader.LoadPkcs12FromFile(
+                path,
+                password,
+                baseFlags);
+        }
     }
 
     private static byte[] BuildZipArchive(IReadOnlyDictionary<string, byte[]> files)
