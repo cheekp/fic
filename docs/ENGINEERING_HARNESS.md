@@ -125,6 +125,9 @@ Completed slice chain to date:
 - `F10`
   - programme-centric workspace navigation
   - validator: `scripts/validate-f10-programme-workspace-nav.sh`
+- `F11`
+  - programme workspace polish and daily-use reduction of visual density
+  - validator: `scripts/validate-f11-programme-workspace-polish.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
@@ -152,6 +155,7 @@ The repo now supports:
 - Apple Wallet `.pkpass` issuance seam
 - merchant-scoped brand theming across workspace, join flow, and wallet preview
 - platform-level concerns reduced to lightweight workspace utilities once inside a merchant-owned area
+- company-layer home, account, billing, and consultancy surfaces separated from merchant-owned workspace theming
 
 The repo does not yet represent finished production behavior for:
 
@@ -202,7 +206,7 @@ Review the harness when:
 
 The next likely product slices are:
 
-- programme workspace polish and daily-use reduction of visual density
+- company brand surfaces and support-layer polish
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries

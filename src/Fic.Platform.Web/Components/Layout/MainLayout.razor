@@ -19,7 +19,7 @@
         @if (_shellContext.ShowMerchantUtilityBar)
         {
             <div class="merchant-shell-bar">
-                <span class="merchant-shell-bar__powered">Powered by FIC</span>
+                <span class="merchant-shell-bar__powered">Support by North Star</span>
                 <div class="merchant-shell-bar__utility">
                     <button class="merchant-shell-bar__menu button button--ghost button--compact"
                             type="button"
@@ -31,10 +31,10 @@
                         <span></span>
                     </button>
                     <div class="merchant-shell-bar__actions @(_isMerchantUtilityMenuOpen ? "merchant-shell-bar__actions--open" : string.Empty)">
-                        <button class="button button--ghost button--compact" type="button" disabled>Training &amp; Consultancy</button>
-                        <button class="button button--ghost button--compact" type="button" disabled>Billing</button>
-                        <button class="button button--ghost button--compact" type="button" disabled>Account</button>
-                        <button class="button button--ghost button--compact" type="button" disabled>Log Out</button>
+                        <a class="button button--ghost button--compact" href="/consultancy">Training &amp; Consultancy</a>
+                        <a class="button button--ghost button--compact" href="/support/billing">Billing</a>
+                        <a class="button button--ghost button--compact" href="/support/account">Account</a>
+                        <a class="button button--ghost button--compact" href="/account/login">Log Out</a>
                     </div>
                 </div>
             </div>
@@ -121,6 +121,7 @@
 
 @code {
     private MerchantThemeView _defaultTheme = default!;
+    private MerchantThemeView _companyTheme = default!;
     private ShellContext _shellContext = ShellContext.Default;
     private string _shellKind = string.Empty;
     private bool _isSidebarCollapsed;
@@ -137,6 +138,7 @@
     protected override void OnInitialized()
     {
         _defaultTheme = BrandPresentation.GetDefaultTheme();
+        _companyTheme = BrandPresentation.BuildPreview("#0F1B2A", "#C8A96A", 160, 120);
         RebuildShellContext();
         Navigation.LocationChanged += HandleLocationChanged;
         PlatformState.Changed += HandlePlatformStateChanged;
@@ -174,6 +176,8 @@
         }
     }
 
+    private ShellContext ApplyCompanyTheme(ShellContext context) => context with { Theme = _companyTheme };
+
     private ShellContext ResolveShellContext()
     {
         var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri)
@@ -209,7 +213,7 @@
                     new AgentContext(
                         "Support",
                         "Speak with Loyalty Agent",
-                        "Quick support for programme setup, merchant guidance, and consultancy handoff.",
+                        "North Star support for programme setup, merchant guidance, and consultancy handoff.",
                         "Open Loyalty Agent",
                         "Ask a setup question",
                         "Book consultancy"));
@@ -250,7 +254,7 @@
                         "Use this discreet help surface if someone needs support during the join and Wallet handoff flow.",
                         "Open join help",
                         "Ask about joining",
-                        "Contact support"));
+                        "Contact North Star"));
             }
         }
 
@@ -289,8 +293,42 @@
                         "Use this discreet help surface for Wallet pass questions, refresh issues, or redemption support.",
                         "Open Wallet help",
                         "Ask about Wallet",
-                        "Contact support"));
+                        "Contact North Star"));
             }
+        }
+
+        if (segments.Length >= 2
+            && string.Equals(segments[0], "account", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "login", StringComparison.OrdinalIgnoreCase))
+        {
+            return ApplyCompanyTheme(ShellContext.Login);
+        }
+
+        if (segments.Length >= 2
+            && string.Equals(segments[0], "account", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "forgot-password", StringComparison.OrdinalIgnoreCase))
+        {
+            return ApplyCompanyTheme(ShellContext.AccountRecovery);
+        }
+
+        if (segments.Length >= 1
+            && string.Equals(segments[0], "consultancy", StringComparison.OrdinalIgnoreCase))
+        {
+            return ApplyCompanyTheme(ShellContext.Consultancy);
+        }
+
+        if (segments.Length >= 2
+            && string.Equals(segments[0], "support", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "billing", StringComparison.OrdinalIgnoreCase))
+        {
+            return ApplyCompanyTheme(ShellContext.CompanyBilling);
+        }
+
+        if (segments.Length >= 2
+            && string.Equals(segments[0], "support", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "account", StringComparison.OrdinalIgnoreCase))
+        {
+            return ApplyCompanyTheme(ShellContext.CompanyAccount);
         }
 
         if (segments.Length >= 3
@@ -298,14 +336,14 @@
             && string.Equals(segments[1], "signup", StringComparison.OrdinalIgnoreCase)
             && string.Equals(segments[2], "billing", StringComparison.OrdinalIgnoreCase))
         {
-            return ShellContext.Billing;
+            return ApplyCompanyTheme(ShellContext.Billing);
         }
 
         return segments.Length >= 2
             && string.Equals(segments[0], "portal", StringComparison.OrdinalIgnoreCase)
             && string.Equals(segments[1], "signup", StringComparison.OrdinalIgnoreCase)
-            ? ShellContext.Signup
-            : ShellContext.Default;
+            ? ApplyCompanyTheme(ShellContext.Signup)
+            : ApplyCompanyTheme(ShellContext.Default);
     }
 
     private void ToggleSidebar() => _isSidebarCollapsed = !_isSidebarCollapsed;
@@ -340,66 +378,58 @@
         AgentContext? Agent)
     {
         public static ShellContext Default { get; } = new(
-            "FIC Loyalty",
-            "Set up your loyalty programme.",
-            "For independent coffee shops: no app, no customer accounts, simple QR onboarding, and a wallet loyalty card customers actually keep.",
+            "North Star Customer Solutions",
+            "Designing loyalty that actually works.",
+            "North Star Customer Solutions brings strategy, support, and commercial grounding to the FIC product layer.",
             "default",
             false,
             false,
             false,
             false,
             false,
-            "Self-Serve Setup",
-            "FIC Loyalty",
-            "Create your card, brand it, share the join QR, and stamp visits from your phone or till-side device.",
-            "What this setup gives you",
-            [
-                "FIC stays the product-level shell.",
-                "Shop owners get their own branded area after signup.",
-                "Brand, card template, and customers stay clearly separated."
-            ],
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
             null,
             null,
             new AgentContext(
-                "Sales",
-                "Speak with Sales",
-                "Use this discreet launcher for plan questions, onboarding guidance, or consultancy conversations before signup.",
-                "Open sales help",
-                "Ask about pricing",
-                "Talk to sales"));
+                "North Star",
+                "Speak with a loyalty strategist",
+                "Use this discreet launcher for product questions, consultancy conversations, or rollout guidance before signup.",
+                "Open strategist help",
+                "Ask about FIC",
+                "Discuss consultancy"));
 
         public static ShellContext Signup { get; } = new(
-            "FIC Merchant Setup",
+            "Commercial onboarding",
             "Set up your loyalty programme.",
-            "Create the shop first. The richer brand editing, card setup, and customer operations belong inside the owner-facing shop area after signup.",
+            "Create the shop first, then move into the merchant-owned workspace for programme setup and day-to-day operation.",
             "signup",
             false,
             false,
             false,
             false,
             false,
-            "Merchant setup",
-            "Your merchant setup",
-            "Collect the minimum inputs now, then let the workspace become the real product surface.",
-            "What happens next",
-            [
-                "Land in Brand first and upload the real logo there.",
-                "Refine the loyalty card template from inside the shop area.",
-                "Use Customers for join QR, scans, and issued cards."
-            ],
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
             null,
             null,
             new AgentContext(
                 "Setup",
-                "Get setup help",
+                "Get onboarding help",
                 "Use this discreet launcher if you need help creating the shop account before moving into billing and workspace setup.",
                 "Open setup help",
                 "Ask about setup",
-                "Contact support"));
+                "Talk to North Star"));
 
         public static ShellContext Billing { get; } = new(
-            "Billing setup",
-            "Complete mock billing",
+            "Commercial onboarding",
+            "Confirm billing",
             "This step simulates commercial onboarding before the merchant lands in the live workspace.",
             "billing",
             false,
@@ -407,15 +437,11 @@
             false,
             false,
             false,
-            "Billing",
-            "Billing setup",
-            "Mock billing keeps the internal demo flow realistic without introducing a live payment system.",
-            "Billing step",
-            [
-                "Pick a demo plan.",
-                "Confirm billing contact details.",
-                "Continue into the merchant workspace."
-            ],
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
             null,
             null,
             new AgentContext(
@@ -424,7 +450,132 @@
                 "Use this discreet launcher for plan, pricing, or mock billing questions during onboarding.",
                 "Open billing help",
                 "Ask about billing",
-                "Talk to sales"));
+                "Talk to North Star"));
+
+        public static ShellContext Login { get; } = new(
+            "Account access",
+            "Merchant login",
+            "North Star account support for merchant access and FIC workspace entry.",
+            "login",
+            false,
+            false,
+            false,
+            false,
+            false,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
+            null,
+            null,
+            new AgentContext(
+                "Support",
+                "Get account help",
+                "Use this discreet launcher if you need support with access, password recovery, or account ownership.",
+                "Open account help",
+                "Ask about access",
+                "Contact North Star"));
+
+        public static ShellContext AccountRecovery { get; } = new(
+            "Account recovery",
+            "Password reset",
+            "North Star account support for password recovery and merchant access issues.",
+            "recovery",
+            false,
+            false,
+            false,
+            false,
+            false,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
+            null,
+            null,
+            new AgentContext(
+                "Support",
+                "Get recovery help",
+                "Use this discreet launcher if you need help recovering access or routing the merchant back into the right support path.",
+                "Open recovery help",
+                "Ask about recovery",
+                "Contact North Star"));
+
+        public static ShellContext Consultancy { get; } = new(
+            "North Star Customer Solutions",
+            "Training and consultancy",
+            "Strategic support for loyalty, membership, and customer strategy around the FIC product layer.",
+            "consultancy",
+            false,
+            false,
+            false,
+            false,
+            false,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
+            null,
+            null,
+            new AgentContext(
+                "Consultancy",
+                "Speak with North Star",
+                "Use this discreet launcher for training, consultancy, and loyalty strategy conversations.",
+                "Open consultancy help",
+                "Ask about services",
+                "Book a strategy call"));
+
+        public static ShellContext CompanyBilling { get; } = new(
+            "North Star billing support",
+            "Billing and commercial help",
+            "Support for commercial onboarding, plan questions, and billing-related conversations.",
+            "company-billing",
+            false,
+            false,
+            false,
+            false,
+            false,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
+            null,
+            null,
+            new AgentContext(
+                "Billing",
+                "Get billing support",
+                "Use this discreet launcher for billing, plan, and commercial onboarding questions.",
+                "Open billing support",
+                "Ask about plans",
+                "Talk to North Star"));
+
+        public static ShellContext CompanyAccount { get; } = new(
+            "North Star account support",
+            "Account and access help",
+            "Support for merchant login, recovery, and account ownership questions.",
+            "company-account",
+            false,
+            false,
+            false,
+            false,
+            false,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            [],
+            null,
+            null,
+            new AgentContext(
+                "Account",
+                "Get account support",
+                "Use this discreet launcher for account access, password recovery, and merchant support routing.",
+                "Open account support",
+                "Ask about login",
+                "Contact North Star"));
     }
 
     public sealed record AgentContext(
