@@ -1088,8 +1088,14 @@ textarea {
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.72fr);
 }
 
+.workspace-detail-grid--programme-operate-secondary {
+    margin-top: 0.05rem;
+}
+
 .workspace-preview-panel {
     min-height: 100%;
+    position: sticky;
+    top: 1rem;
 }
 
 .programme-sidebar {
@@ -1121,7 +1127,7 @@ textarea {
     justify-content: space-between;
     gap: 1rem;
     align-items: end;
-    padding-block: 0.9rem;
+    padding-block: 0.8rem;
 }
 
 .programme-context-bar__title {
@@ -1140,7 +1146,7 @@ textarea {
     align-items: center;
     color: var(--brand-muted);
     line-height: 1.35;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
 }
 
 .programme-create-panel {
@@ -1331,7 +1337,7 @@ textarea {
 
 .qr-panel__meta {
     display: grid;
-    gap: 0.8rem;
+    gap: 0.65rem;
 }
 
 .card-list,
@@ -1344,7 +1350,18 @@ textarea {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    align-items: center;
+    align-items: start;
+    padding: 0.95rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface-strong) 86%, transparent 14%);
+}
+
+.card-row__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    justify-content: end;
 }
 
 .timeline__entry {
@@ -1472,6 +1489,10 @@ textarea {
 .empty-state {
     text-align: center;
     padding-block: 2.4rem;
+}
+
+.empty-state--compact {
+    padding-block: 1rem;
 }
 
 .resume-card {
@@ -1640,6 +1661,11 @@ textarea {
     .workspace-drawer {
         width: 100%;
         max-height: calc(100vh - 2rem);
+    }
+
+    .workspace-preview-panel {
+        position: static;
+        top: auto;
     }
 
     .resume-card__metrics {

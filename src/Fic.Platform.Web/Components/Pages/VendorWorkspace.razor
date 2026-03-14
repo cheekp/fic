@@ -315,16 +315,15 @@ else
                                 <div class="panel__header">
                                     <div>
                                         <p class="eyebrow">Customer join</p>
-                                        <h3>@selectedProgrammeSummary.RewardHeadline</h3>
+                                        <h3>Customer join QR</h3>
                                     </div>
-                                    <span class="chip">Programme specific</span>
                                 </div>
                                 <div class="qr-panel">
                                     <div class="qr-panel__graphic">
                                         @((MarkupString)_joinQrSvg)
                                     </div>
                                     <div class="qr-panel__meta">
-                                        <p>Customers scan this QR for the selected programme, then keep progress in Apple Wallet.</p>
+                                        <p>Customers scan this QR, join the programme, and keep progress in Apple Wallet.</p>
                                         <p class="field-hint">Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</p>
                                         <code>@_workspace.SelectedJoinUrl</code>
                                         @if (!SelectedProgrammeIsActive)
@@ -349,10 +348,10 @@ else
                                 <div class="panel__header">
                                     <div>
                                         <p class="eyebrow">Till-side stamping</p>
-                                        <h3>Daily use for this programme</h3>
+                                        <h3>Stamp visits</h3>
                                     </div>
-                                    <span class="chip">@_workspace.SelectedProgrammeCards.Count active cards</span>
                                 </div>
+                                <p class="field-hint">@_workspace.SelectedProgrammeCards.Count active cards on this programme.</p>
                                 <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
                                     <label class="field">
                                         <span>Customer pass code</span>
@@ -374,60 +373,70 @@ else
                             </article>
                         </section>
 
-                        @if (_workspace.SelectedProgrammeCards.Count == 0)
-                        {
-                            <section class="empty-state">
-                                <h4>No customer passes issued yet.</h4>
-                                <p>Share the join QR for this selected programme first. Once someone joins, their pass and progress will appear here.</p>
-                            </section>
-                        }
-                        else
-                        {
-                            <section class="card-list">
-                                @foreach (var card in _workspace.SelectedProgrammeCards)
-                                {
-                                    <article class="card-row">
-                                        <div>
-                                            <p class="eyebrow">Issued customer pass</p>
-                                            <h4>@card.ProgressDisplayText</h4>
-                                            <p class="field-hint">Valid @FormatDate(card.StartsOn) to @FormatDate(card.EndsOn)</p>
-                                            <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
-                                        </div>
-                                        <div class="card-row__meta">
-                                            <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
-                                            <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Open Preview</a>
-                                            @if (WalletCapability.SupportsAppleWalletPass)
-                                            {
-                                                <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Download Wallet Pass</a>
-                                            }
-                                            <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Pass Code</button>
-                                            <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Mark Reward Redeemed</button>
-                                        </div>
-                                    </article>
-                                }
-                            </section>
-                        }
-
-                        <section class="panel">
-                            <div class="panel__header">
-                                <div>
-                                    <p class="eyebrow">Recent activity</p>
-                                    <h3>Selected programme timeline</h3>
+                        <section class="workspace-detail-grid workspace-detail-grid--programme-operate-secondary">
+                            <article class="panel">
+                                <div class="panel__header">
+                                    <div>
+                                        <p class="eyebrow">Customer passes</p>
+                                        <h3>Issued on this programme</h3>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="timeline">
-                                @foreach (var entry in _workspace.Timeline)
+                                @if (_workspace.SelectedProgrammeCards.Count == 0)
                                 {
-                                    <article class="timeline__entry">
-                                        <div class="timeline__dot"></div>
-                                        <div>
-                                            <p class="timeline__event">@entry.EventType</p>
-                                            <p>@entry.Summary</p>
-                                            <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
-                                        </div>
-                                    </article>
+                                    <div class="empty-state empty-state--compact">
+                                        <h4>No customer passes issued yet.</h4>
+                                        <p>Share the join QR first. Once someone joins, their pass and progress appear here.</p>
+                                    </div>
                                 }
-                            </div>
+                                else
+                                {
+                                    <section class="card-list">
+                                        @foreach (var card in _workspace.SelectedProgrammeCards)
+                                        {
+                                            <article class="card-row">
+                                                <div>
+                                                    <p class="eyebrow">Issued customer pass</p>
+                                                    <h4>@card.ProgressDisplayText</h4>
+                                                    <p class="field-hint">Valid @FormatDate(card.StartsOn) to @FormatDate(card.EndsOn)</p>
+                                                    <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
+                                                </div>
+                                                <div class="card-row__meta">
+                                                    <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
+                                                    <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Preview</a>
+                                                    @if (WalletCapability.SupportsAppleWalletPass)
+                                                    {
+                                                        <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Wallet Pass</a>
+                                                    }
+                                                    <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Code</button>
+                                                    <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Redeem</button>
+                                                </div>
+                                            </article>
+                                        }
+                                    </section>
+                                }
+                            </article>
+
+                            <article class="panel">
+                                <div class="panel__header">
+                                    <div>
+                                        <p class="eyebrow">Recent activity</p>
+                                        <h3>Programme timeline</h3>
+                                    </div>
+                                </div>
+                                <div class="timeline">
+                                    @foreach (var entry in _workspace.Timeline)
+                                    {
+                                        <article class="timeline__entry">
+                                            <div class="timeline__dot"></div>
+                                            <div>
+                                                <p class="timeline__event">@entry.EventType</p>
+                                                <p>@entry.Summary</p>
+                                                <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                                            </div>
+                                        </article>
+                                    }
+                                </div>
+                            </article>
                         </section>
                     }
                     else if (IsProgrammeSection("configure"))
@@ -439,7 +448,6 @@ else
                                         <p class="eyebrow">Programme configuration</p>
                                         <h3>Rule, schedule, and output</h3>
                                     </div>
-                                    <span class="chip">@selectedProgrammeBadge</span>
                                 </div>
                                 <EditForm Model="_cardForm" OnValidSubmit="HandleCardSaveAsync" FormName="update-card-template" class="form-stack">
                                     <DataAnnotationsValidator />
@@ -448,7 +456,7 @@ else
                                     <section class="form-section">
                                         <div class="form-section__header">
                                             <h4>Programme rule</h4>
-                                            <p class="field-hint">Reward, threshold, and dates for this programme.</p>
+                                            <p class="field-hint">Reward, threshold, and live window.</p>
                                         </div>
                                         <div class="form-grid">
                                             <label class="field">
@@ -476,7 +484,7 @@ else
                                     <section class="form-section">
                                         <div class="form-section__header">
                                             <h4>Current customer output</h4>
-                                            <p class="field-hint">This programme currently publishes a wallet loyalty card.</p>
+                                            <p class="field-hint">Wallet loyalty card.</p>
                                         </div>
                                         <div class="form-grid">
                                             <label class="field field--full">
@@ -502,14 +510,13 @@ else
                                 <div class="panel__header">
                                     <div>
                                         <p class="eyebrow">Preview</p>
-                                        <h3>Wallet loyalty card</h3>
+                                        <h3>Customer-facing wallet card</h3>
                                     </div>
-                                    <span class="chip chip--accent">Customer output</span>
                                 </div>
                                 <div class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
                                     <header class="wallet-pass__header">
                                         <div>
-                                            <p class="wallet-pass__label">Customer-facing view</p>
+                                            <p class="wallet-pass__label">Current output</p>
                                             <h2>@_shopForm.DisplayName</h2>
                                         </div>
                                         <div class="wallet-pass__mark">
