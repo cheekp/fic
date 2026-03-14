@@ -131,6 +131,12 @@ Completed slice chain to date:
 - `F12`
   - company brand surfaces and support-layer polish
   - validator: `scripts/validate-f12-company-brand-surfaces.sh`
+- `F13`
+  - entry-flow cleanup so the home page and signup path stay product-led and low-friction
+  - validator: `scripts/validate-f13-entry-flow-polish.sh`
+- `F14`
+  - further reduction of narrative and competing signals in the public entry lane
+  - validator: `scripts/validate-f14-entry-lane-focus.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
@@ -160,6 +166,7 @@ The repo now supports:
 - platform-level concerns reduced to lightweight workspace utilities once inside a merchant-owned area
 - company-layer home, account, billing, and consultancy surfaces separated from merchant-owned workspace theming
 - product entry flow now separates company backing from the primary FIC product CTA
+- public entry now needs ongoing restraint so company positioning never overwhelms the product lane
 
 The repo does not yet represent finished production behavior for:
 
@@ -212,6 +219,7 @@ The next likely product slices are:
 
 - company brand surfaces and support-layer polish
 - entry-flow cleanup so the home page and signup path stay product-led and low-friction
+- further reduction of narrative and competing signals in the public entry lane
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries

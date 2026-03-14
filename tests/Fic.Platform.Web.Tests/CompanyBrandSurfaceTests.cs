@@ -27,6 +27,7 @@ public sealed class CompanyBrandSurfaceTests
         Assert.Contains("Already have an account?", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/portal/signup", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/consultancy", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Consultancy", cut.Find("nav[aria-label='Company links']").TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain("company-logo.png", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -39,9 +40,34 @@ public sealed class CompanyBrandSurfaceTests
         var cut = context.Render<PortalSignup>();
 
         Assert.Contains("Create your shop account", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Next we confirm billing", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Billing is next, then your workspace opens.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Continue to Billing", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Next: confirm mock billing", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task BillingPage_ReadsAsFinalOnboardingStep()
+    {
+        using var context = new BunitContext();
+        var state = new DemoPlatformState(NullLogger<DemoPlatformState>.Instance, new InMemoryMerchantBrandAssetStore());
+        context.Services.AddSingleton(state);
+
+        var workspace = await state.CreateMerchantAsync(
+            "Jo's Coffee",
+            "Bristol",
+            "BS1 4DJ",
+            "owner@joscoffee.test",
+            logoUpload: null,
+            fallbackLogoUrl: FallbackLogoUrl,
+            primaryColor: "#1f3731",
+            accentColor: "#f4c15d",
+            baseUri: BaseUri);
+
+        var cut = context.Render<SignupBilling>(parameters => parameters
+            .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Final step before the workspace opens", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Open Workspace", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

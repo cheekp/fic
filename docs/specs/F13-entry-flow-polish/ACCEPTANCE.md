@@ -9,6 +9,7 @@
 5. Signup reads as a short account/shop setup step rather than a broader product explanation page.
 6. The updated entry flow passes targeted automated tests.
 7. The F13 validator passes.
+8. A follow-on slice may further reduce narrative and visual competition on the public side.
 
 ## Demo Walkthrough
 

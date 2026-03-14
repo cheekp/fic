@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F13-entry-flow-polish.md`
+- `F14-entry-lane-focus.md`
