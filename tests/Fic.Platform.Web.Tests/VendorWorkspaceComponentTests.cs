@@ -40,10 +40,11 @@ public sealed class VendorWorkspaceComponentTests
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Daily use for this programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Stamp visits", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Open Customer Join", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Select a programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("All programmes", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Run daily loyalty from here", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Operate for daily use", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -142,11 +143,12 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Save Programme", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Customer delivery", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Current customer output", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("wallet loyalty card", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Current output", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Current output and future room", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Choose how customers receive this programme", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -160,12 +162,76 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         cut.FindAll("button")
-            .Single(button => button.TextContent.Contains("New Programme", StringComparison.Ordinal))
+            .Single(button => button.TextContent.Contains("New programme", StringComparison.Ordinal))
             .Click();
 
-        Assert.Contains("Choose customer delivery", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("New programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Current option", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Current launch format", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Available now", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesRail_ReadsAsNavigationNotExplainer()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("All programmes", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("A programme defines the rule", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Run daily loyalty from here", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammeContextBar_IsCompactAndDoesNotExplainTabs()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "configure");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Current programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Operate for daily use", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesOperate_UsesLeanOperateSurface()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Customer join QR", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Stamp visits", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Issued on this programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Programme timeline", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Programme specific", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Selected programme timeline", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesConfigure_UsesCalmerPreviewLanguage()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "configure");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Customer-facing wallet card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet loyalty card.", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Customer-facing view", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

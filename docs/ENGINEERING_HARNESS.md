@@ -137,8 +137,17 @@ Completed slice chain to date:
 - `F14`
   - further reduction of narrative and competing signals in the public entry lane
   - validator: `scripts/validate-f14-entry-lane-focus.sh`
+- `F15`
+  - programme workspace focus so the merchant area reads as a tool rather than an explanation
+  - validator: `scripts/validate-f15-programme-workspace-focus.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
+
+## Current Active Slice
+
+- `F16`
+  - further polish of the selected-programme work surface so daily use feels lighter and less stacked
+  - validator: `scripts/validate-f16-programme-worksurface-polish.sh`
 
 ## Current Product Reality
 
@@ -167,6 +176,9 @@ The repo now supports:
 - company-layer home, account, billing, and consultancy surfaces separated from merchant-owned workspace theming
 - product entry flow now separates company backing from the primary FIC product CTA
 - public entry now needs ongoing restraint so company positioning never overwhelms the product lane
+- programme workspace is organised under shop -> programmes, with one selected programme work surface at a time
+- shop settings now need to stay lightweight and secondary to daily programme operations
+- selected-programme operate/configure surfaces should keep shrinking toward day-to-day utility rather than explanatory UI
 
 The repo does not yet represent finished production behavior for:
 
@@ -220,6 +232,8 @@ The next likely product slices are:
 - company brand surfaces and support-layer polish
 - entry-flow cleanup so the home page and signup path stay product-led and low-friction
 - further reduction of narrative and competing signals in the public entry lane
+- merchant workspace focus so programmes feel like a rail plus one working surface
+- selected-programme work surface polish so operate and configure feel calmer and more direct
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries
