@@ -2,6 +2,7 @@ using Bunit;
 using Fic.Platform.Web.Components.Layout;
 using Fic.Platform.Web.Components.Pages;
 using Fic.Platform.Web.Services;
+using Fic.WalletPasses;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -88,6 +89,7 @@ public sealed class CompanyBrandSurfaceTests
     public void ConsultancyAndSupportPages_ExistAsBrandedCompanySurfaces()
     {
         using var context = new BunitContext();
+        context.Services.AddSingleton<IAppleWalletPassService>(new FakeAppleWalletPassService());
 
         var consultancy = context.Render<Consultancy>();
         Assert.Contains("Training &amp; Consultancy", consultancy.Markup, StringComparison.Ordinal);
@@ -98,6 +100,10 @@ public sealed class CompanyBrandSurfaceTests
 
         var account = context.Render<SupportAccount>();
         Assert.Contains("Account and access help", account.Markup, StringComparison.Ordinal);
+
+        var walletDemo = context.Render<SupportWalletDemo>();
+        Assert.Contains("Apple Wallet demo readiness", walletDemo.Markup, StringComparison.Ordinal);
+        Assert.Contains("Preview fallback", walletDemo.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -126,10 +132,24 @@ public sealed class CompanyBrandSurfaceTests
             .Add(layout => layout.Body, (RenderFragment)(_ => { })));
 
         Assert.Contains("Support by North Star", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("/support/wallet-demo", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/consultancy", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/support/billing", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/support/account", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/account/login", cut.Markup, StringComparison.Ordinal);
+    }
+
+    private sealed class FakeAppleWalletPassService : IAppleWalletPassService
+    {
+        public WalletPassCapability GetCapability() =>
+            new(
+                WalletPassDeliveryMode.Preview,
+                "Open Card Preview",
+                "Finish the Apple Wallet signing checklist to issue a real pass.",
+                ["Signing certificate path is missing."]);
+
+        public Task<WalletPassPackage> CreatePackageAsync(Fic.Contracts.WalletCardSnapshot card, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("Company support tests do not issue Apple Wallet packages.");
     }
 
     private sealed class InMemoryMerchantBrandAssetStore : Fic.MerchantAccounts.IMerchantBrandAssetStore

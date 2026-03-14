@@ -143,14 +143,17 @@ Completed slice chain to date:
 - `F16`
   - selected-programme worksurface polish so operate and configure feel lighter and less stacked
   - validator: `scripts/validate-f16-programme-worksurface-polish.sh`
+- `F17`
+  - merchant workspace visual polish so the programme rail and work pane feel calmer, tighter, and less dashboard-like
+  - validator: `scripts/validate-f17-workspace-visual-polish.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F17`
-  - merchant workspace visual polish so the programme rail and work pane feel calmer, tighter, and less dashboard-like
-  - validator: `scripts/validate-f17-workspace-visual-polish.sh`
+- `F18`
+  - real Apple Wallet founder-demo completion with readiness diagnostics and automated `.pkpass` proof
+  - validator: `scripts/validate-f18-real-wallet-demo.sh`
 
 ## Current Product Reality
 
@@ -183,6 +186,7 @@ The repo now supports:
 - shop settings now need to stay lightweight and secondary to daily programme operations
 - selected-programme operate/configure surfaces should keep shrinking toward day-to-day utility rather than explanatory UI
 - workspace presentation now needs ongoing restraint so the programme rail reads like navigation and the right side reads like one focused tool surface
+- Wallet demo readiness now needs to surface exact signing gaps so founder setup is predictable rather than guesswork
 
 The repo does not yet represent finished production behavior for:
 
@@ -238,8 +242,8 @@ The next likely product slices are:
 - further reduction of narrative and competing signals in the public entry lane
 - merchant workspace focus so programmes feel like a rail plus one working surface
 - selected-programme work surface polish so operate and configure feel calmer and more direct
-- merchant workspace visual polish so the rail, context bar, and work pane feel less crowded
 - real Apple Wallet signed-pass demo completion with founder-friendly setup
+- pass generation proof that exercises the signed `.pkpass` path in tests
 - pass update lifecycle after `VisitAwarded`
 - stronger merchant account and tenant ownership boundaries
 - production auth/session flow that removes the remaining demo assumptions

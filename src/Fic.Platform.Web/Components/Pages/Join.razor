@@ -16,6 +16,7 @@
 else
 {
     var joinTheme = BrandPresentation.Build(_experience.BrandProfile);
+    var walletCapability = WalletPasses.GetCapability();
 
         <section class="join-hero @joinTheme.ThemeClass" style="@joinTheme.CssVariables">
             <div class="join-hero__content">
@@ -61,9 +62,21 @@ else
             {
                 <p class="field-hint">@BuildProgrammeWindowMessage(_experience.Programme.StartsOn, _experience.Programme.EndsOn)</p>
             }
-            <p class="field-hint">@WalletPasses.GetCapability().HelperText</p>
+            <p class="field-hint">@walletCapability.HelperText</p>
+            @if (walletCapability.HasDiagnostics)
+            {
+                <ul class="support-list">
+                    @foreach (var issue in walletCapability.DiagnosticItems!)
+                    {
+                        <li>@issue</li>
+                    }
+                </ul>
+                <div class="form-actions">
+                    <a class="button button--ghost" href="/support/wallet-demo">Wallet demo setup</a>
+                </div>
+            }
             <div class="form-actions">
-                <button class="button button--primary" type="button" disabled="@(!ProgrammeIsJoinOpen)" @onclick="IssueWalletCardAsync">@WalletPasses.GetCapability().ActionLabel</button>
+                <button class="button button--primary" type="button" disabled="@(!ProgrammeIsJoinOpen)" @onclick="IssueWalletCardAsync">@walletCapability.ActionLabel</button>
             </div>
         </section>
     }
