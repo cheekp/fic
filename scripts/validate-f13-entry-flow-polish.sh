@@ -42,7 +42,7 @@ require_text "F13 Entry Flow Polish" "docs/plans/active/F13-entry-flow-polish.md
 require_text "product-first" "docs/specs/F13-entry-flow-polish/REQUIREMENTS.md"
 require_text "one clear primary CTA" "docs/specs/F13-entry-flow-polish/ACCEPTANCE.md"
 require_text "entry-flow cleanup" "docs/ENGINEERING_HARNESS.md"
-require_text "Launch your wallet loyalty programme in minutes." "src/Fic.Platform.Web/Components/Pages/Home.razor"
+require_text "Set up your wallet loyalty programme in minutes." "src/Fic.Platform.Web/Components/Pages/Home.razor"
 require_text "Set Up Your Shop" "src/Fic.Platform.Web/Components/Pages/Home.razor"
 require_text "Create your shop account" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
 require_text "Continue to Billing" "src/Fic.Platform.Web/Components/Pages/PortalSignup.razor"
