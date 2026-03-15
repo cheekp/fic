@@ -167,14 +167,17 @@ Completed slice chain to date:
 - `F24`
   - Wallet demo critical path so pass issuance, pass refresh, and merchant feedback all support a founder demo without guesswork
   - validator: `scripts/validate-f24-wallet-demo-critical-path.sh`
+- `F25`
+  - founder-demo flow hardening so billing, first-programme setup, and publish/test actions feel like one natural lane
+  - validator: `scripts/validate-f25-demo-flow-hardening.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F25`
-  - founder-demo flow hardening so billing, first-programme setup, and publish/test actions feel like one natural lane
-  - validator: `scripts/validate-f25-demo-flow-hardening.sh`
+- `F26`
+  - launch-mode separation so first-programme onboarding reads as a dedicated surface and drops away once normal programme work begins
+  - validator: `scripts/validate-f26-launch-mode-separation.sh`
 
 ## Current Product Reality
 
@@ -216,7 +219,7 @@ The repo now supports:
 - starter programme creation now offers explicit templates, including a visit reward and a coffee-plus-food offer shape
 - programme creation now needs to keep separating programme type, starter template, delivery type, and current output so the wallet surface never masquerades as the programme itself
 - the next founder-demo refinement is proving the Wallet critical path clearly: issue a real pass, stamp a visit, and surface whether Wallet refresh was requested or still waiting on push readiness
-- the next founder-demo refinement is tightening the first-programme lane so billing, configure, join, and first stamp feel like one guided launch instead of separate surfaces
+- the next founder-demo refinement is separating first-programme launch from normal workspace chrome so onboarding feels focused before the merchant drops into day-to-day programme use
 
 The repo does not yet represent finished production behavior for:
 

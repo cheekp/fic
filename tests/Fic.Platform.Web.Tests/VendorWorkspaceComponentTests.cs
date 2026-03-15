@@ -510,6 +510,8 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("Visit reward", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Apple Wallet pass", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Coffee plus food offer", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("programme-rail", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("No programmes yet.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -549,46 +551,55 @@ public sealed class VendorWorkspaceComponentTests
 
         var navigation = context.Services.GetRequiredService<NavigationManager>();
         Assert.Contains("programmeSection=configure", navigation.Uri, StringComparison.Ordinal);
-        Assert.Contains("launch=configure", navigation.Uri, StringComparison.Ordinal);
+        Assert.DoesNotContain("launch=", navigation.Uri, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task ProgrammeConfigure_LaunchMode_SavesIntoOperate()
+    public async Task ProgrammeConfigure_FirstProgrammeSetup_SavesIntoOperateWithoutLaunchState()
     {
         using var context = CreateContext();
-        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "configure", programmeId: selectedProgramme.ProgrammeId, launch: "configure");
+        var state = CreateState();
+        RegisterServices(context, state);
+        var workspace = await CreateMerchantAsync(state);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "create", launch: "create");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
+        cut.FindAll("button")
+            .First(button => button.TextContent.Contains("Start with this template", StringComparison.Ordinal))
+            .Click();
+
+        var navigation = context.Services.GetRequiredService<NavigationManager>();
+        Assert.Contains("programmeSection=configure", navigation.Uri, StringComparison.Ordinal);
+        Assert.DoesNotContain("launch=", navigation.Uri, StringComparison.Ordinal);
+        Assert.Equal(1, CountOccurrences(cut.Markup, "First programme setup"));
         Assert.Contains("Save and open operate", cut.Markup, StringComparison.Ordinal);
 
         cut.FindAll("button")
             .Single(button => button.TextContent.Contains("Save and open operate", StringComparison.Ordinal))
             .Click();
 
-        var navigation = context.Services.GetRequiredService<NavigationManager>();
         Assert.Contains("programmeSection=operate", navigation.Uri, StringComparison.Ordinal);
-        Assert.Contains("launch=operate", navigation.Uri, StringComparison.Ordinal);
+        Assert.DoesNotContain("launch=", navigation.Uri, StringComparison.Ordinal);
+        Assert.DoesNotContain("First programme setup", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task ProgrammeOperate_LaunchMode_ShowsPublishAndTestActions()
+    public async Task ProgrammeOperate_ShowsDailyActionsWithoutLaunchGuidance()
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
         var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: selectedProgramme.ProgrammeId, launch: "operate");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: selectedProgramme.ProgrammeId);
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Publish and test the live programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Copy Join Link", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Open Customer Join", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Open the join flow on the demo phone", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("First programme setup", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Guided setup", cut.Markup, StringComparison.Ordinal);
     }
 
     private static BunitContext CreateContext() => new();

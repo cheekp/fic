@@ -1102,6 +1102,10 @@ textarea {
     grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
 }
 
+.workspace-detail-grid--single-pane {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .workspace-detail-grid--programme-configure {
     grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.72fr);
 }
@@ -1156,6 +1160,21 @@ textarea {
     align-items: end;
     padding: 0.15rem 0 0.8rem;
     border-bottom: 1px solid var(--brand-line);
+}
+
+.programme-setup-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--brand-line);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--brand-surface-strong) 86%, transparent 14%);
+}
+
+.programme-setup-strip p {
+    margin: 0;
 }
 
 .programme-context-bar__title {
@@ -1852,6 +1871,7 @@ textarea {
     .workspace-brand,
     .panel__header,
     .programme-rail__header,
+    .programme-setup-strip,
     .programme-context-bar__meta,
     .wallet-pass__header,
     .wallet-pass__footer,

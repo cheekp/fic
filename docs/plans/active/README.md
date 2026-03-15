@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F25-demo-flow-hardening.md`
+- `F26-launch-mode-separation.md`
