@@ -147,6 +147,9 @@ public sealed class AppleWalletPassServiceTests
             5,
             "2/5 coffees",
             RewardState.Locked,
+            CustomerCardStatus.Active,
+            "Active",
+            false,
             DateTimeOffset.UtcNow);
 
     private sealed class TemporaryDirectory : IDisposable

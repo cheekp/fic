@@ -80,6 +80,9 @@ public sealed record WalletCardSnapshot(
     int TargetCount,
     string ProgressDisplayText,
     RewardState RewardState,
+    CustomerCardStatus CustomerCardStatus,
+    string CustomerCardStatusLabel,
+    bool CanRedeem,
     DateTimeOffset LastUpdatedUtc);
 
 public sealed record JoinExperienceSnapshot(

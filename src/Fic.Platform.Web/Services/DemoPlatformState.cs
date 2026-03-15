@@ -823,6 +823,7 @@ public sealed class DemoPlatformState(
         var merchant = _merchants[card.MerchantId];
         var programme = _programmes[card.ProgrammeId];
         var brand = _brands[card.MerchantId];
+        var customerCardStatus = BuildCustomerCardStatus(programme, progress.RewardState);
 
         return new WalletCardSnapshot(
             card.CardId,
@@ -844,6 +845,9 @@ public sealed class DemoPlatformState(
             progress.TargetCount,
             progress.ProgressDisplayText,
             progress.RewardState,
+            customerCardStatus,
+            BuildCustomerCardStatusLabel(customerCardStatus),
+            customerCardStatus == CustomerCardStatus.RewardReady,
             progress.LastUpdatedUtc);
     }
 
@@ -855,6 +859,36 @@ public sealed class DemoPlatformState(
         var normalized = value.Trim();
         return normalized.StartsWith('#') ? normalized : $"#{normalized}";
     }
+
+    private static CustomerCardStatus BuildCustomerCardStatus(LoyaltyProgramme programme, RewardState rewardState)
+    {
+        var today = GetTodayUtc();
+        if (today < programme.StartsOn)
+        {
+            return CustomerCardStatus.Scheduled;
+        }
+
+        if (today > programme.EndsOn)
+        {
+            return CustomerCardStatus.Expired;
+        }
+
+        return rewardState switch
+        {
+            RewardState.Unlocked => CustomerCardStatus.RewardReady,
+            RewardState.Redeemed => CustomerCardStatus.Redeemed,
+            _ => CustomerCardStatus.Active
+        };
+    }
+
+    private static string BuildCustomerCardStatusLabel(CustomerCardStatus status) => status switch
+    {
+        CustomerCardStatus.RewardReady => "Reward ready",
+        CustomerCardStatus.Redeemed => "Redeemed",
+        CustomerCardStatus.Scheduled => "Scheduled",
+        CustomerCardStatus.Expired => "Expired",
+        _ => "Active"
+    };
 
     private MerchantAccountSnapshot ToMerchantSnapshot(MerchantAccount merchant) =>
         new(merchant.MerchantId, merchant.DisplayName, merchant.TownOrCity, merchant.Postcode, merchant.ContactEmail, merchant.CreatedAtUtc);

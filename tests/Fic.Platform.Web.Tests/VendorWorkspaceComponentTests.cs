@@ -224,6 +224,26 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
+    public async Task ProgrammeNavigation_IncludesDedicatedCustomersSection()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        var subNavLinks = cut.FindAll("nav[aria-label='Programme sections'] a")
+            .Select(anchor => anchor.TextContent.Trim())
+            .ToArray();
+
+        Assert.Contains("Operate", subNavLinks);
+        Assert.Contains("Customers", subNavLinks);
+        Assert.Contains("Configure", subNavLinks);
+        Assert.Contains("Insights", subNavLinks);
+    }
+
+    [Fact]
     public async Task ProgrammesOperate_UsesLeanOperateSurface()
     {
         using var context = CreateContext();
@@ -235,10 +255,10 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains("Customer join QR", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Stamp visits", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Issued on this programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Quick programme picture", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Manage customer passes", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Issued passes on this programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Programme timeline", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Programme specific", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Selected programme timeline", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -255,6 +275,48 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("Current delivery", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Uses the shop brand defaults for this programme.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Customer-facing view", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesCustomers_ShowsGroupedCustomerCardStatuses()
+    {
+        var state = CreateState();
+        using var context = CreateContext();
+        RegisterServices(context, state, new FakeAppleWalletPassService(WalletPassDeliveryMode.AppleWalletPass));
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+
+        var activeCard = state.JoinCustomer(selectedProgramme.JoinCode);
+        var rewardReadyCard = state.JoinCustomer(selectedProgramme.JoinCode);
+        var redeemedCard = state.JoinCustomer(selectedProgramme.JoinCode);
+
+        Assert.NotNull(activeCard);
+        Assert.NotNull(rewardReadyCard);
+        Assert.NotNull(redeemedCard);
+
+        for (var i = 0; i < selectedProgramme.RewardThreshold; i++)
+        {
+            Assert.NotNull(state.AwardVisit(workspace.Merchant.MerchantId, selectedProgramme.ProgrammeId, rewardReadyCard!.CardCode, BaseUri));
+            Assert.NotNull(state.AwardVisit(workspace.Merchant.MerchantId, selectedProgramme.ProgrammeId, redeemedCard!.CardCode, BaseUri));
+        }
+
+        Assert.NotNull(state.RedeemReward(workspace.Merchant.MerchantId, selectedProgramme.ProgrammeId, redeemedCard!.CardId, BaseUri));
+
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "customers", programmeId: selectedProgramme.ProgrammeId);
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Issued passes on this programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Reward ready", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Active", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Redeemed", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Load Code", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet Pass", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Redeem", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(rewardReadyCard.CardCode, cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(redeemedCard.CardCode, cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("No customer passes issued yet.", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -461,11 +523,14 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     private static void RegisterServices(BunitContext context, DemoPlatformState state)
+        => RegisterServices(context, state, new FakeAppleWalletPassService());
+
+    private static void RegisterServices(BunitContext context, DemoPlatformState state, IAppleWalletPassService walletPassService)
     {
         context.Services.AddSingleton(state);
         context.Services.AddSingleton(new JoinQrCodeService());
         context.Services.AddSingleton(new MerchantBrandPresentationService());
-        context.Services.AddSingleton<IAppleWalletPassService>(new FakeAppleWalletPassService());
+        context.Services.AddSingleton(walletPassService);
     }
 
     private static void NavigateToWorkspace(
@@ -535,11 +600,22 @@ public sealed class VendorWorkspaceComponentTests
 
     private sealed class FakeAppleWalletPassService : IAppleWalletPassService
     {
-        public WalletPassCapability GetCapability() =>
-            new(
-                WalletPassDeliveryMode.Preview,
-                "Open Card Preview",
-                "Preview only for component tests.");
+        private readonly WalletPassCapability _capability;
+
+        public FakeAppleWalletPassService(WalletPassDeliveryMode deliveryMode = WalletPassDeliveryMode.Preview)
+        {
+            _capability = deliveryMode == WalletPassDeliveryMode.AppleWalletPass
+                ? new WalletPassCapability(
+                    WalletPassDeliveryMode.AppleWalletPass,
+                    "Add to Apple Wallet",
+                    "Signed Apple Wallet ready for component tests.")
+                : new WalletPassCapability(
+                    WalletPassDeliveryMode.Preview,
+                    "Open Card Preview",
+                    "Preview only for component tests.");
+        }
+
+        public WalletPassCapability GetCapability() => _capability;
 
         public Task<WalletPassPackage> CreatePackageAsync(
             WalletCardSnapshot card,

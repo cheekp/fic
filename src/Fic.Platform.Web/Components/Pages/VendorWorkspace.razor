@@ -37,6 +37,12 @@ else
     var activeProgrammesCount = programmeGroups.FirstOrDefault(group => group.Label == "Active")?.Programmes.Count ?? 0;
     var scheduledProgrammesCount = programmeGroups.FirstOrDefault(group => group.Label == "Scheduled")?.Programmes.Count ?? 0;
     var expiredProgrammesCount = programmeGroups.FirstOrDefault(group => group.Label == "Expired")?.Programmes.Count ?? 0;
+    var selectedProgrammeCards = _workspace.SelectedProgrammeCards;
+    var customerCardGroups = BuildCustomerCardGroups(selectedProgrammeCards);
+    var rewardReadyCardsCount = selectedProgrammeCards.Count(card => card.CustomerCardStatus == CustomerCardStatus.RewardReady);
+    var redeemedCardsCount = selectedProgrammeCards.Count(card => card.CustomerCardStatus == CustomerCardStatus.Redeemed);
+    var inactiveCardsCount = selectedProgrammeCards.Count(card =>
+        card.CustomerCardStatus is CustomerCardStatus.Scheduled or CustomerCardStatus.Expired);
 
     <div class="workspace-stage @workspaceTheme.ThemeClass" style="@workspaceTheme.CssVariables">
         <section class="workspace-header">
@@ -355,6 +361,7 @@ else
 
                         <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
                             <a class="workspace-tabs__item @(IsProgrammeSection("operate") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("operate")">Operate</a>
+                            <a class="workspace-tabs__item @(IsProgrammeSection("customers") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("customers")">Customers</a>
                             <a class="workspace-tabs__item @(IsProgrammeSection("configure") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("configure")">Configure</a>
                             <a class="workspace-tabs__item @(IsProgrammeSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("insights")">Insights</a>
                         </nav>
@@ -428,43 +435,35 @@ else
                                 <article class="panel">
                                     <div class="panel__header">
                                         <div>
-                                            <p class="eyebrow">Customer passes</p>
-                                            <h3>Issued on this programme</h3>
+                                            <p class="eyebrow">Daily use</p>
+                                            <h3>Quick programme picture</h3>
                                         </div>
                                     </div>
-                                    @if (_workspace.SelectedProgrammeCards.Count == 0)
-                                    {
-                                        <div class="empty-state empty-state--compact">
-                                            <h4>No customer passes issued yet.</h4>
-                                            <p>Share the join QR first. Once someone joins, their pass and progress appear here.</p>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <section class="card-list">
-                                            @foreach (var card in _workspace.SelectedProgrammeCards)
-                                            {
-                                                <article class="card-row">
-                                                    <div>
-                                                        <p class="eyebrow">Issued customer pass</p>
-                                                        <h4>@card.ProgressDisplayText</h4>
-                                                        <p class="field-hint">Valid @FormatDate(card.StartsOn) to @FormatDate(card.EndsOn)</p>
-                                                        <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
-                                                    </div>
-                                                    <div class="card-row__meta">
-                                                        <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
-                                                        <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Preview</a>
-                                                        @if (WalletCapability.SupportsAppleWalletPass)
-                                                        {
-                                                            <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Wallet Pass</a>
-                                                        }
-                                                        <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Code</button>
-                                                        <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Redeem</button>
-                                                    </div>
-                                                </article>
-                                            }
-                                        </section>
-                                    }
+                                    <div class="workspace-overview-strip workspace-summary-grid">
+                                        <article class="workspace-overview-card">
+                                            <span class="workspace-overview-card__label">Issued</span>
+                                            <strong class="workspace-overview-card__value">@selectedProgrammeCards.Count</strong>
+                                            <p class="workspace-overview-card__copy">Customer passes currently issued on this programme.</p>
+                                        </article>
+                                        <article class="workspace-overview-card">
+                                            <span class="workspace-overview-card__label">Reward ready</span>
+                                            <strong class="workspace-overview-card__value">@rewardReadyCardsCount</strong>
+                                            <p class="workspace-overview-card__copy">Ready to redeem right now.</p>
+                                        </article>
+                                        <article class="workspace-overview-card">
+                                            <span class="workspace-overview-card__label">Redeemed</span>
+                                            <strong class="workspace-overview-card__value">@redeemedCardsCount</strong>
+                                            <p class="workspace-overview-card__copy">Most recently completed and reset.</p>
+                                        </article>
+                                        <article class="workspace-overview-card">
+                                            <span class="workspace-overview-card__label">Inactive</span>
+                                            <strong class="workspace-overview-card__value">@inactiveCardsCount</strong>
+                                            <p class="workspace-overview-card__copy">Currently outside the programme’s active date window.</p>
+                                        </article>
+                                    </div>
+                                    <div class="form-actions">
+                                        <a class="button button--secondary" href="@GetProgrammeSectionUrl("customers")">Manage customer passes</a>
+                                    </div>
                                 </article>
 
                                 <article class="panel">
@@ -488,6 +487,88 @@ else
                                         }
                                     </div>
                                 </article>
+                            </section>
+                        }
+                        else if (IsProgrammeSection("customers"))
+                        {
+                            <section class="workspace-stack workspace-stack--programme-customers">
+                                <section class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Customer pass management</p>
+                                            <h3>Issued passes on this programme</h3>
+                                        </div>
+                                        <span class="chip">@selectedProgrammeCards.Count cards</span>
+                                    </div>
+
+                                    @if (selectedProgrammeCards.Count == 0)
+                                    {
+                                        <div class="empty-state empty-state--compact">
+                                            <h4>No customer passes issued yet.</h4>
+                                            <p>Share the join QR from Operate first. Once someone joins, their pass appears here with status and actions.</p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="customer-card-groups">
+                                            @foreach (var group in customerCardGroups)
+                                            {
+                                                <section class="customer-card-group">
+                                                    <div class="customer-card-group__header">
+                                                        <h4>@group.Label</h4>
+                                                        <span class="chip">@group.Cards.Count</span>
+                                                    </div>
+                                                    <div class="card-list">
+                                                        @foreach (var card in group.Cards)
+                                                        {
+                                                            <article class="card-row">
+                                                                <div>
+                                                                    <p class="eyebrow">Issued customer pass</p>
+                                                                    <h4>@card.ProgressDisplayText</h4>
+                                                                    <p class="field-hint">Status: @card.CustomerCardStatusLabel</p>
+                                                                    <p class="field-hint">Valid @FormatDate(card.StartsOn) to @FormatDate(card.EndsOn)</p>
+                                                                    <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
+                                                                </div>
+                                                                <div class="card-row__meta">
+                                                                    <span class="chip @(card.CustomerCardStatus == CustomerCardStatus.RewardReady ? "chip--success" : string.Empty)">@card.CustomerCardStatusLabel</span>
+                                                                    <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Preview</a>
+                                                                    @if (WalletCapability.SupportsAppleWalletPass)
+                                                                    {
+                                                                        <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Wallet Pass</a>
+                                                                    }
+                                                                    <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Code</button>
+                                                                    <button class="button button--secondary" type="button" disabled="@(!card.CanRedeem)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Redeem</button>
+                                                                </div>
+                                                            </article>
+                                                        }
+                                                    </div>
+                                                </section>
+                                            }
+                                        </div>
+                                    }
+                                </section>
+
+                                <section class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Recent activity</p>
+                                            <h3>Programme timeline</h3>
+                                        </div>
+                                    </div>
+                                    <div class="timeline">
+                                        @foreach (var entry in _workspace.Timeline)
+                                        {
+                                            <article class="timeline__entry">
+                                                <div class="timeline__dot"></div>
+                                                <div>
+                                                    <p class="timeline__event">@entry.EventType</p>
+                                                    <p>@entry.Summary</p>
+                                                    <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                                                </div>
+                                            </article>
+                                        }
+                                    </div>
+                                </section>
                             </section>
                         }
                         else if (IsProgrammeSection("configure"))
@@ -993,19 +1074,21 @@ else
     {
         "create" => "create",
         "operate" => "operate",
+        "customers" => "customers",
         "configure" => "configure",
         "insights" => "insights",
         _ => section?.Trim().ToLowerInvariant() switch
         {
             "create" => "create",
             "operate" => "operate",
+            "customers" => "customers",
             "configure" => "configure",
             "insights" => "insights",
             _ => legacyTab?.Trim().ToLowerInvariant() switch
             {
                 "cards" => "configure",
                 "card" => "configure",
-                "customers" => "operate",
+                "customers" => "customers",
                 "programmes" => "operate",
                 "programme" => "operate",
                 "insights" => "insights",
@@ -1258,6 +1341,28 @@ else
         .ToArray();
     }
 
+    private static IReadOnlyList<CustomerCardGroupView> BuildCustomerCardGroups(IReadOnlyList<WalletCardSnapshot> cards)
+    {
+        if (cards.Count == 0)
+        {
+            return [];
+        }
+
+        static IReadOnlyList<WalletCardSnapshot> FilterByStatus(IEnumerable<WalletCardSnapshot> source, CustomerCardStatus status) =>
+            source.Where(card => card.CustomerCardStatus == status).ToArray();
+
+        return new[]
+        {
+            new CustomerCardGroupView("Reward ready", FilterByStatus(cards, CustomerCardStatus.RewardReady)),
+            new CustomerCardGroupView("Active", FilterByStatus(cards, CustomerCardStatus.Active)),
+            new CustomerCardGroupView("Scheduled", FilterByStatus(cards, CustomerCardStatus.Scheduled)),
+            new CustomerCardGroupView("Expired", FilterByStatus(cards, CustomerCardStatus.Expired)),
+            new CustomerCardGroupView("Redeemed", FilterByStatus(cards, CustomerCardStatus.Redeemed))
+        }
+        .Where(group => group.Cards.Count > 0)
+        .ToArray();
+    }
+
     private static string BuildSetupRoadmapHeadline(int completed, int total) =>
         completed == total ? "Your shop is ready." : $"{completed} of {total} setup steps complete";
 
@@ -1378,4 +1483,8 @@ else
     private sealed record ProgrammeGroupView(
         string Label,
         IReadOnlyList<ProgrammeSummarySnapshot> Programmes);
+
+    private sealed record CustomerCardGroupView(
+        string Label,
+        IReadOnlyList<WalletCardSnapshot> Cards);
 }

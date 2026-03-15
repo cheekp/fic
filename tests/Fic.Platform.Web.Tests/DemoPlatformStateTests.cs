@@ -173,6 +173,83 @@ public sealed class DemoPlatformStateTests
     }
 
     [Fact]
+    public async Task WalletCardSnapshot_DerivesRewardReadyAndRedeemedStatuses()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        var joined = state.JoinCustomer(selectedProgramme.JoinCode);
+        Assert.NotNull(joined);
+
+        for (var i = 0; i < selectedProgramme.RewardThreshold; i++)
+        {
+            Assert.NotNull(state.AwardVisit(workspace.Merchant.MerchantId, selectedProgramme.ProgrammeId, joined!.CardCode, BaseUri));
+        }
+
+        var rewardReadyCard = state.GetWalletCard(joined!.CardId);
+        Assert.NotNull(rewardReadyCard);
+        Assert.Equal(CustomerCardStatus.RewardReady, rewardReadyCard!.CustomerCardStatus);
+        Assert.Equal("Reward ready", rewardReadyCard.CustomerCardStatusLabel);
+        Assert.True(rewardReadyCard.CanRedeem);
+
+        Assert.NotNull(state.RedeemReward(workspace.Merchant.MerchantId, selectedProgramme.ProgrammeId, joined.CardId, BaseUri));
+
+        var redeemedCard = state.GetWalletCard(joined.CardId);
+        Assert.NotNull(redeemedCard);
+        Assert.Equal(CustomerCardStatus.Redeemed, redeemedCard!.CustomerCardStatus);
+        Assert.Equal("Redeemed", redeemedCard.CustomerCardStatusLabel);
+        Assert.False(redeemedCard.CanRedeem);
+    }
+
+    [Fact]
+    public async Task WalletCardSnapshot_DerivesScheduledAndExpiredStatusesFromProgrammeWindow()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        var joined = state.JoinCustomer(selectedProgramme.JoinCode);
+        Assert.NotNull(joined);
+
+        var scheduledStartsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(10);
+        var scheduledEndsOn = scheduledStartsOn.AddDays(30);
+
+        Assert.NotNull(state.UpdateProgramme(
+            workspace.Merchant.MerchantId,
+            selectedProgramme.ProgrammeId,
+            selectedProgramme.RewardItemLabel,
+            selectedProgramme.RewardThreshold,
+            selectedProgramme.RewardCopy,
+            scheduledStartsOn,
+            scheduledEndsOn,
+            BaseUri));
+
+        var scheduledCard = state.GetWalletCard(joined!.CardId);
+        Assert.NotNull(scheduledCard);
+        Assert.Equal(CustomerCardStatus.Scheduled, scheduledCard!.CustomerCardStatus);
+        Assert.Equal("Scheduled", scheduledCard.CustomerCardStatusLabel);
+        Assert.False(scheduledCard.CanRedeem);
+
+        var expiredStartsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-40);
+        var expiredEndsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-2);
+
+        Assert.NotNull(state.UpdateProgramme(
+            workspace.Merchant.MerchantId,
+            selectedProgramme.ProgrammeId,
+            selectedProgramme.RewardItemLabel,
+            selectedProgramme.RewardThreshold,
+            selectedProgramme.RewardCopy,
+            expiredStartsOn,
+            expiredEndsOn,
+            BaseUri));
+
+        var expiredCard = state.GetWalletCard(joined.CardId);
+        Assert.NotNull(expiredCard);
+        Assert.Equal(CustomerCardStatus.Expired, expiredCard!.CustomerCardStatus);
+        Assert.Equal("Expired", expiredCard.CustomerCardStatusLabel);
+        Assert.False(expiredCard.CanRedeem);
+    }
+
+    [Fact]
     public async Task ConfigureMerchantAccess_StoresCredentials_AndAllowsAuthentication()
     {
         var state = CreateState();

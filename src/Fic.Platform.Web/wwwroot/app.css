@@ -1463,6 +1463,28 @@ textarea {
     gap: 0.75rem;
 }
 
+.customer-card-groups,
+.workspace-stack--programme-customers {
+    display: grid;
+    gap: 1rem;
+}
+
+.customer-card-group {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.customer-card-group__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.customer-card-group__header h4 {
+    margin: 0;
+}
+
 .card-row {
     display: flex;
     justify-content: space-between;

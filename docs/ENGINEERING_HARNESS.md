@@ -158,14 +158,17 @@ Completed slice chain to date:
 - `F21`
   - onboarding and workspace IA reset so shop signup, billing, first programme setup, and programme delivery read as one natural flow
   - validator: `scripts/validate-f21-journey-ia-reset.sh`
+- `F22`
+  - programme model and templates so the workspace treats programme type, starter template, and current customer delivery as explicit but distinct concerns
+  - validator: `scripts/validate-f22-programme-model-and-templates.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F22`
-  - programme model and templates so the workspace treats programme type, starter template, and current customer delivery as explicit but distinct concerns
-  - validator: `scripts/validate-f22-programme-model-and-templates.sh`
+- `F23`
+  - customer card management so operate stays fast, customers get their own management surface, and issued passes have clear statuses
+  - validator: `scripts/validate-f23-customer-card-management.sh`
 
 ## Current Product Reality
 
@@ -205,7 +208,7 @@ The repo now supports:
 - shop signup now creates the merchant account first, while the first programme is created explicitly after billing inside the workspace
 - starter programme creation now offers explicit templates, including a visit reward and a coffee-plus-food offer shape
 - programme creation now needs to keep separating programme type, starter template, delivery type, and current output so the wallet surface never masquerades as the programme itself
-- the next active refinement is making that separation explicit throughout the live workspace, so programme setup no longer feels like editing a card with extra words around it
+- customer card management now needs to stand on its own as a day-to-day operating surface instead of sharing space with programme configuration
 
 The repo does not yet represent finished production behavior for:
 
