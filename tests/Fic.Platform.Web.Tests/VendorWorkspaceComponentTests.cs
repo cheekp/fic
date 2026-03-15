@@ -157,8 +157,12 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Save Programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Programme model", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Starter template", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Programme type", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Customer delivery", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("wallet loyalty card", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Apple Wallet pass", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Current live output for this programme.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Current output and future room", cut.Markup, StringComparison.Ordinal);
@@ -176,7 +180,11 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Add another programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Visit reward", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Conditional offer", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Apple Wallet pass", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Wallet offer card", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Coffee plus food offer", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Use this template", cut.Markup, StringComparison.Ordinal);
     }
@@ -207,7 +215,9 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Current programme", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Started from Coffee stamp card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Visit reward", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Apple Wallet pass", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Operate for daily use", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("0 customers", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("0 unlocked", cut.Markup, StringComparison.Ordinal);
@@ -435,6 +445,8 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains("Create your first programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Coffee stamp card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Visit reward", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Apple Wallet pass", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Coffee plus food offer", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }

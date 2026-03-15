@@ -39,7 +39,11 @@ public sealed class DemoPlatformStateTests
         var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(updated.SelectedProgramme);
         Assert.Equal("coffee-visits", selectedProgramme.TemplateKey);
         Assert.Equal("Coffee stamp card", selectedProgramme.TemplateLabel);
-        Assert.Equal("Wallet loyalty card", selectedProgramme.DeliveryLabel);
+        Assert.Equal("visit-reward", selectedProgramme.ProgrammeTypeKey);
+        Assert.Equal("Visit reward", selectedProgramme.ProgrammeTypeLabel);
+        Assert.Equal("apple-wallet-pass", selectedProgramme.DeliveryTypeKey);
+        Assert.Equal("Apple Wallet pass", selectedProgramme.DeliveryTypeLabel);
+        Assert.Equal("Wallet loyalty card", selectedProgramme.OutputLabel);
         Assert.Equal(selectedProgramme.StartsOn.AddDays(365), selectedProgramme.EndsOn);
         Assert.Contains(selectedProgramme.JoinCode, updated.SelectedJoinUrl, StringComparison.Ordinal);
     }
@@ -53,6 +57,9 @@ public sealed class DemoPlatformStateTests
 
         Assert.Contains(templates, template => template.TemplateKey == "coffee-visits");
         Assert.Contains(templates, template => template.TemplateKey == "coffee-food-offer");
+        Assert.Contains(templates, template => template.ProgrammeTypeLabel == "Visit reward");
+        Assert.Contains(templates, template => template.ProgrammeTypeLabel == "Conditional offer");
+        Assert.All(templates, template => Assert.Equal("Apple Wallet pass", template.DeliveryTypeLabel));
     }
 
     [Fact]
