@@ -17,15 +17,15 @@ else
     <section class="panel signup-panel">
         <div class="panel__header">
             <div>
-                <p class="eyebrow">Step 2 of 2</p>
+                <p class="eyebrow">Step 2 of 3</p>
                 <h2>Confirm billing</h2>
-                <p class="lede">Final step before the workspace opens for @_workspace.Merchant.DisplayName. Set the owner password here as part of the same handoff.</p>
+                <p class="lede">Final account step before the workspace opens for @_workspace.Merchant.DisplayName. Set the owner password here, then create the first programme inside the shop area.</p>
             </div>
         </div>
 
         <form method="post" action="/account/session/complete-signup" class="form-stack">
             <input type="hidden" name="merchantId" value="@MerchantId" />
-            <input type="hidden" name="returnUrl" value="@($"/portal/merchant/{MerchantId}?tab=programmes&section=configure")" />
+            <input type="hidden" name="returnUrl" value="@($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=create")" />
             <div class="form-grid">
                 <label class="field">
                     <span>Plan</span>

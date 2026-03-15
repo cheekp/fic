@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Implement merchant auth and ownership boundaries from here: create merchant credentials during onboarding, require a signed-in merchant session for workspace access, and stop the shared demo shell from acting like the default access model.
+Reset the onboarding and merchant workspace hierarchy from here: shop signup creates the shop, billing completes access, and first programme setup happens explicitly inside the merchant workspace.

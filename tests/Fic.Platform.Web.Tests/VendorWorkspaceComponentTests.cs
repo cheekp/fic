@@ -170,19 +170,15 @@ public sealed class VendorWorkspaceComponentTests
     {
         using var context = CreateContext();
         var workspace = await CreateMerchantAndRegisterServicesAsync(context);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate");
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "create");
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        cut.FindAll("button")
-            .Single(button => button.TextContent.Contains("New programme", StringComparison.Ordinal))
-            .Click();
-
-        Assert.Contains("Choose output", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Add another programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Wallet loyalty card", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Launch format", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Live now", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Coffee plus food offer", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Use this template", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -257,21 +253,23 @@ public sealed class VendorWorkspaceComponentTests
         var state = CreateState();
         using var context = CreateContext();
         RegisterServices(context, state);
-        var workspace = await CreateMerchantAsync(state);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(5);
         var endsOn = startsOn.AddDays(30);
 
         var updated = state.UpdateProgramme(
             workspace.Merchant.MerchantId,
-            workspace.SelectedProgramme.ProgrammeId,
-            workspace.SelectedProgramme.RewardItemLabel,
-            workspace.SelectedProgramme.RewardThreshold,
-            workspace.SelectedProgramme.RewardCopy,
+            selectedProgramme.ProgrammeId,
+            selectedProgramme.RewardItemLabel,
+            selectedProgramme.RewardThreshold,
+            selectedProgramme.RewardCopy,
             startsOn,
             endsOn,
             BaseUri);
         Assert.NotNull(updated);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: updated!.SelectedProgramme.ProgrammeId);
+        var updatedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(updated!.SelectedProgramme);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: updatedProgramme.ProgrammeId);
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
@@ -290,28 +288,31 @@ public sealed class VendorWorkspaceComponentTests
         var state = CreateState();
         using var context = CreateContext();
         RegisterServices(context, state);
-        var workspace = await CreateMerchantAsync(state);
-        var secondProgramme = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var secondProgramme = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-food-offer", BaseUri);
         Assert.NotNull(secondProgramme);
+        var secondSelectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(secondProgramme!.SelectedProgramme);
 
         var updatedProgramme = state.UpdateProgramme(
             workspace.Merchant.MerchantId,
-            secondProgramme!.SelectedProgramme.ProgrammeId,
+            secondSelectedProgramme.ProgrammeId,
             "espressos",
             7,
             "Buy 7 espressos, get one free.",
-            secondProgramme.SelectedProgramme.StartsOn,
-            secondProgramme.SelectedProgramme.EndsOn,
+            secondSelectedProgramme.StartsOn,
+            secondSelectedProgramme.EndsOn,
             BaseUri);
 
         Assert.NotNull(updatedProgramme);
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: updatedProgramme!.SelectedProgramme.ProgrammeId);
+        var updatedSelectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(updatedProgramme!.SelectedProgramme);
+        var firstSelectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: updatedSelectedProgramme.ProgrammeId);
 
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains(updatedProgramme.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain(workspace.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(updatedSelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain(firstSelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -320,32 +321,34 @@ public sealed class VendorWorkspaceComponentTests
         var state = CreateState();
         using var context = CreateContext();
         RegisterServices(context, state);
-        var workspace = await CreateMerchantAsync(state);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
 
-        var scheduled = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        var scheduled = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-visits", BaseUri);
         Assert.NotNull(scheduled);
+        var scheduledProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(scheduled!.SelectedProgramme);
         var scheduledStartsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(7);
         var scheduledEndsOn = scheduledStartsOn.AddDays(30);
         Assert.NotNull(state.UpdateProgramme(
             workspace.Merchant.MerchantId,
-            scheduled!.SelectedProgramme.ProgrammeId,
-            scheduled.SelectedProgramme.RewardItemLabel,
-            scheduled.SelectedProgramme.RewardThreshold,
-            scheduled.SelectedProgramme.RewardCopy,
+            scheduledProgramme.ProgrammeId,
+            scheduledProgramme.RewardItemLabel,
+            scheduledProgramme.RewardThreshold,
+            scheduledProgramme.RewardCopy,
             scheduledStartsOn,
             scheduledEndsOn,
             BaseUri));
 
-        var expired = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        var expired = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-food-offer", BaseUri);
         Assert.NotNull(expired);
+        var expiredProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(expired!.SelectedProgramme);
         var expiredStartsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-60);
         var expiredEndsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-7);
         Assert.NotNull(state.UpdateProgramme(
             workspace.Merchant.MerchantId,
-            expired!.SelectedProgramme.ProgrammeId,
-            expired.SelectedProgramme.RewardItemLabel,
-            expired.SelectedProgramme.RewardThreshold,
-            expired.SelectedProgramme.RewardCopy,
+            expiredProgramme.ProgrammeId,
+            expiredProgramme.RewardItemLabel,
+            expiredProgramme.RewardThreshold,
+            expiredProgramme.RewardCopy,
             expiredStartsOn,
             expiredEndsOn,
             BaseUri));
@@ -366,9 +369,10 @@ public sealed class VendorWorkspaceComponentTests
         var state = CreateState();
         using var context = CreateContext();
         RegisterServices(context, state);
-        var workspace = await CreateMerchantAsync(state);
-        var secondProgramme = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var secondProgramme = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-food-offer", BaseUri);
         Assert.NotNull(secondProgramme);
+        var secondSelectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(secondProgramme!.SelectedProgramme);
 
         NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "insights");
 
@@ -382,7 +386,7 @@ public sealed class VendorWorkspaceComponentTests
                 return href is not null
                     && href.Contains("section=programmes", StringComparison.Ordinal)
                     && href.Contains("programmeSection=insights", StringComparison.Ordinal)
-                    && href.Contains($"programme={secondProgramme!.SelectedProgramme.ProgrammeId}", StringComparison.Ordinal);
+                    && href.Contains($"programme={secondSelectedProgramme.ProgrammeId}", StringComparison.Ordinal);
             });
 
         Assert.True(matchingLink);
@@ -413,8 +417,26 @@ public sealed class VendorWorkspaceComponentTests
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Programme insights", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains(workspace.SelectedProgramme.JoinCode, cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme).JoinCode, cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Across every programme in the shop", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesSection_ShowsFirstProgrammeSetup_WhenShopHasNoProgrammes()
+    {
+        using var context = CreateContext();
+        var state = CreateState();
+        RegisterServices(context, state);
+        var workspace = await CreateMerchantAsync(state);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "create");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Create your first programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Coffee stamp card", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Coffee plus food offer", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 
     private static BunitContext CreateContext() => new();
@@ -423,7 +445,7 @@ public sealed class VendorWorkspaceComponentTests
     {
         var state = CreateState();
         RegisterServices(context, state);
-        return await CreateMerchantAsync(state);
+        return await CreateMerchantWithProgrammeAsync(state);
     }
 
     private static void RegisterServices(BunitContext context, DemoPlatformState state)
@@ -492,6 +514,12 @@ public sealed class VendorWorkspaceComponentTests
             primaryColor: "#1f3731",
             accentColor: "#f4c15d",
             baseUri: BaseUri);
+
+    private static async Task<MerchantWorkspaceSnapshot> CreateMerchantWithProgrammeAsync(DemoPlatformState state, string templateKey = "coffee-visits")
+    {
+        var workspace = await CreateMerchantAsync(state);
+        return state.CreateProgramme(workspace.Merchant.MerchantId, templateKey, BaseUri)!;
+    }
 
     private sealed class FakeAppleWalletPassService : IAppleWalletPassService
     {

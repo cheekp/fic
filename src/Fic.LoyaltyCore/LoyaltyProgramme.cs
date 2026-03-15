@@ -13,6 +13,9 @@ public sealed record BrandProfile(
 public sealed record LoyaltyProgramme(
     Guid ProgrammeId,
     Guid MerchantId,
+    string TemplateKey,
+    string TemplateLabel,
+    string DeliveryLabel,
     string RewardItemLabel,
     int RewardThreshold,
     string RewardCopy,

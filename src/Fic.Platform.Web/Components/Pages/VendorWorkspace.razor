@@ -25,7 +25,12 @@ else
     var workspaceTheme = BrandPresentation.Build(_workspace.BrandProfile);
     var brandPreviewTheme = BuildBrandPreviewTheme();
     var selectedProgrammeSummary = SelectedProgrammeSummary;
-    var selectedProgrammeBadge = BuildProgrammeWindowBadge(selectedProgrammeSummary.StartsOn, selectedProgrammeSummary.EndsOn);
+    var selectedProgramme = _workspace.SelectedProgramme;
+    var hasProgrammes = _workspace.Programmes.Count > 0;
+    var hasSelectedProgramme = selectedProgramme is not null && selectedProgrammeSummary is not null;
+    var selectedProgrammeBadge = hasSelectedProgramme
+        ? BuildProgrammeWindowBadge(selectedProgramme!.StartsOn, selectedProgramme.EndsOn)
+        : string.Empty;
     var setupSteps = BuildSetupSteps();
     var completedSetupSteps = setupSteps.Count(x => x.IsComplete);
     var programmeGroups = BuildProgrammeGroups();
@@ -173,7 +178,7 @@ else
                             <p class="workspace-overview-card__copy">Past programmes retained for reference and insight.</p>
                         </article>
                     </div>
-                    <p class="field-hint">Current programme focus: <strong>@selectedProgrammeSummary.RewardHeadline</strong>. Customer join, stamping, dates, and loyalty card behaviour all live inside the programme workspace.</p>
+                    <p class="field-hint">@(selectedProgrammeSummary is null ? "Create the first programme to open customer join, Wallet delivery, and daily operations." : $"Current programme focus: {selectedProgrammeSummary.RewardHeadline}. Customer join, stamping, dates, and delivery all live inside the programme workspace.")</p>
                 </article>
             </section>
         }
@@ -217,7 +222,7 @@ else
                     <div class="programme-list">
                         @foreach (var programme in _workspace.Programmes)
                         {
-                            <a class="programme-list__item @(programme.ProgrammeId == _workspace.SelectedProgramme.ProgrammeId ? "programme-list__item--active" : string.Empty)"
+                            <a class="programme-list__item @(programme.ProgrammeId == selectedProgramme?.ProgrammeId ? "programme-list__item--active" : string.Empty)"
                                href="@GetProgrammeUrl(programme.ProgrammeId, "insights")">
                                 <div>
                                     <p class="eyebrow">Programme</p>
@@ -244,371 +249,408 @@ else
                             <p class="eyebrow">Programmes</p>
                             <h3>Programmes</h3>
                         </div>
-                        <button class="button button--secondary" type="button" @onclick="ToggleCreateProgrammeOptions">New programme</button>
+                        <a class="button button--secondary" href="@GetProgrammeSectionUrl("create")">New programme</a>
                     </div>
 
-                    @if (_isCreateProgrammeOptionsOpen)
-                    {
-                        <section class="programme-create-panel">
-                            <div class="programme-create-panel__header">
-                                <p class="eyebrow">Choose output</p>
-                                <button class="button button--ghost button--compact" type="button" @onclick="ToggleCreateProgrammeOptions">Close</button>
-                            </div>
-                            <button class="programme-create-option" type="button" @onclick="HandleCreateWalletProgrammeAsync">
-                                <div class="programme-create-option__copy">
-                                    <strong>Wallet loyalty card</strong>
-                                    <span>Live now</span>
-                                </div>
-                                <span class="chip chip--accent">Launch format</span>
-                            </button>
-                        </section>
-                    }
-
                     <div class="programme-groups">
-                        @foreach (var group in programmeGroups)
+                        @if (programmeGroups.Count == 0)
                         {
-                            <section class="programme-group">
-                                <div class="programme-group__header">
-                                    <h4>@group.Label</h4>
-                                    <span class="chip">@group.Programmes.Count</span>
-                                </div>
-                                <div class="programme-list">
-                                    @foreach (var programme in group.Programmes)
-                                    {
-                                        <a class="programme-list__item @(programme.ProgrammeId == _workspace.SelectedProgramme.ProgrammeId ? "programme-list__item--active" : string.Empty)"
-                                           href="@GetProgrammeUrl(programme.ProgrammeId)">
-                                            <div>
-                                                <h4>@programme.RewardHeadline</h4>
-                                                <p class="field-hint">@BuildProgrammeWindowMessage(programme.StartsOn, programme.EndsOn)</p>
-                                            </div>
-                                            <span class="chip">@BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn)</span>
-                                        </a>
-                                    }
-                                </div>
-                            </section>
+                            <p class="field-hint">No programmes yet. Create the first one to launch customer join, Wallet delivery, and daily operations.</p>
+                        }
+                        else
+                        {
+                            @foreach (var group in programmeGroups)
+                            {
+                                <section class="programme-group">
+                                    <div class="programme-group__header">
+                                        <h4>@group.Label</h4>
+                                        <span class="chip">@group.Programmes.Count</span>
+                                    </div>
+                                    <div class="programme-list">
+                                        @foreach (var programme in group.Programmes)
+                                        {
+                                            <a class="programme-list__item @(programme.ProgrammeId == selectedProgramme?.ProgrammeId ? "programme-list__item--active" : string.Empty)"
+                                               href="@GetProgrammeUrl(programme.ProgrammeId)">
+                                                <div>
+                                                    <h4>@programme.RewardHeadline</h4>
+                                                    <p class="field-hint">@programme.TemplateLabel</p>
+                                                    <p class="field-hint">@BuildProgrammeWindowMessage(programme.StartsOn, programme.EndsOn)</p>
+                                                </div>
+                                                <span class="chip">@BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn)</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </section>
+                            }
                         }
                     </div>
                 </aside>
 
                 <div class="workspace-stack workspace-stack--programme programme-workpane">
-                    <section class="programme-context-bar">
-                        <div class="programme-context-bar__title">
-                            <p class="eyebrow">Current programme</p>
-                            <h3>@selectedProgrammeSummary.RewardHeadline</h3>
-                        </div>
-                        <div class="programme-context-bar__meta">
-                            <span class="chip">@selectedProgrammeBadge</span>
-                            <span>@selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") - @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
-                            <span class="chip">Wallet loyalty card</span>
-                        </div>
-                    </section>
-
-                    <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
-                        <a class="workspace-tabs__item @(IsProgrammeSection("operate") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("operate")">Operate</a>
-                        <a class="workspace-tabs__item @(IsProgrammeSection("configure") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("configure")">Configure</a>
-                        <a class="workspace-tabs__item @(IsProgrammeSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("insights")">Insights</a>
-                    </nav>
-
-                    @if (IsProgrammeSection("operate"))
+                    @if (!hasProgrammes || IsProgrammeSection("create"))
                     {
-                        <section class="workspace-detail-grid">
-                            <article class="panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Customer join</p>
-                                        <h3>Customer join QR</h3>
-                                    </div>
+                        <section class="panel programme-setup-flow">
+                            <div class="panel__header">
+                                <div>
+                                    <p class="eyebrow">@(hasProgrammes ? "New programme" : "Step 3 of 3")</p>
+                                    <h3>@(hasProgrammes ? "Add another programme" : "Create your first programme")</h3>
+                                    <p class="lede">Choose the programme template first. The current customer delivery output is then configured inside the programme workspace.</p>
                                 </div>
-                                <div class="qr-panel">
-                                    <div class="qr-panel__graphic">
-                                        @((MarkupString)_joinQrSvg)
-                                    </div>
-                                    <div class="qr-panel__meta">
-                                        <p>Customers scan this QR, join the programme, and keep progress in Apple Wallet.</p>
-                                        <p class="field-hint">Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</p>
-                                        <code>@_workspace.SelectedJoinUrl</code>
-                                        @if (!SelectedProgrammeIsActive)
-                                        {
-                                            <p class="field-hint">@BuildProgrammeWindowMessage(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn)</p>
-                                        }
-                                        <div class="form-actions">
-                                            @if (SelectedProgrammeIsActive)
-                                            {
-                                                <a class="button button--secondary" href="@_workspace.SelectedJoinUrl" target="_blank">Open Customer Join</a>
-                                            }
-                                            else
-                                            {
-                                                <button class="button button--secondary" type="button" disabled>Open Customer Join</button>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
+                            </div>
 
-                            <article class="panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Till-side stamping</p>
-                                        <h3>Stamp visits</h3>
-                                    </div>
-                                </div>
-                                <p class="field-hint">@_workspace.SelectedProgrammeCards.Count active cards on this programme.</p>
-                                <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
-                                    <label class="field">
-                                        <span>Customer pass code</span>
-                                        <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
-                                    </label>
-                                    <div class="form-actions">
-                                        <button class="button button--primary" type="submit" disabled="@(!SelectedProgrammeIsActive || string.IsNullOrWhiteSpace(_scanCode))">Award visit</button>
-                                        <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
-                                    </div>
-                                </EditForm>
-                                @if (!SelectedProgrammeIsActive)
+                            <div class="template-grid">
+                                @foreach (var template in ProgrammeTemplates)
                                 {
-                                    <p class="field-hint">@BuildProgrammeWindowMessage(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn)</p>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(_scanMessage))
-                                {
-                                    <p class="field-hint">@_scanMessage</p>
-                                }
-                            </article>
-                        </section>
-
-                        <section class="workspace-detail-grid workspace-detail-grid--programme-operate-secondary">
-                            <article class="panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Customer passes</p>
-                                        <h3>Issued on this programme</h3>
-                                    </div>
-                                </div>
-                                @if (_workspace.SelectedProgrammeCards.Count == 0)
-                                {
-                                    <div class="empty-state empty-state--compact">
-                                        <h4>No customer passes issued yet.</h4>
-                                        <p>Share the join QR first. Once someone joins, their pass and progress appear here.</p>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <section class="card-list">
-                                        @foreach (var card in _workspace.SelectedProgrammeCards)
-                                        {
-                                            <article class="card-row">
-                                                <div>
-                                                    <p class="eyebrow">Issued customer pass</p>
-                                                    <h4>@card.ProgressDisplayText</h4>
-                                                    <p class="field-hint">Valid @FormatDate(card.StartsOn) to @FormatDate(card.EndsOn)</p>
-                                                    <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
-                                                </div>
-                                                <div class="card-row__meta">
-                                                    <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
-                                                    <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Preview</a>
-                                                    @if (WalletCapability.SupportsAppleWalletPass)
-                                                    {
-                                                        <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Wallet Pass</a>
-                                                    }
-                                                    <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Code</button>
-                                                    <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Redeem</button>
-                                                </div>
-                                            </article>
-                                        }
-                                    </section>
-                                }
-                            </article>
-
-                            <article class="panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Recent activity</p>
-                                        <h3>Programme timeline</h3>
-                                    </div>
-                                </div>
-                                <div class="timeline">
-                                    @foreach (var entry in _workspace.Timeline)
-                                    {
-                                        <article class="timeline__entry">
-                                            <div class="timeline__dot"></div>
+                                    <article class="template-card">
+                                        <div class="template-card__header">
                                             <div>
-                                                <p class="timeline__event">@entry.EventType</p>
-                                                <p>@entry.Summary</p>
-                                                <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                                                <p class="eyebrow">Programme template</p>
+                                                <h4>@template.TemplateLabel</h4>
                                             </div>
-                                        </article>
-                                    }
-                                </div>
-                            </article>
-                        </section>
-                    }
-                    else if (IsProgrammeSection("configure"))
-                    {
-                        <section class="workspace-detail-grid workspace-detail-grid--programme-configure">
-                            <article class="panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Programme configuration</p>
-                                        <h3>Rule, schedule, and output</h3>
-                                    </div>
-                                </div>
-                                <EditForm Model="_cardForm" OnValidSubmit="HandleCardSaveAsync" FormName="update-card-template" class="form-stack">
-                                    <DataAnnotationsValidator />
-                                    <ValidationSummary class="validation-summary" />
-
-                                    <section class="form-section">
-                                        <div class="form-section__header">
-                                            <h4>Rule and schedule</h4>
-                                            <p class="field-hint">Reward, threshold, and live window.</p>
+                                            <span class="chip chip--accent">@template.DeliveryLabel</span>
                                         </div>
-                                        <div class="form-grid">
-                                            <label class="field">
-                                                <span>Reward item</span>
-                                                <InputText @bind-Value="_cardForm.RewardItemLabel" class="input" />
-                                            </label>
-
-                                            <label class="field">
-                                                <span>Visits before reward</span>
-                                                <InputNumber @bind-Value="_cardForm.RewardThreshold" class="input" />
-                                            </label>
-
-                                            <label class="field">
-                                                <span>Begins on</span>
-                                                <InputDate @bind-Value="_cardForm.StartsOn" class="input" />
-                                            </label>
-
-                                            <label class="field">
-                                                <span>Expires on</span>
-                                                <InputDate @bind-Value="_cardForm.EndsOn" class="input" />
-                                            </label>
+                                        <p class="template-card__headline">@template.Headline</p>
+                                        <p class="field-hint">@template.Description</p>
+                                        <dl class="template-card__facts">
+                                            <div>
+                                                <dt>Reward rule</dt>
+                                                <dd>@template.RewardCopy</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Current delivery</dt>
+                                                <dd>@template.DeliveryLabel</dd>
+                                            </div>
+                                        </dl>
+                                        <div class="form-actions">
+                                            <button class="button button--primary" type="button" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">Use this template</button>
                                         </div>
-                                    </section>
-
-                                    <section class="form-section">
-                                        <div class="form-section__header">
-                                            <h4>Customer delivery</h4>
-                                            <p class="field-hint">Choose how this programme reaches customers.</p>
-                                        </div>
-                                        <div class="delivery-options">
-                                            <article class="delivery-option delivery-option--selected">
-                                                <div class="delivery-option__copy">
-                                                    <strong>Wallet loyalty card</strong>
-                                                    <span>Current live output for this programme.</span>
-                                                </div>
-                                                <span class="chip chip--accent">Current</span>
-                                            </article>
-                                        </div>
-                                        <div class="form-grid">
-                                            <label class="field field--full">
-                                                <span>Wallet loyalty card copy</span>
-                                                <InputText @bind-Value="_cardForm.RewardCopy" class="input" />
-                                            </label>
-                                        </div>
-                                    </section>
-
-                                    @if (!string.IsNullOrWhiteSpace(_cardMessage))
-                                    {
-                                        <p class="field-hint">@_cardMessage</p>
-                                    }
-
-                                    <div class="form-actions">
-                                        <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Programme</button>
-                                        <button class="button button--ghost" type="button" @onclick="ResetCardForm">Reset</button>
-                                    </div>
-                                </EditForm>
-                            </article>
-
-                            <article class="panel workspace-preview-panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Preview</p>
-                                        <h3>Wallet loyalty card preview</h3>
-                                    </div>
-                                </div>
-                                <div class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
-                                    <header class="wallet-pass__header">
-                                        <div>
-                                            <p class="wallet-pass__label">Current delivery</p>
-                                            <h2>@_shopForm.DisplayName</h2>
-                                        </div>
-                                        <div class="wallet-pass__mark">
-                                            <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName wallet logo" />
-                                        </div>
-                                    </header>
-
-                                    <div class="wallet-pass__body">
-                                        <div>
-                                            <p class="wallet-pass__copy">@_cardForm.RewardCopy</p>
-                                            <p class="wallet-pass__progress">2/@_cardForm.RewardThreshold</p>
-                                            <p class="field-hint">Valid @FormatDate(_cardForm.StartsOn) to @FormatDate(_cardForm.EndsOn)</p>
-                                        </div>
-                                        <div class="stamp-track" aria-label="wallet template preview">
-                                            @for (var i = 0; i < _cardForm.RewardThreshold; i++)
-                                            {
-                                                <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
-                                            }
-                                        </div>
-                                        <p class="wallet-pass__status">Uses the shop brand defaults for this programme.</p>
-                                    </div>
-                                </div>
-                            </article>
+                                    </article>
+                                }
+                            </div>
                         </section>
                     }
                     else
                     {
-                        <section class="workspace-detail-grid">
-                            <article class="panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Programme insights</p>
-                                        <h3>@selectedProgrammeSummary.RewardHeadline</h3>
-                                    </div>
-                                    <span class="chip">Programme level</span>
-                                </div>
-                                <div class="metrics-grid">
-                                    <article class="metric-card">
-                                        <span class="metric-card__label">Customers</span>
-                                        <strong class="metric-card__value">@selectedProgrammeSummary.ActiveCards</strong>
-                                        <p class="metric-card__copy">Customer passes issued from this programme.</p>
-                                    </article>
-                                    <article class="metric-card">
-                                        <span class="metric-card__label">Unlocked</span>
-                                        <strong class="metric-card__value">@selectedProgrammeSummary.RewardsUnlocked</strong>
-                                        <p class="metric-card__copy">Rewards currently unlocked on this programme.</p>
-                                    </article>
-                                    <article class="metric-card">
-                                        <span class="metric-card__label">Join code</span>
-                                        <strong class="metric-card__value">@selectedProgrammeSummary.JoinCode</strong>
-                                        <p class="metric-card__copy">This join code belongs only to the selected programme.</p>
-                                    </article>
-                                    <article class="metric-card">
-                                        <span class="metric-card__label">Validity</span>
-                                        <strong class="metric-card__value">@selectedProgrammeBadge</strong>
-                                        <p class="metric-card__copy">@BuildProgrammeWindowMessage(selectedProgrammeSummary.StartsOn, selectedProgrammeSummary.EndsOn)</p>
-                                    </article>
-                                </div>
-                            </article>
-
-                            <article class="panel">
-                                <div class="panel__header">
-                                    <div>
-                                        <p class="eyebrow">Programme activity</p>
-                                        <h3>Recent events for the selected programme</h3>
-                                    </div>
-                                </div>
-                                <div class="timeline">
-                                    @foreach (var entry in _workspace.Timeline)
-                                    {
-                                        <article class="timeline__entry">
-                                            <div class="timeline__dot"></div>
-                                            <div>
-                                                <p class="timeline__event">@entry.EventType</p>
-                                                <p>@entry.Summary</p>
-                                                <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
-                                            </div>
-                                        </article>
-                                    }
-                                </div>
-                            </article>
+                        <section class="programme-context-bar">
+                            <div class="programme-context-bar__title">
+                                <p class="eyebrow">Current programme</p>
+                                <h3>@selectedProgrammeSummary!.RewardHeadline</h3>
+                            </div>
+                            <div class="programme-context-bar__meta">
+                                <span class="chip">@selectedProgrammeBadge</span>
+                                <span>@selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") - @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
+                                <span class="chip">@selectedProgrammeSummary.TemplateLabel</span>
+                                <span class="chip">@selectedProgrammeSummary.DeliveryLabel</span>
+                            </div>
                         </section>
+
+                        <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
+                            <a class="workspace-tabs__item @(IsProgrammeSection("operate") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("operate")">Operate</a>
+                            <a class="workspace-tabs__item @(IsProgrammeSection("configure") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("configure")">Configure</a>
+                            <a class="workspace-tabs__item @(IsProgrammeSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("insights")">Insights</a>
+                        </nav>
+
+                        @if (IsProgrammeSection("operate"))
+                        {
+                            <section class="workspace-detail-grid">
+                                <article class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Customer join</p>
+                                            <h3>Customer join QR</h3>
+                                        </div>
+                                    </div>
+                                    <div class="qr-panel">
+                                        <div class="qr-panel__graphic">
+                                            @((MarkupString)_joinQrSvg)
+                                        </div>
+                                        <div class="qr-panel__meta">
+                                            <p>Customers scan this QR, join the programme, and keep progress in Apple Wallet.</p>
+                                            <p class="field-hint">Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</p>
+                                            <code>@_workspace.SelectedJoinUrl</code>
+                                            @if (!SelectedProgrammeIsActive)
+                                            {
+                                                <p class="field-hint">@BuildProgrammeWindowMessage(selectedProgramme!.StartsOn, selectedProgramme.EndsOn)</p>
+                                            }
+                                            <div class="form-actions">
+                                                @if (SelectedProgrammeIsActive)
+                                                {
+                                                    <a class="button button--secondary" href="@_workspace.SelectedJoinUrl" target="_blank">Open Customer Join</a>
+                                                }
+                                                else
+                                                {
+                                                    <button class="button button--secondary" type="button" disabled>Open Customer Join</button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </article>
+
+                                <article class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Till-side stamping</p>
+                                            <h3>Stamp visits</h3>
+                                        </div>
+                                    </div>
+                                    <p class="field-hint">@_workspace.SelectedProgrammeCards.Count active cards on this programme.</p>
+                                    <EditForm OnValidSubmit="HandleAwardVisitAsync" Model="this" FormName="award-visit" class="form-stack">
+                                        <label class="field">
+                                            <span>Customer pass code</span>
+                                            <InputText @bind-Value="_scanCode" class="input" placeholder="card-..." />
+                                        </label>
+                                        <div class="form-actions">
+                                            <button class="button button--primary" type="submit" disabled="@(!SelectedProgrammeIsActive || string.IsNullOrWhiteSpace(_scanCode))">Award visit</button>
+                                            <button class="button button--ghost" type="button" @onclick="ClearScan">Clear</button>
+                                        </div>
+                                    </EditForm>
+                                    @if (!SelectedProgrammeIsActive)
+                                    {
+                                        <p class="field-hint">@BuildProgrammeWindowMessage(selectedProgramme!.StartsOn, selectedProgramme.EndsOn)</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(_scanMessage))
+                                    {
+                                        <p class="field-hint">@_scanMessage</p>
+                                    }
+                                </article>
+                            </section>
+
+                            <section class="workspace-detail-grid workspace-detail-grid--programme-operate-secondary">
+                                <article class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Customer passes</p>
+                                            <h3>Issued on this programme</h3>
+                                        </div>
+                                    </div>
+                                    @if (_workspace.SelectedProgrammeCards.Count == 0)
+                                    {
+                                        <div class="empty-state empty-state--compact">
+                                            <h4>No customer passes issued yet.</h4>
+                                            <p>Share the join QR first. Once someone joins, their pass and progress appear here.</p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <section class="card-list">
+                                            @foreach (var card in _workspace.SelectedProgrammeCards)
+                                            {
+                                                <article class="card-row">
+                                                    <div>
+                                                        <p class="eyebrow">Issued customer pass</p>
+                                                        <h4>@card.ProgressDisplayText</h4>
+                                                        <p class="field-hint">Valid @FormatDate(card.StartsOn) to @FormatDate(card.EndsOn)</p>
+                                                        <p class="field-hint">Pass code: <code>@card.CardCode</code></p>
+                                                    </div>
+                                                    <div class="card-row__meta">
+                                                        <span class="chip @(card.RewardState == RewardState.Unlocked ? "chip--success" : string.Empty)">@card.RewardState</span>
+                                                        <a class="button button--ghost" href="/wallet/card/@card.CardId" target="_blank">Preview</a>
+                                                        @if (WalletCapability.SupportsAppleWalletPass)
+                                                        {
+                                                            <a class="button button--ghost" href="/wallet/passes/@(card.CardId).pkpass" target="_blank">Wallet Pass</a>
+                                                        }
+                                                        <button class="button button--secondary" type="button" @onclick="@(() => UseScanCode(card.CardCode))">Load Code</button>
+                                                        <button class="button button--secondary" type="button" disabled="@(card.RewardState != RewardState.Unlocked)" @onclick="@(() => HandleRedeemAsync(card.CardId))">Redeem</button>
+                                                    </div>
+                                                </article>
+                                            }
+                                        </section>
+                                    }
+                                </article>
+
+                                <article class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Recent activity</p>
+                                            <h3>Programme timeline</h3>
+                                        </div>
+                                    </div>
+                                    <div class="timeline">
+                                        @foreach (var entry in _workspace.Timeline)
+                                        {
+                                            <article class="timeline__entry">
+                                                <div class="timeline__dot"></div>
+                                                <div>
+                                                    <p class="timeline__event">@entry.EventType</p>
+                                                    <p>@entry.Summary</p>
+                                                    <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                                                </div>
+                                            </article>
+                                        }
+                                    </div>
+                                </article>
+                            </section>
+                        }
+                        else if (IsProgrammeSection("configure"))
+                        {
+                            <section class="workspace-detail-grid workspace-detail-grid--programme-configure">
+                                <article class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Programme configuration</p>
+                                            <h3>Rule, schedule, and current delivery</h3>
+                                        </div>
+                                    </div>
+                                    <EditForm Model="_cardForm" OnValidSubmit="HandleCardSaveAsync" FormName="update-card-template" class="form-stack">
+                                        <DataAnnotationsValidator />
+                                        <ValidationSummary class="validation-summary" />
+
+                                        <section class="form-section">
+                                            <div class="form-section__header">
+                                                <h4>Programme rule and schedule</h4>
+                                                <p class="field-hint">@selectedProgrammeSummary.TemplateLabel</p>
+                                            </div>
+                                            <div class="form-grid">
+                                                <label class="field">
+                                                    <span>Reward item</span>
+                                                    <InputText @bind-Value="_cardForm.RewardItemLabel" class="input" />
+                                                </label>
+
+                                                <label class="field">
+                                                    <span>Visits before reward</span>
+                                                    <InputNumber @bind-Value="_cardForm.RewardThreshold" class="input" />
+                                                </label>
+
+                                                <label class="field">
+                                                    <span>Begins on</span>
+                                                    <InputDate @bind-Value="_cardForm.StartsOn" class="input" />
+                                                </label>
+
+                                                <label class="field">
+                                                    <span>Expires on</span>
+                                                    <InputDate @bind-Value="_cardForm.EndsOn" class="input" />
+                                                </label>
+                                            </div>
+                                        </section>
+
+                                        <section class="form-section">
+                                            <div class="form-section__header">
+                                                <h4>Customer delivery</h4>
+                                                <p class="field-hint">@selectedProgrammeSummary.DeliveryLabel</p>
+                                            </div>
+                                            <div class="delivery-options">
+                                                <article class="delivery-option delivery-option--selected">
+                                                    <div class="delivery-option__copy">
+                                                        <strong>@selectedProgrammeSummary.DeliveryLabel</strong>
+                                                        <span>Current live output for this programme.</span>
+                                                    </div>
+                                                    <span class="chip chip--accent">Current</span>
+                                                </article>
+                                            </div>
+                                            <div class="form-grid">
+                                                <label class="field field--full">
+                                                    <span>Customer-facing copy</span>
+                                                    <InputText @bind-Value="_cardForm.RewardCopy" class="input" />
+                                                </label>
+                                            </div>
+                                        </section>
+
+                                        @if (!string.IsNullOrWhiteSpace(_cardMessage))
+                                        {
+                                            <p class="field-hint">@_cardMessage</p>
+                                        }
+
+                                        <div class="form-actions">
+                                            <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Programme</button>
+                                            <button class="button button--ghost" type="button" @onclick="ResetCardForm">Reset</button>
+                                        </div>
+                                    </EditForm>
+                                </article>
+
+                                <article class="panel workspace-preview-panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Preview</p>
+                                            <h3>@selectedProgrammeSummary.DeliveryLabel preview</h3>
+                                        </div>
+                                    </div>
+                                    <div class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
+                                        <header class="wallet-pass__header">
+                                            <div>
+                                                <p class="wallet-pass__label">Current delivery</p>
+                                                <h2>@_shopForm.DisplayName</h2>
+                                            </div>
+                                            <div class="wallet-pass__mark">
+                                                <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName wallet logo" />
+                                            </div>
+                                        </header>
+
+                                        <div class="wallet-pass__body">
+                                            <div>
+                                                <p class="wallet-pass__copy">@_cardForm.RewardCopy</p>
+                                                <p class="wallet-pass__progress">2/@_cardForm.RewardThreshold</p>
+                                                <p class="field-hint">Valid @FormatDate(_cardForm.StartsOn) to @FormatDate(_cardForm.EndsOn)</p>
+                                            </div>
+                                            <div class="stamp-track" aria-label="wallet template preview">
+                                                @for (var i = 0; i < _cardForm.RewardThreshold; i++)
+                                                {
+                                                    <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
+                                                }
+                                            </div>
+                                            <p class="wallet-pass__status">Uses the shop brand defaults for this programme.</p>
+                                        </div>
+                                    </div>
+                                </article>
+                            </section>
+                        }
+                        else
+                        {
+                            <section class="workspace-detail-grid">
+                                <article class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Programme insights</p>
+                                            <h3>@selectedProgrammeSummary.RewardHeadline</h3>
+                                        </div>
+                                        <span class="chip">Programme level</span>
+                                    </div>
+                                    <div class="metrics-grid">
+                                        <article class="metric-card">
+                                            <span class="metric-card__label">Customers</span>
+                                            <strong class="metric-card__value">@selectedProgrammeSummary.ActiveCards</strong>
+                                            <p class="metric-card__copy">Customer passes issued from this programme.</p>
+                                        </article>
+                                        <article class="metric-card">
+                                            <span class="metric-card__label">Unlocked</span>
+                                            <strong class="metric-card__value">@selectedProgrammeSummary.RewardsUnlocked</strong>
+                                            <p class="metric-card__copy">Rewards currently unlocked on this programme.</p>
+                                        </article>
+                                        <article class="metric-card">
+                                            <span class="metric-card__label">Join code</span>
+                                            <strong class="metric-card__value">@selectedProgrammeSummary.JoinCode</strong>
+                                            <p class="metric-card__copy">This join code belongs only to the selected programme.</p>
+                                        </article>
+                                        <article class="metric-card">
+                                            <span class="metric-card__label">Validity</span>
+                                            <strong class="metric-card__value">@selectedProgrammeBadge</strong>
+                                            <p class="metric-card__copy">@BuildProgrammeWindowMessage(selectedProgrammeSummary.StartsOn, selectedProgrammeSummary.EndsOn)</p>
+                                        </article>
+                                    </div>
+                                </article>
+
+                                <article class="panel">
+                                    <div class="panel__header">
+                                        <div>
+                                            <p class="eyebrow">Programme activity</p>
+                                            <h3>Recent events for the selected programme</h3>
+                                        </div>
+                                    </div>
+                                    <div class="timeline">
+                                        @foreach (var entry in _workspace.Timeline)
+                                        {
+                                            <article class="timeline__entry">
+                                                <div class="timeline__dot"></div>
+                                                <div>
+                                                    <p class="timeline__event">@entry.EventType</p>
+                                                    <p>@entry.Summary</p>
+                                                    <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                                                </div>
+                                            </article>
+                                        }
+                                    </div>
+                                </article>
+                            </section>
+                        }
                     }
                 </div>
             </section>
@@ -688,7 +730,7 @@ else
                                 <div>
                                     <p class="eyebrow">Shared brand preview</p>
                                     <p class="workspace-preview-copy">@_shopForm.DisplayName</p>
-                                    <p class="field-hint">Example output: @selectedProgrammeSummary.RewardHeadline</p>
+                                    <p class="field-hint">Example output: @(selectedProgrammeSummary?.RewardHeadline ?? "Create the first programme to preview customer delivery.")</p>
                                 </div>
                             </div>
                         </section>
@@ -734,7 +776,6 @@ else
     private bool _isSetupRoadmapCollapsed;
     private bool _isSetupRoadmapDismissed;
     private bool _didInitializeRoadmapState;
-    private bool _isCreateProgrammeOptionsOpen;
     private readonly ShopForm _shopForm = new();
     private readonly CardTemplateForm _cardForm = new();
     private byte[]? _pendingLogoUploadBytes;
@@ -743,10 +784,19 @@ else
     private MerchantLogoMetadata _pendingLogoMetadata = new(160, 160);
 
     private WalletPassCapability WalletCapability => WalletPasses.GetCapability();
-    private ProgrammeSummarySnapshot SelectedProgrammeSummary =>
-        _workspace!.Programmes.First(x => x.ProgrammeId == _workspace.SelectedProgramme.ProgrammeId);
+    private IReadOnlyList<ProgrammeTemplateOption> ProgrammeTemplates => PlatformState.GetProgrammeTemplates();
+    private ProgrammeSummarySnapshot? SelectedProgrammeSummary
+    {
+        get
+        {
+            var selectedProgrammeId = _workspace?.SelectedProgramme?.ProgrammeId;
+            return selectedProgrammeId is null
+                ? null
+                : _workspace!.Programmes.FirstOrDefault(x => x.ProgrammeId == selectedProgrammeId.Value);
+        }
+    }
     private bool SelectedProgrammeIsActive =>
-        _workspace is not null && IsProgrammeActiveOn(_workspace.SelectedProgramme.StartsOn, _workspace.SelectedProgramme.EndsOn);
+        _workspace?.SelectedProgramme is { } selectedProgramme && IsProgrammeActiveOn(selectedProgramme.StartsOn, selectedProgramme.EndsOn);
 
     protected override void OnInitialized()
     {
@@ -761,7 +811,9 @@ else
     private void LoadWorkspace(bool refreshForms)
     {
         _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri, ProgrammeId);
-        _joinQrSvg = _workspace is null ? string.Empty : QrCodes.RenderSvg(_workspace.SelectedJoinUrl);
+        _joinQrSvg = _workspace?.SelectedJoinUrl is { Length: > 0 } selectedJoinUrl
+            ? QrCodes.RenderSvg(selectedJoinUrl)
+            : string.Empty;
 
         if (_workspace is null)
         {
@@ -786,11 +838,23 @@ else
         _shopForm.PrimaryColor = _workspace.BrandProfile.PrimaryColor;
         _shopForm.AccentColor = _workspace.BrandProfile.AccentColor;
 
-        _cardForm.RewardItemLabel = _workspace.SelectedProgramme.RewardItemLabel;
-        _cardForm.RewardThreshold = _workspace.SelectedProgramme.RewardThreshold;
-        _cardForm.RewardCopy = _workspace.SelectedProgramme.RewardCopy;
-        _cardForm.StartsOn = _workspace.SelectedProgramme.StartsOn;
-        _cardForm.EndsOn = _workspace.SelectedProgramme.EndsOn;
+        if (_workspace.SelectedProgramme is { } selectedProgramme)
+        {
+            _cardForm.RewardItemLabel = selectedProgramme.RewardItemLabel;
+            _cardForm.RewardThreshold = selectedProgramme.RewardThreshold;
+            _cardForm.RewardCopy = selectedProgramme.RewardCopy;
+            _cardForm.StartsOn = selectedProgramme.StartsOn;
+            _cardForm.EndsOn = selectedProgramme.EndsOn;
+        }
+        else
+        {
+            var defaultTemplate = ProgrammeTemplates.First();
+            _cardForm.RewardItemLabel = defaultTemplate.RewardItemLabel;
+            _cardForm.RewardThreshold = defaultTemplate.RewardThreshold;
+            _cardForm.RewardCopy = defaultTemplate.RewardCopy;
+            _cardForm.StartsOn = DateOnly.FromDateTime(DateTime.Today);
+            _cardForm.EndsOn = DateOnly.FromDateTime(DateTime.Today.AddYears(1));
+        }
 
         _pendingLogoUploadBytes = null;
         _pendingLogoPreviewUri = null;
@@ -833,21 +897,21 @@ else
         GetWorkspaceUrl(
             section,
             section == "programmes" ? GetActiveProgrammeSection() : null,
-            _workspace?.SelectedProgramme.ProgrammeId,
+            _workspace?.SelectedProgramme?.ProgrammeId,
             settings: null);
 
     private string GetShopSettingsUrl() =>
         GetWorkspaceUrl(
             GetActiveSection(),
             IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : null,
-            _workspace?.SelectedProgramme.ProgrammeId,
+            _workspace?.SelectedProgramme?.ProgrammeId,
             settings: "shop");
 
     private string GetCloseShopSettingsUrl() =>
         GetWorkspaceUrl(
             GetActiveSection(),
             IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : null,
-            _workspace?.SelectedProgramme.ProgrammeId,
+            _workspace?.SelectedProgramme?.ProgrammeId,
             settings: null);
 
     private string GetWorkspaceUrl(string section, string? programmeSection, Guid? programmeId, string? settings) =>
@@ -855,13 +919,13 @@ else
         {
             ["tab"] = section == "programmes" ? "programmes" : "shop",
             ["section"] = section,
-            ["programmeSection"] = section == "programmes" ? (programmeSection ?? "operate") : null,
+            ["programmeSection"] = section == "programmes" ? (programmeSection ?? (_workspace?.SetupChecklist.HasAnyProgramme == true ? "operate" : "create")) : null,
             ["programme"] = programmeId,
             ["settings"] = settings
         });
 
     private string GetProgrammeSectionUrl(string section, Guid? programmeId = null) =>
-        GetWorkspaceUrl("programmes", section, programmeId ?? _workspace?.SelectedProgramme.ProgrammeId, settings: null);
+        GetWorkspaceUrl("programmes", section, programmeId ?? _workspace?.SelectedProgramme?.ProgrammeId, settings: null);
 
     private string GetProgrammeUrl(Guid programmeId, string? section = null) =>
         GetProgrammeSectionUrl(section ?? (IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : "operate"), programmeId);
@@ -887,17 +951,19 @@ else
             "customers" => "programmes",
             "shop" => "overview",
             "insights" => "insights",
-            _ => _workspace is not null && _workspace.SetupChecklist.HasAnyProgramme ? "programmes" : "overview"
+            _ => _workspace is not null && _workspace.SetupChecklist.HasAnyProgramme ? "programmes" : "programmes"
         }
     };
 
-    private static string NormalizeProgrammeSection(string? legacyTab, string? section, string? programmeSection) => programmeSection?.Trim().ToLowerInvariant() switch
+    private string NormalizeProgrammeSection(string? legacyTab, string? section, string? programmeSection) => programmeSection?.Trim().ToLowerInvariant() switch
     {
+        "create" => "create",
         "operate" => "operate",
         "configure" => "configure",
         "insights" => "insights",
         _ => section?.Trim().ToLowerInvariant() switch
         {
+            "create" => "create",
             "operate" => "operate",
             "configure" => "configure",
             "insights" => "insights",
@@ -909,7 +975,7 @@ else
                 "programmes" => "operate",
                 "programme" => "operate",
                 "insights" => "insights",
-                _ => "operate"
+                _ => _workspace?.SetupChecklist.HasAnyProgramme == true ? "operate" : "create"
             }
         }
     };
@@ -965,7 +1031,7 @@ else
                 _shopForm.PrimaryColor,
                 _shopForm.AccentColor,
                 _pendingLogoUploadBytes is null ? null : new MerchantLogoUpload(_pendingLogoUploadBytes, "image/png", _pendingLogoFileName),
-                _workspace.SelectedProgramme.ProgrammeId,
+                _workspace.SelectedProgramme?.ProgrammeId,
                 Navigation.BaseUri);
 
             if (updated is not null)
@@ -990,16 +1056,12 @@ else
         LoadWorkspace(refreshForms: true);
     }
 
-    private void ToggleCreateProgrammeOptions() =>
-        _isCreateProgrammeOptionsOpen = !_isCreateProgrammeOptionsOpen;
-
-    private Task HandleCreateWalletProgrammeAsync()
+    private Task HandleCreateProgrammeAsync(string templateKey)
     {
-        var updated = PlatformState.CreateProgramme(MerchantId, Navigation.BaseUri);
-        if (updated is not null)
+        var updated = PlatformState.CreateProgramme(MerchantId, templateKey, Navigation.BaseUri);
+        if (updated?.SelectedProgramme is not null)
         {
-            _isCreateProgrammeOptionsOpen = false;
-            Navigation.NavigateTo($"/portal/merchant/{MerchantId}?tab=programmes&section=configure&programme={updated.SelectedProgramme.ProgrammeId}");
+            Navigation.NavigateTo($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=configure&programme={updated.SelectedProgramme.ProgrammeId}");
         }
 
         return Task.CompletedTask;
@@ -1007,7 +1069,8 @@ else
 
     private Task HandleCardSaveAsync()
     {
-        if (_workspace is null)
+        var selectedProgramme = _workspace?.SelectedProgramme;
+        if (selectedProgramme is null)
         {
             return Task.CompletedTask;
         }
@@ -1018,7 +1081,7 @@ else
         {
             var updated = PlatformState.UpdateProgramme(
                 MerchantId,
-                _workspace.SelectedProgramme.ProgrammeId,
+                selectedProgramme.ProgrammeId,
                 _cardForm.RewardItemLabel,
                 _cardForm.RewardThreshold,
                 _cardForm.RewardCopy,
@@ -1052,12 +1115,13 @@ else
 
     private Task HandleAwardVisitAsync()
     {
-        if (_workspace is null)
+        var selectedProgramme = _workspace?.SelectedProgramme;
+        if (selectedProgramme is null)
         {
             return Task.CompletedTask;
         }
 
-        var updated = PlatformState.AwardVisit(MerchantId, _workspace.SelectedProgramme.ProgrammeId, _scanCode, Navigation.BaseUri);
+        var updated = PlatformState.AwardVisit(MerchantId, selectedProgramme.ProgrammeId, _scanCode, Navigation.BaseUri);
         _scanMessage = updated is null
             ? "That pass code does not belong to this programme, or the programme is outside its active dates."
             : $"Visit stamped. The customer pass now shows {updated.SelectedProgrammeCards.First(x => x.CardCode == _scanCode.Trim()).ProgressDisplayText}.";
@@ -1069,12 +1133,13 @@ else
 
     private Task HandleRedeemAsync(Guid cardId)
     {
-        if (_workspace is null)
+        var selectedProgramme = _workspace?.SelectedProgramme;
+        if (selectedProgramme is null)
         {
             return Task.CompletedTask;
         }
 
-        var updated = PlatformState.RedeemReward(MerchantId, _workspace.SelectedProgramme.ProgrammeId, cardId, Navigation.BaseUri);
+        var updated = PlatformState.RedeemReward(MerchantId, selectedProgramme.ProgrammeId, cardId, Navigation.BaseUri);
         _scanMessage = updated is null ? "The reward could not be marked as redeemed." : "Reward redeemed and the customer pass has reset for the next cycle.";
         LoadWorkspace(refreshForms: false);
         return Task.CompletedTask;
@@ -1245,7 +1310,7 @@ else
         [Required, StringLength(40)]
         public string RewardItemLabel { get; set; } = "coffees";
 
-        [Range(2, 20)]
+        [Range(1, 20)]
         public int RewardThreshold { get; set; } = 5;
 
         [Required, StringLength(120)]
