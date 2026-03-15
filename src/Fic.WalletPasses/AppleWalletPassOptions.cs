@@ -4,6 +4,8 @@ public sealed class AppleWalletPassOptions
 {
     public bool SigningConfigured { get; set; }
 
+    public bool PushNotificationsEnabled { get; set; }
+
     public string PassTypeIdentifier { get; set; } = string.Empty;
 
     public string TeamIdentifier { get; set; } = string.Empty;
@@ -19,4 +21,8 @@ public sealed class AppleWalletPassOptions
     public string WwdrCertificatePath { get; set; } = string.Empty;
 
     public string DefaultAssetDirectory { get; set; } = string.Empty;
+
+    public bool UseSandboxPushEndpoint { get; set; } = true;
+
+    public string PushEndpointOverride { get; set; } = string.Empty;
 }

@@ -5,11 +5,10 @@ This runbook gets the current FIC demo to the point where an iPhone can scan the
 ## What This Supports
 - local LAN demo from your Mac to your iPhone
 - signed `.pkpass` download from the join flow
-- founder demo of merchant setup, QR join, and Apple Wallet add
+- founder demo of merchant setup, QR join, Apple Wallet add, and pass refresh request after a stamp or redeem
 
 ## What This Does Not Yet Support
-- Apple push update registration
-- automatic pass refresh after `VisitAwarded`
+- production-grade APNs credential rotation
 - production secret storage or certificate rotation
 
 ## Apple Prerequisites
@@ -42,6 +41,7 @@ The web app now has a stable `UserSecretsId`, so use .NET user secrets instead o
 ```bash
 cd /Users/paulcheek/dev/fic
 dotnet user-secrets set "Wallet:AppleWalletSigningConfigured" "true" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
+dotnet user-secrets set "Wallet:AppleWallet:PushNotificationsEnabled" "true" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
 dotnet user-secrets set "Wallet:AppleWallet:PassTypeIdentifier" "pass.com.yourteam.ficdemo" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
 dotnet user-secrets set "Wallet:AppleWallet:TeamIdentifier" "ABCDE12345" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
 dotnet user-secrets set "Wallet:AppleWallet:OrganizationName" "FIC Demo" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
@@ -49,10 +49,12 @@ dotnet user-secrets set "Wallet:AppleWallet:Description" "Coffee loyalty card" -
 dotnet user-secrets set "Wallet:AppleWallet:P12CertificatePath" "/Users/yourname/fic-secrets/apple-wallet/fic-demo-signing.p12" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
 dotnet user-secrets set "Wallet:AppleWallet:P12CertificatePassword" "your-p12-password" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
 dotnet user-secrets set "Wallet:AppleWallet:WwdrCertificatePath" "/Users/yourname/fic-secrets/apple-wallet/AppleWWDRCAG6.cer" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
+dotnet user-secrets set "Wallet:AppleWallet:UseSandboxPushEndpoint" "true" --project src/Fic.Platform.Web/Fic.Platform.Web.csproj
 ```
 
 Environment variables also work if preferred:
 - `Wallet__AppleWalletSigningConfigured`
+- `Wallet__AppleWallet__PushNotificationsEnabled`
 - `Wallet__AppleWallet__PassTypeIdentifier`
 - `Wallet__AppleWallet__TeamIdentifier`
 - `Wallet__AppleWallet__OrganizationName`
@@ -60,6 +62,7 @@ Environment variables also work if preferred:
 - `Wallet__AppleWallet__P12CertificatePath`
 - `Wallet__AppleWallet__P12CertificatePassword`
 - `Wallet__AppleWallet__WwdrCertificatePath`
+- `Wallet__AppleWallet__UseSandboxPushEndpoint`
 
 ## Run The Demo
 
@@ -82,11 +85,14 @@ It also prints a Wallet demo readiness URL at `/support/wallet-demo`, which show
 5. Scan the join QR from your iPhone.
 6. Tap `Add to Apple Wallet`.
 7. Safari should download the `.pkpass` and hand off to Wallet.
+8. Back in the merchant workspace, stamp a visit.
+9. The merchant UI should report whether a Wallet refresh request was sent, skipped because no registered device exists yet, or blocked by missing push setup.
 
 ## If It Falls Back To Preview
 
 The environment is still missing one of:
 - signing enabled flag
+- push notifications enabled flag
 - pass type identifier
 - team identifier
 - `.p12` file path
@@ -103,3 +109,8 @@ Check these first:
 - the response is coming from Safari and not an embedded browser view
 
 If local LAN delivery is still flaky, the next fallback is a public HTTPS dev host or tunnel for the same app build.
+
+## References
+
+- [Apple: Updating a pass](https://developer.apple.com/library/archive/documentation/UserExperience/Conceptual/PassKit_PG/Updating.html)
+- [Apple: APNs provider API](https://developer.apple.com/library/archive/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/CommunicatingwithAPNs.html)

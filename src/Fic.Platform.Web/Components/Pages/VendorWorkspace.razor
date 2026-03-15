@@ -8,6 +8,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject IAppleWalletPassService WalletPasses
+@inject IWalletPassUpdateNotifier WalletPushes
 @inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>Your Shop</PageTitle>
@@ -66,6 +67,15 @@ else
                 {
                     <span class="chip">Preview fallback</span>
                     <a class="button button--ghost button--compact" href="/support/wallet-demo">Wallet demo setup</a>
+                }
+                @if (WalletPushCapability.IsReady)
+                {
+                    <span class="chip chip--success">Wallet refresh ready</span>
+                }
+                else if (WalletCapability.SupportsAppleWalletPass)
+                {
+                    <span class="chip">Refresh setup</span>
+                    <a class="button button--ghost button--compact" href="/support/wallet-demo">Refresh setup</a>
                 }
             </div>
         </section>
@@ -899,6 +909,7 @@ else
     private MerchantLogoMetadata _pendingLogoMetadata = new(160, 160);
 
     private WalletPassCapability WalletCapability => WalletPasses.GetCapability();
+    private WalletPassPushCapability WalletPushCapability => WalletPushes.GetCapability();
     private IReadOnlyList<ProgrammeTemplateOption> ProgrammeTemplates => PlatformState.GetProgrammeTemplates();
     private ProgrammeSummarySnapshot? SelectedProgrammeSummary
     {
@@ -1230,36 +1241,78 @@ else
         LoadWorkspace(refreshForms: true);
     }
 
-    private Task HandleAwardVisitAsync()
+    private async Task HandleAwardVisitAsync()
     {
         var selectedProgramme = _workspace?.SelectedProgramme;
         if (selectedProgramme is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        var updated = PlatformState.AwardVisit(MerchantId, selectedProgramme.ProgrammeId, _scanCode, Navigation.BaseUri);
-        _scanMessage = updated is null
-            ? "That pass code does not belong to this programme, or the programme is outside its active dates."
-            : $"Visit stamped. The customer pass now shows {updated.SelectedProgrammeCards.First(x => x.CardCode == _scanCode.Trim()).ProgressDisplayText}.";
+        var scannedCode = _scanCode.Trim();
+        var updated = PlatformState.AwardVisit(MerchantId, selectedProgramme.ProgrammeId, scannedCode, Navigation.BaseUri);
+        if (updated is null)
+        {
+            _scanMessage = "That pass code does not belong to this programme, or the programme is outside its active dates.";
+            _scanCode = string.Empty;
+            LoadWorkspace(refreshForms: false);
+            return;
+        }
+
+        var updatedCard = updated.SelectedProgrammeCards.First(x => x.CardCode == scannedCode);
+        var refresh = await TryRequestWalletRefreshAsync(updatedCard);
+        _scanMessage = $"Visit stamped. The customer pass now shows {updatedCard.ProgressDisplayText}. {refresh.Summary}";
 
         _scanCode = string.Empty;
         LoadWorkspace(refreshForms: false);
-        return Task.CompletedTask;
     }
 
-    private Task HandleRedeemAsync(Guid cardId)
+    private async Task HandleRedeemAsync(Guid cardId)
     {
         var selectedProgramme = _workspace?.SelectedProgramme;
         if (selectedProgramme is null)
         {
-            return Task.CompletedTask;
+            return;
+        }
+
+        var currentCard = _workspace?.SelectedProgrammeCards.FirstOrDefault(card => card.CardId == cardId);
+        if (currentCard is null || !currentCard.CanRedeem)
+        {
+            _scanMessage = "That customer pass is not ready to redeem yet.";
+            return;
         }
 
         var updated = PlatformState.RedeemReward(MerchantId, selectedProgramme.ProgrammeId, cardId, Navigation.BaseUri);
-        _scanMessage = updated is null ? "The reward could not be marked as redeemed." : "Reward redeemed and the customer pass has reset for the next cycle.";
+        if (updated is null)
+        {
+            _scanMessage = "The reward could not be marked as redeemed.";
+            LoadWorkspace(refreshForms: false);
+            return;
+        }
+
+        var updatedCard = updated.SelectedProgrammeCards.FirstOrDefault(card => card.CardId == cardId);
+        var refresh = updatedCard is null
+            ? new WalletPassUpdateDispatchResult(0, 0, 0, true, "Wallet refresh was not requested because the updated pass could not be reloaded.")
+            : await TryRequestWalletRefreshAsync(updatedCard);
+
+        _scanMessage = $"Reward redeemed and the customer pass has reset for the next cycle. {refresh.Summary}";
         LoadWorkspace(refreshForms: false);
-        return Task.CompletedTask;
+    }
+
+    private async Task<WalletPassUpdateDispatchResult> TryRequestWalletRefreshAsync(WalletCardSnapshot card)
+    {
+        if (!WalletCapability.SupportsAppleWalletPass)
+        {
+            return new WalletPassUpdateDispatchResult(
+                0,
+                0,
+                0,
+                true,
+                "Wallet refresh was not requested because this environment is still using preview mode.");
+        }
+
+        var pushTokens = PlatformState.GetWalletPushTokens(card.CardId);
+        return await WalletPushes.NotifyPassUpdatedAsync(card, pushTokens);
     }
 
     private void UseScanCode(string cardCode)

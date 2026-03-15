@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F23-customer-card-management.md`
+- `F24-wallet-demo-critical-path.md`

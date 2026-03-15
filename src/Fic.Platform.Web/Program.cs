@@ -70,6 +70,8 @@ builder.Services.AddSingleton<IAppleWalletPassService>(sp =>
         sp.GetRequiredService<AppleWalletPassOptions>(),
         sp.GetRequiredService<IMerchantBrandAssetStore>());
 });
+builder.Services.AddSingleton<IWalletPassUpdateNotifier>(sp =>
+    new AppleWalletPassUpdateNotifier(sp.GetRequiredService<AppleWalletPassOptions>()));
 
 var app = builder.Build();
 

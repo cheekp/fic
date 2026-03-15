@@ -523,14 +523,19 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     private static void RegisterServices(BunitContext context, DemoPlatformState state)
-        => RegisterServices(context, state, new FakeAppleWalletPassService());
+        => RegisterServices(context, state, new FakeAppleWalletPassService(), new FakeWalletPassUpdateNotifier());
 
-    private static void RegisterServices(BunitContext context, DemoPlatformState state, IAppleWalletPassService walletPassService)
+    private static void RegisterServices(
+        BunitContext context,
+        DemoPlatformState state,
+        IAppleWalletPassService walletPassService,
+        IWalletPassUpdateNotifier? walletPassUpdateNotifier = null)
     {
         context.Services.AddSingleton(state);
         context.Services.AddSingleton(new JoinQrCodeService());
         context.Services.AddSingleton(new MerchantBrandPresentationService());
         context.Services.AddSingleton(walletPassService);
+        context.Services.AddSingleton(walletPassUpdateNotifier ?? new FakeWalletPassUpdateNotifier());
     }
 
     private static void NavigateToWorkspace(
@@ -623,6 +628,31 @@ public sealed class VendorWorkspaceComponentTests
             string webServiceUrl,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("Component tests do not issue Apple Wallet packages.");
+    }
+
+    private sealed class FakeWalletPassUpdateNotifier : IWalletPassUpdateNotifier
+    {
+        private readonly WalletPassPushCapability _capability;
+
+        public FakeWalletPassUpdateNotifier(bool isReady = false)
+        {
+            _capability = isReady
+                ? new WalletPassPushCapability(true, "Wallet refresh requests can be sent for registered devices after a stamp or redeem.")
+                : new WalletPassPushCapability(false, "Wallet refresh push delivery is turned off for this environment.");
+        }
+
+        public WalletPassPushCapability GetCapability() => _capability;
+
+        public Task<WalletPassUpdateDispatchResult> NotifyPassUpdatedAsync(
+            WalletCardSnapshot card,
+            IReadOnlyList<string> pushTokens,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new WalletPassUpdateDispatchResult(
+                pushTokens.Count,
+                0,
+                0,
+                true,
+                "Wallet refresh was not requested because push delivery is not configured."));
     }
 
     private sealed class InMemoryMerchantBrandAssetStore : Fic.MerchantAccounts.IMerchantBrandAssetStore
