@@ -79,14 +79,15 @@ It also prints a Wallet demo readiness URL at `/support/wallet-demo`, which show
 ## Demo Flow
 
 1. On your Mac, open the printed `/portal/signup` URL.
-2. Create a merchant and upload a PNG logo if you want the pass branding to carry through cleanly.
-3. Open the merchant workspace.
-4. Confirm the workspace shows `Signed Apple Wallet ready`, not `Preview fallback`.
-5. Scan the join QR from your iPhone.
-6. Tap `Add to Apple Wallet`.
-7. Safari should download the `.pkpass` and hand off to Wallet.
-8. Back in the merchant workspace, stamp a visit.
-9. The merchant UI should report whether a Wallet refresh request was sent, skipped because no registered device exists yet, or blocked by missing push setup.
+2. Create the shop.
+3. Confirm the single founding plan and set the owner password.
+4. Choose the first programme template and finish the first-programme setup step.
+5. In `Operate`, confirm the workspace shows `Signed Apple Wallet ready`, not `Preview fallback`.
+6. Use `Open Customer Join` or `Copy Join Link` to open the join flow on your iPhone.
+7. Tap `Add to Apple Wallet`.
+8. Safari should download the `.pkpass` and hand off to Wallet.
+9. Back in the merchant workspace, stamp a visit.
+10. The merchant UI should report whether a Wallet refresh request was sent, skipped because no registered device exists yet, or blocked by missing push setup.
 
 ## If It Falls Back To Preview
 

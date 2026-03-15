@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Tighten the Wallet founder demo from here: keep signed pass issuance working, add clear refresh-notification feedback after stamp/redeem, and make the full critical path easy to run locally.
+Tighten the founder-demo lane from billing into first live programme setup, then keep the operate flow obvious enough to issue, join, and stamp without guesswork.

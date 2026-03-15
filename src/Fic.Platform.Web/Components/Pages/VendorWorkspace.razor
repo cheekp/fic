@@ -314,6 +314,33 @@ else
                                 </div>
                             </div>
 
+                            @if (HasLaunchFlow)
+                            {
+                                <section class="launch-flow-panel">
+                                    <div class="launch-flow-panel__header">
+                                        <div>
+                                            <p class="eyebrow">Guided setup</p>
+                                            <h4>Create the first live programme</h4>
+                                            <p class="field-hint">Choose the starting template first. We then take you into configure, then into operate so the join and Wallet demo path is easy to test.</p>
+                                        </div>
+                                        <a class="button button--ghost button--compact" href="@GetDismissLaunchUrl()">Exit guided setup</a>
+                                    </div>
+                                    <div class="launch-flow-panel__steps">
+                                        @foreach (var step in BuildLaunchFlowSteps())
+                                        {
+                                            <article class="launch-flow-step @(step.IsComplete ? "launch-flow-step--complete" : string.Empty) @(step.IsCurrent ? "launch-flow-step--current" : string.Empty)">
+                                                <span class="launch-flow-step__index">@step.Order</span>
+                                                <div class="launch-flow-step__copy">
+                                                    <strong>@step.Label</strong>
+                                                    <span>@step.Description</span>
+                                                </div>
+                                                <span class="chip @(step.IsCurrent ? "chip--accent" : string.Empty)">@step.StatusLabel</span>
+                                            </article>
+                                        }
+                                    </div>
+                                </section>
+                            }
+
                             <div class="template-grid">
                                 @foreach (var template in ProgrammeTemplates)
                                 {
@@ -346,7 +373,7 @@ else
                                             </div>
                                         </dl>
                                         <div class="form-actions">
-                                            <button class="button button--primary" type="button" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">Use this template</button>
+                                            <button class="button button--primary" type="button" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">@(HasLaunchFlow ? "Start with this template" : "Use this template")</button>
                                         </div>
                                     </article>
                                 }
@@ -368,6 +395,33 @@ else
                                 <span class="chip">@selectedProgrammeSummary.DeliveryTypeLabel</span>
                             </div>
                         </section>
+
+                        @if (HasLaunchFlow && (IsProgrammeSection("configure") || IsProgrammeSection("operate")))
+                        {
+                            <section class="launch-flow-panel launch-flow-panel--compact">
+                                <div class="launch-flow-panel__header">
+                                    <div>
+                                        <p class="eyebrow">Guided setup</p>
+                                        <h4>@BuildLaunchFlowHeadline()</h4>
+                                        <p class="field-hint">@BuildLaunchFlowMessage()</p>
+                                    </div>
+                                    <a class="button button--ghost button--compact" href="@GetDismissLaunchUrl()">Exit guided setup</a>
+                                </div>
+                                <div class="launch-flow-panel__steps">
+                                    @foreach (var step in BuildLaunchFlowSteps())
+                                    {
+                                        <article class="launch-flow-step @(step.IsComplete ? "launch-flow-step--complete" : string.Empty) @(step.IsCurrent ? "launch-flow-step--current" : string.Empty)">
+                                            <span class="launch-flow-step__index">@step.Order</span>
+                                            <div class="launch-flow-step__copy">
+                                                <strong>@step.Label</strong>
+                                                <span>@step.Description</span>
+                                            </div>
+                                            <span class="chip @(step.IsCurrent ? "chip--accent" : string.Empty)">@step.StatusLabel</span>
+                                        </article>
+                                    }
+                                </div>
+                            </section>
+                        }
 
                         <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
                             <a class="workspace-tabs__item @(IsProgrammeSection("operate") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("operate")">Operate</a>
@@ -394,6 +448,10 @@ else
                                             <p>Customers scan this QR, join the programme, and receive the current output through @selectedProgrammeSummary.DeliveryTypeLabel.</p>
                                             <p class="field-hint">Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</p>
                                             <code>@_workspace.SelectedJoinUrl</code>
+                                            @if (!string.IsNullOrWhiteSpace(_operateMessage))
+                                            {
+                                                <p class="field-hint">@_operateMessage</p>
+                                            }
                                             @if (!SelectedProgrammeIsActive)
                                             {
                                                 <p class="field-hint">@BuildProgrammeWindowMessage(selectedProgramme!.StartsOn, selectedProgramme.EndsOn)</p>
@@ -402,10 +460,12 @@ else
                                                 @if (SelectedProgrammeIsActive)
                                                 {
                                                     <a class="button button--secondary" href="@_workspace.SelectedJoinUrl" target="_blank">Open Customer Join</a>
+                                                    <button class="button button--ghost" type="button" @onclick="HandleCopyJoinLinkAsync">Copy Join Link</button>
                                                 }
                                                 else
                                                 {
                                                     <button class="button button--secondary" type="button" disabled>Open Customer Join</button>
+                                                    <button class="button button--ghost" type="button" disabled>Copy Join Link</button>
                                                 }
                                             </div>
                                         </div>
@@ -588,7 +648,7 @@ else
                                     <div class="panel__header">
                                         <div>
                                             <p class="eyebrow">Programme configuration</p>
-                                            <h3>Programme setup and current delivery</h3>
+                                            <h3>@(HasLaunchFlow ? "Finish programme setup" : "Programme setup and current delivery")</h3>
                                         </div>
                                     </div>
                                     <EditForm Model="_programmeForm" OnValidSubmit="HandleProgrammeSaveAsync" FormName="update-programme" class="form-stack">
@@ -676,7 +736,7 @@ else
                                         }
 
                                         <div class="form-actions">
-                                            <button class="button button--primary" type="submit" disabled="@_isSavingProgramme">Save Programme</button>
+                                            <button class="button button--primary" type="submit" disabled="@_isSavingProgramme">@(HasLaunchFlow ? "Save and open operate" : "Save Programme")</button>
                                             <button class="button button--ghost" type="button" @onclick="ResetProgrammeForm">Reset</button>
                                         </div>
                                     </EditForm>
@@ -890,10 +950,14 @@ else
     [SupplyParameterFromQuery(Name = "settings")]
     public string? Settings { get; set; }
 
+    [SupplyParameterFromQuery(Name = "launch")]
+    public string? Launch { get; set; }
+
     private MerchantWorkspaceSnapshot? _workspace;
     private string _joinQrSvg = string.Empty;
     private string _scanCode = string.Empty;
     private string? _scanMessage;
+    private string? _operateMessage;
     private string? _shopMessage;
     private string? _programmeMessage;
     private bool _isSavingShop;
@@ -921,6 +985,8 @@ else
                 : _workspace!.Programmes.FirstOrDefault(x => x.ProgrammeId == selectedProgrammeId.Value);
         }
     }
+    private string? ActiveLaunchStage => NormalizeLaunchStage(Launch);
+    private bool HasLaunchFlow => ActiveLaunchStage is not null;
     private bool SelectedProgrammeIsActive =>
         _workspace?.SelectedProgramme is { } selectedProgramme && IsProgrammeActiveOn(selectedProgramme.StartsOn, selectedProgramme.EndsOn);
 
@@ -986,6 +1052,7 @@ else
         _pendingLogoPreviewUri = null;
         _pendingLogoFileName = "logo.png";
         _pendingLogoMetadata = new MerchantLogoMetadata(_workspace.BrandProfile.LogoWidth, _workspace.BrandProfile.LogoHeight);
+        _operateMessage = null;
     }
 
     private MerchantThemeView BuildBrandPreviewTheme() =>
@@ -1024,34 +1091,46 @@ else
             section,
             section == "programmes" ? GetActiveProgrammeSection() : null,
             _workspace?.SelectedProgramme?.ProgrammeId,
-            settings: null);
+            settings: null,
+            launch: section == "programmes" ? ActiveLaunchStage : null);
 
     private string GetShopSettingsUrl() =>
         GetWorkspaceUrl(
             GetActiveSection(),
             IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : null,
             _workspace?.SelectedProgramme?.ProgrammeId,
-            settings: "shop");
+            settings: "shop",
+            launch: IsWorkspaceSection("programmes") ? ActiveLaunchStage : null);
 
     private string GetCloseShopSettingsUrl() =>
         GetWorkspaceUrl(
             GetActiveSection(),
             IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : null,
             _workspace?.SelectedProgramme?.ProgrammeId,
-            settings: null);
+            settings: null,
+            launch: IsWorkspaceSection("programmes") ? ActiveLaunchStage : null);
 
-    private string GetWorkspaceUrl(string section, string? programmeSection, Guid? programmeId, string? settings) =>
+    private string GetDismissLaunchUrl() =>
+        GetWorkspaceUrl(
+            "programmes",
+            _workspace?.SetupChecklist.HasAnyProgramme == true ? GetActiveProgrammeSection() : "create",
+            _workspace?.SelectedProgramme?.ProgrammeId,
+            settings: null,
+            launch: null);
+
+    private string GetWorkspaceUrl(string section, string? programmeSection, Guid? programmeId, string? settings, string? launch) =>
         Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
             ["tab"] = section == "programmes" ? "programmes" : "shop",
             ["section"] = section,
             ["programmeSection"] = section == "programmes" ? (programmeSection ?? (_workspace?.SetupChecklist.HasAnyProgramme == true ? "operate" : "create")) : null,
             ["programme"] = programmeId,
-            ["settings"] = settings
+            ["settings"] = settings,
+            ["launch"] = section == "programmes" ? launch : null
         });
 
-    private string GetProgrammeSectionUrl(string section, Guid? programmeId = null) =>
-        GetWorkspaceUrl("programmes", section, programmeId ?? _workspace?.SelectedProgramme?.ProgrammeId, settings: null);
+    private string GetProgrammeSectionUrl(string section, Guid? programmeId = null, string? launch = null) =>
+        GetWorkspaceUrl("programmes", section, programmeId ?? _workspace?.SelectedProgramme?.ProgrammeId, settings: null, launch: launch ?? ActiveLaunchStage);
 
     private string GetProgrammeUrl(Guid programmeId, string? section = null) =>
         GetProgrammeSectionUrl(section ?? (IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : "operate"), programmeId);
@@ -1106,6 +1185,14 @@ else
                 _ => _workspace?.SetupChecklist.HasAnyProgramme == true ? "operate" : "create"
             }
         }
+    };
+
+    private static string? NormalizeLaunchStage(string? launch) => launch?.Trim().ToLowerInvariant() switch
+    {
+        "create" => "create",
+        "configure" => "configure",
+        "operate" => "operate",
+        _ => null
     };
 
     private async Task HandleBrandLogoSelectedAsync(InputFileChangeEventArgs args)
@@ -1189,7 +1276,8 @@ else
         var updated = PlatformState.CreateProgramme(MerchantId, templateKey, Navigation.BaseUri);
         if (updated?.SelectedProgramme is not null)
         {
-            Navigation.NavigateTo($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=configure&programme={updated.SelectedProgramme.ProgrammeId}");
+            var launchStage = HasLaunchFlow ? "configure" : null;
+            Navigation.NavigateTo(GetProgrammeSectionUrl("configure", updated.SelectedProgramme.ProgrammeId, launchStage));
         }
 
         return Task.CompletedTask;
@@ -1219,6 +1307,12 @@ else
 
             if (updated is not null)
             {
+                if (HasLaunchFlow)
+                {
+                    Navigation.NavigateTo(GetProgrammeSectionUrl("operate", updated.SelectedProgramme?.ProgrammeId, "operate"));
+                    return Task.CompletedTask;
+                }
+
                 _programmeMessage = "Programme updated.";
                 LoadWorkspace(refreshForms: true);
             }
@@ -1233,6 +1327,24 @@ else
         }
 
         return Task.CompletedTask;
+    }
+
+    private async Task HandleCopyJoinLinkAsync()
+    {
+        if (_workspace?.SelectedJoinUrl is not { Length: > 0 } joinUrl)
+        {
+            return;
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", joinUrl);
+            _operateMessage = "Join link copied. Open it on the demo phone to add the current pass.";
+        }
+        catch (JSException)
+        {
+            _operateMessage = "Copy failed in this browser. Use the join link shown above instead.";
+        }
     }
 
     private void ResetProgrammeForm()
@@ -1326,6 +1438,53 @@ else
         _scanCode = string.Empty;
         _scanMessage = null;
     }
+
+    private IReadOnlyList<LaunchFlowStepView> BuildLaunchFlowSteps()
+    {
+        if (!HasLaunchFlow)
+        {
+            return [];
+        }
+
+        return
+        [
+            new LaunchFlowStepView(
+                1,
+                "Template",
+                "Choose the starting shape for the programme.",
+                ActiveLaunchStage is "configure" or "operate",
+                ActiveLaunchStage == "create",
+                ActiveLaunchStage == "create" ? "Current" : "Complete"),
+            new LaunchFlowStepView(
+                2,
+                "Configure",
+                "Confirm the rule, dates, and customer delivery.",
+                ActiveLaunchStage is "operate",
+                ActiveLaunchStage == "configure",
+                ActiveLaunchStage == "configure" ? "Current" : ActiveLaunchStage == "operate" ? "Complete" : "Next"),
+            new LaunchFlowStepView(
+                3,
+                "Publish and test",
+                "Open join, add the Wallet pass, then stamp once.",
+                false,
+                ActiveLaunchStage == "operate",
+                ActiveLaunchStage == "operate" ? "Current" : "Next")
+        ];
+    }
+
+    private string BuildLaunchFlowHeadline() => ActiveLaunchStage switch
+    {
+        "configure" => "Finish the first programme setup",
+        "operate" => "Publish and test the live programme",
+        _ => "Create the first live programme"
+    };
+
+    private string BuildLaunchFlowMessage() => ActiveLaunchStage switch
+    {
+        "configure" => "Confirm the reward rule, date window, and current customer delivery. Saving here opens the daily-use operate view.",
+        "operate" => "Open the join flow on the demo phone, add the pass to Apple Wallet, then come back here and stamp a visit.",
+        _ => "Choose the starting template first. We then take you into configure, then into operate so the founder demo feels natural."
+    };
 
     private async Task SuggestPaletteFromLogoAsync(string logoPreviewUri)
     {
@@ -1540,4 +1699,12 @@ else
     private sealed record CustomerCardGroupView(
         string Label,
         IReadOnlyList<WalletCardSnapshot> Cards);
+
+    private sealed record LaunchFlowStepView(
+        int Order,
+        string Label,
+        string Description,
+        bool IsComplete,
+        bool IsCurrent,
+        string StatusLabel);
 }

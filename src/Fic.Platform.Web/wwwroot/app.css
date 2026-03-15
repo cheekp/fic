@@ -1183,6 +1183,82 @@ textarea {
     gap: 1rem;
 }
 
+.launch-flow-panel {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0.95rem 1rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--brand-accent) 34%, var(--brand-line) 66%);
+    background: color-mix(in srgb, var(--brand-surface-strong) 90%, var(--brand-accent-soft) 10%);
+}
+
+.launch-flow-panel--compact {
+    padding: 0.85rem 0.95rem;
+}
+
+.launch-flow-panel__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.85rem;
+    align-items: start;
+}
+
+.launch-flow-panel__header h4 {
+    margin: 0;
+}
+
+.launch-flow-panel__steps {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.launch-flow-step {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    align-items: center;
+    padding: 0.8rem 0.85rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-line);
+    background: color-mix(in srgb, var(--brand-surface) 86%, transparent 14%);
+}
+
+.launch-flow-step--complete {
+    background: color-mix(in srgb, var(--brand-surface) 82%, rgba(47, 122, 75, 0.1) 18%);
+}
+
+.launch-flow-step--current {
+    border-color: color-mix(in srgb, var(--brand-accent) 56%, var(--brand-line) 44%);
+}
+
+.launch-flow-step__index {
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 999px;
+    display: inline-grid;
+    place-items: center;
+    background: var(--brand-button);
+    color: var(--brand-button-ink);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.launch-flow-step__copy {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.launch-flow-step__copy strong {
+    font-size: 0.96rem;
+}
+
+.launch-flow-step__copy span {
+    color: var(--brand-muted);
+    font-size: 0.86rem;
+    line-height: 1.4;
+}
+
 .template-grid {
     display: grid;
     gap: 1rem;
@@ -1763,6 +1839,8 @@ textarea {
     .signup-preview,
     .qr-panel,
     .setup-roadmap__steps,
+    .launch-flow-panel__header,
+    .launch-flow-panel__steps,
     .workspace-tabs-bar,
     .merchant-card__head,
     .merchant-card__brand,
@@ -1778,6 +1856,7 @@ textarea {
     .wallet-pass__header,
     .wallet-pass__footer,
     .card-row,
+    .launch-flow-step,
     .section-header {
         grid-template-columns: 1fr;
         flex-direction: column;

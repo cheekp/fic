@@ -164,14 +164,17 @@ Completed slice chain to date:
 - `F23`
   - customer card management so operate stays fast, customers get their own management surface, and issued passes have clear statuses
   - validator: `scripts/validate-f23-customer-card-management.sh`
+- `F24`
+  - Wallet demo critical path so pass issuance, pass refresh, and merchant feedback all support a founder demo without guesswork
+  - validator: `scripts/validate-f24-wallet-demo-critical-path.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F24`
-  - wallet demo critical path so pass issuance and pass refresh are both explicit, and merchant actions report whether Wallet refresh was actually requested
-  - validator: `scripts/validate-f24-wallet-demo-critical-path.sh`
+- `F25`
+  - founder-demo flow hardening so billing, first-programme setup, and publish/test actions feel like one natural lane
+  - validator: `scripts/validate-f25-demo-flow-hardening.sh`
 
 ## Current Product Reality
 
@@ -209,9 +212,11 @@ The repo now supports:
 - merchant onboarding now sets owner access credentials before the workspace opens
 - merchant workspace routes now require a cookie-backed merchant session and enforce merchant ownership on route access
 - shop signup now creates the merchant account first, while the first programme is created explicitly after billing inside the workspace
+- billing currently uses one clear founding tier so the founder-demo lane stays simple and believable
 - starter programme creation now offers explicit templates, including a visit reward and a coffee-plus-food offer shape
 - programme creation now needs to keep separating programme type, starter template, delivery type, and current output so the wallet surface never masquerades as the programme itself
 - the next founder-demo refinement is proving the Wallet critical path clearly: issue a real pass, stamp a visit, and surface whether Wallet refresh was requested or still waiting on push readiness
+- the next founder-demo refinement is tightening the first-programme lane so billing, configure, join, and first stamp feel like one guided launch instead of separate surfaces
 
 The repo does not yet represent finished production behavior for:
 

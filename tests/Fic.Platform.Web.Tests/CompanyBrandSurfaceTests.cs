@@ -69,8 +69,11 @@ public sealed class CompanyBrandSurfaceTests
             .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
 
         Assert.Contains("Set the owner password here", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Open Workspace", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Continue to first programme", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Owner password", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Founding coffee shop", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("£19.99/mo", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("launch=create", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
