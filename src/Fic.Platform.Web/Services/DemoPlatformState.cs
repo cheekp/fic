@@ -385,6 +385,19 @@ public sealed class DemoPlatformState(
         }
     }
 
+    public IReadOnlyList<string> GetWalletPushTokens(Guid cardId)
+    {
+        lock (_gate)
+        {
+            return _walletRegistrations.Values
+                .Where(registration => registration.CardId == cardId)
+                .Select(registration => registration.PushToken)
+                .Where(token => !string.IsNullOrWhiteSpace(token))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+        }
+    }
+
     public MerchantAuthenticationResult AuthenticateMerchant(string email, string password)
     {
         lock (_gate)

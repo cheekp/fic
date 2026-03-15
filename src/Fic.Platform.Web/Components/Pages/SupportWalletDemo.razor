@@ -1,10 +1,12 @@
 @page "/support/wallet-demo"
 @inject IAppleWalletPassService WalletPasses
+@inject IWalletPassUpdateNotifier WalletPushes
 
 <PageTitle>Wallet Demo Support</PageTitle>
 
 @{
-    var capability = WalletPasses.GetCapability();
+    var issuanceCapability = WalletPasses.GetCapability();
+    var refreshCapability = WalletPushes.GetCapability();
 }
 
 <section class="panel company-support">
@@ -13,25 +15,44 @@
             <p class="eyebrow">North Star Wallet support</p>
             <h2>Apple Wallet demo readiness</h2>
             <p class="lede">
-                Check whether this environment will issue a real signed Apple Wallet pass or stay in preview mode.
+                Check whether this environment can both issue a real signed Apple Wallet pass and request a refresh after merchant actions.
             </p>
         </div>
-        <span class="chip @(capability.SupportsAppleWalletPass ? "chip--success" : string.Empty)">
-            @(capability.SupportsAppleWalletPass ? "Signed pass ready" : "Preview fallback")
+        <span class="chip @((issuanceCapability.SupportsAppleWalletPass && refreshCapability.IsReady) ? "chip--success" : string.Empty)">
+            @((issuanceCapability.SupportsAppleWalletPass && refreshCapability.IsReady) ? "Founder demo ready" : "Demo setup needed")
         </span>
     </div>
 
-    <div class="company-support__summary">
-        <p>@capability.HelperText</p>
-        @if (capability.HasDiagnostics)
-        {
-            <ul>
-                @foreach (var issue in capability.DiagnosticItems!)
-                {
-                    <li>@issue</li>
-                }
-            </ul>
-        }
+    <div class="metrics-grid">
+        <article class="metric-card">
+            <span class="metric-card__label">Pass issuance</span>
+            <strong class="metric-card__value">@(issuanceCapability.SupportsAppleWalletPass ? "Ready" : "Preview")</strong>
+            <p class="metric-card__copy">@issuanceCapability.HelperText</p>
+            @if (issuanceCapability.HasDiagnostics)
+            {
+                <ul class="support-list">
+                    @foreach (var issue in issuanceCapability.DiagnosticItems!)
+                    {
+                        <li>@issue</li>
+                    }
+                </ul>
+            }
+        </article>
+
+        <article class="metric-card">
+            <span class="metric-card__label">Pass refresh</span>
+            <strong class="metric-card__value">@(refreshCapability.IsReady ? "Ready" : "Setup")</strong>
+            <p class="metric-card__copy">@refreshCapability.HelperText</p>
+            @if (refreshCapability.HasDiagnostics)
+            {
+                <ul class="support-list">
+                    @foreach (var issue in refreshCapability.DiagnosticItems!)
+                    {
+                        <li>@issue</li>
+                    }
+                </ul>
+            }
+        </article>
     </div>
 
     <div class="company-support__summary">
@@ -42,8 +63,9 @@
             <li>a signing certificate exported as <code>.p12</code></li>
             <li>the Apple WWDR certificate</li>
             <li>local secrets configured for the web app</li>
+            <li>Wallet refresh push enabled for this environment</li>
         </ul>
-        <p>Run <code>./scripts/run-wallet-demo-lan.sh</code> once the environment is ready.</p>
+        <p>Run <code>./scripts/run-wallet-demo-lan.sh</code> once the environment is ready. After the customer adds the pass, stamp a visit from the merchant workspace and check that the refresh request is reported there.</p>
     </div>
 
     <div class="company-support__actions">

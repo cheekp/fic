@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Make issued customer passes feel operational from here: keep `Operate` for join/stamp, and move day-to-day pass management into a clearer dedicated customer management surface.
+Tighten the Wallet founder demo from here: keep signed pass issuance working, add clear refresh-notification feedback after stamp/redeem, and make the full critical path easy to run locally.

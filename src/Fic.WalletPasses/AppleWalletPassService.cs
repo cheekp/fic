@@ -85,7 +85,7 @@ public sealed class AppleWalletPassService(
         {
             diagnostics.Add("Signing certificate file was not found.");
         }
-        else if (!TryLoadSigningCertificate(out _, out var signingIssue))
+        else if (!AppleWalletCertificateLoader.TryLoadSigningCertificate(options, out _, out var signingIssue))
         {
             diagnostics.Add(signingIssue!);
         }
@@ -98,7 +98,7 @@ public sealed class AppleWalletPassService(
         {
             diagnostics.Add("Apple WWDR certificate file was not found.");
         }
-        else if (!TryLoadWwdrCertificate(out _, out var wwdrIssue))
+        else if (!AppleWalletCertificateLoader.TryLoadWwdrCertificate(options, out _, out var wwdrIssue))
         {
             diagnostics.Add(wwdrIssue!);
         }
@@ -300,8 +300,8 @@ public sealed class AppleWalletPassService(
 
     private byte[] BuildSignature(byte[] manifestBytes)
     {
-        var signingCertificate = LoadSigningCertificate();
-        var wwdrCertificate = LoadWwdrCertificate();
+        var signingCertificate = AppleWalletCertificateLoader.LoadSigningCertificate(options);
+        var wwdrCertificate = AppleWalletCertificateLoader.LoadWwdrCertificate(options);
 
         var signedCms = new SignedCms(new ContentInfo(manifestBytes), detached: true);
         var signer = new CmsSigner(SubjectIdentifierType.IssuerAndSerialNumber, signingCertificate)
@@ -313,113 +313,6 @@ public sealed class AppleWalletPassService(
 
         signedCms.ComputeSignature(signer);
         return signedCms.Encode();
-    }
-
-    private X509Certificate2 LoadSigningCertificate()
-    {
-        if (!TryLoadSigningCertificate(out var certificate, out var issue))
-        {
-            throw new InvalidOperationException(issue);
-        }
-
-        return certificate!;
-    }
-
-    private bool TryLoadSigningCertificate(out X509Certificate2? certificate, out string? issue)
-    {
-        try
-        {
-            certificate = LoadPkcs12Certificate(
-                options.P12CertificatePath,
-                options.P12CertificatePassword);
-
-            if (!certificate.HasPrivateKey)
-            {
-                issue = "Signing certificate does not include a private key.";
-                certificate.Dispose();
-                certificate = null;
-                return false;
-            }
-
-            issue = null;
-            return true;
-        }
-        catch (CryptographicException)
-        {
-            certificate = null;
-            issue = "Signing certificate could not be opened. Check the .p12 path and password.";
-            return false;
-        }
-        catch (IOException)
-        {
-            certificate = null;
-            issue = "Signing certificate could not be opened. Check the .p12 path and password.";
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            certificate = null;
-            issue = "Signing certificate could not be opened. Check the .p12 path and password.";
-            return false;
-        }
-    }
-
-    private X509Certificate2 LoadWwdrCertificate()
-    {
-        if (!TryLoadWwdrCertificate(out var certificate, out var issue))
-        {
-            throw new InvalidOperationException(issue);
-        }
-
-        return certificate!;
-    }
-
-    private bool TryLoadWwdrCertificate(out X509Certificate2? certificate, out string? issue)
-    {
-        try
-        {
-            certificate = X509CertificateLoader.LoadCertificateFromFile(options.WwdrCertificatePath);
-            issue = null;
-            return true;
-        }
-        catch (CryptographicException)
-        {
-            certificate = null;
-            issue = "Apple WWDR certificate could not be opened.";
-            return false;
-        }
-        catch (IOException)
-        {
-            certificate = null;
-            issue = "Apple WWDR certificate could not be opened.";
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            certificate = null;
-            issue = "Apple WWDR certificate could not be opened.";
-            return false;
-        }
-    }
-
-    private static X509Certificate2 LoadPkcs12Certificate(string path, string password)
-    {
-        const X509KeyStorageFlags baseFlags = X509KeyStorageFlags.Exportable;
-
-        try
-        {
-            return X509CertificateLoader.LoadPkcs12FromFile(
-                path,
-                password,
-                baseFlags | X509KeyStorageFlags.EphemeralKeySet);
-        }
-        catch (PlatformNotSupportedException)
-        {
-            return X509CertificateLoader.LoadPkcs12FromFile(
-                path,
-                password,
-                baseFlags);
-        }
     }
 
     private static byte[] BuildZipArchive(IReadOnlyDictionary<string, byte[]> files)

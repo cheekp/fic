@@ -2,6 +2,7 @@
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
 @inject IAppleWalletPassService WalletPasses
+@inject IWalletPassUpdateNotifier WalletPushes
 @inject MerchantBrandPresentationService BrandPresentation
 
 <PageTitle>Join Loyalty Card</PageTitle>
@@ -17,6 +18,7 @@ else
 {
     var joinTheme = BrandPresentation.Build(_experience.BrandProfile);
     var walletCapability = WalletPasses.GetCapability();
+    var refreshCapability = WalletPushes.GetCapability();
 
         <section class="join-hero @joinTheme.ThemeClass" style="@joinTheme.CssVariables">
             <div class="join-hero__content">
@@ -63,6 +65,10 @@ else
                 <p class="field-hint">@BuildProgrammeWindowMessage(_experience.Programme.StartsOn, _experience.Programme.EndsOn)</p>
             }
             <p class="field-hint">@walletCapability.HelperText</p>
+            @if (walletCapability.SupportsAppleWalletPass)
+            {
+                <p class="field-hint">@refreshCapability.HelperText</p>
+            }
             @if (walletCapability.HasDiagnostics)
             {
                 <ul class="support-list">

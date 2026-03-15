@@ -161,14 +161,17 @@ Completed slice chain to date:
 - `F22`
   - programme model and templates so the workspace treats programme type, starter template, and current customer delivery as explicit but distinct concerns
   - validator: `scripts/validate-f22-programme-model-and-templates.sh`
+- `F23`
+  - customer card management so operate stays fast, customers get their own management surface, and issued passes have clear statuses
+  - validator: `scripts/validate-f23-customer-card-management.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F23`
-  - customer card management so operate stays fast, customers get their own management surface, and issued passes have clear statuses
-  - validator: `scripts/validate-f23-customer-card-management.sh`
+- `F24`
+  - wallet demo critical path so pass issuance and pass refresh are both explicit, and merchant actions report whether Wallet refresh was actually requested
+  - validator: `scripts/validate-f24-wallet-demo-critical-path.sh`
 
 ## Current Product Reality
 
@@ -208,7 +211,7 @@ The repo now supports:
 - shop signup now creates the merchant account first, while the first programme is created explicitly after billing inside the workspace
 - starter programme creation now offers explicit templates, including a visit reward and a coffee-plus-food offer shape
 - programme creation now needs to keep separating programme type, starter template, delivery type, and current output so the wallet surface never masquerades as the programme itself
-- customer card management now needs to stand on its own as a day-to-day operating surface instead of sharing space with programme configuration
+- the next founder-demo refinement is proving the Wallet critical path clearly: issue a real pass, stamp a visit, and surface whether Wallet refresh was requested or still waiting on push readiness
 
 The repo does not yet represent finished production behavior for:
 

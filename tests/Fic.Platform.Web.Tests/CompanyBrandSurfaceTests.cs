@@ -96,6 +96,7 @@ public sealed class CompanyBrandSurfaceTests
     {
         using var context = new BunitContext();
         context.Services.AddSingleton<IAppleWalletPassService>(new FakeAppleWalletPassService());
+        context.Services.AddSingleton<IWalletPassUpdateNotifier>(new FakeWalletPassUpdateNotifier());
 
         var consultancy = context.Render<Consultancy>();
         Assert.Contains("Training &amp; Consultancy", consultancy.Markup, StringComparison.Ordinal);
@@ -109,7 +110,10 @@ public sealed class CompanyBrandSurfaceTests
 
         var walletDemo = context.Render<SupportWalletDemo>();
         Assert.Contains("Apple Wallet demo readiness", walletDemo.Markup, StringComparison.Ordinal);
-        Assert.Contains("Preview fallback", walletDemo.Markup, StringComparison.Ordinal);
+        Assert.Contains("Pass issuance", walletDemo.Markup, StringComparison.Ordinal);
+        Assert.Contains("Pass refresh", walletDemo.Markup, StringComparison.Ordinal);
+        Assert.Contains("Preview", walletDemo.Markup, StringComparison.Ordinal);
+        Assert.Contains("Setup", walletDemo.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -160,6 +164,26 @@ public sealed class CompanyBrandSurfaceTests
             string webServiceUrl,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("Company support tests do not issue Apple Wallet packages.");
+    }
+
+    private sealed class FakeWalletPassUpdateNotifier : IWalletPassUpdateNotifier
+    {
+        public WalletPassPushCapability GetCapability() =>
+            new(
+                false,
+                "Wallet refresh push delivery is turned off, so pass updates rely on manual refresh behavior.",
+                ["Wallet refresh push delivery is turned off for this environment."]);
+
+        public Task<WalletPassUpdateDispatchResult> NotifyPassUpdatedAsync(
+            Fic.Contracts.WalletCardSnapshot card,
+            IReadOnlyList<string> pushTokens,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new WalletPassUpdateDispatchResult(
+                pushTokens.Count,
+                0,
+                0,
+                true,
+                "Wallet refresh was not requested because push delivery is not configured."));
     }
 
     private sealed class InMemoryMerchantBrandAssetStore : Fic.MerchantAccounts.IMerchantBrandAssetStore
