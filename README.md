@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Reset the onboarding and merchant workspace hierarchy from here: shop signup creates the shop, billing completes access, and first programme setup happens explicitly inside the merchant workspace.
+Strengthen the programme model from here: keep shop as the root, make programmes explicit merchant-owned objects, and treat Wallet as the current customer delivery output rather than the programme itself.

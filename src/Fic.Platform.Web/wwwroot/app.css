@@ -1223,6 +1223,10 @@ textarea {
     margin: 0;
 }
 
+.programme-model-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .template-card__facts div {
     display: grid;
     gap: 0.22rem;
@@ -1243,6 +1247,10 @@ textarea {
 .template-card__facts dd {
     margin: 0;
     line-height: 1.45;
+}
+
+.programme-context-bar__title .field-hint {
+    margin: 0;
 }
 
 .programme-create-panel {
@@ -1694,6 +1702,7 @@ textarea {
     .workspace-detail-grid,
     .workspace-grid,
     .shop-profile-summary,
+    .programme-model-summary,
     .wallet-view,
     .join-hero,
     .signup-preview--studio {

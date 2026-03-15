@@ -273,7 +273,7 @@ else
                                                href="@GetProgrammeUrl(programme.ProgrammeId)">
                                                 <div>
                                                     <h4>@programme.RewardHeadline</h4>
-                                                    <p class="field-hint">@programme.TemplateLabel</p>
+                                                    <p class="field-hint">@programme.ProgrammeTypeLabel · @programme.TemplateLabel</p>
                                                     <p class="field-hint">@BuildProgrammeWindowMessage(programme.StartsOn, programme.EndsOn)</p>
                                                 </div>
                                                 <span class="chip">@BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn)</span>
@@ -304,21 +304,29 @@ else
                                     <article class="template-card">
                                         <div class="template-card__header">
                                             <div>
-                                                <p class="eyebrow">Programme template</p>
+                                                <p class="eyebrow">@template.ProgrammeTypeLabel</p>
                                                 <h4>@template.TemplateLabel</h4>
                                             </div>
-                                            <span class="chip chip--accent">@template.DeliveryLabel</span>
+                                            <span class="chip chip--accent">@template.DeliveryTypeLabel</span>
                                         </div>
                                         <p class="template-card__headline">@template.Headline</p>
                                         <p class="field-hint">@template.Description</p>
                                         <dl class="template-card__facts">
+                                            <div>
+                                                <dt>Programme type</dt>
+                                                <dd>@template.ProgrammeTypeLabel</dd>
+                                            </div>
                                             <div>
                                                 <dt>Reward rule</dt>
                                                 <dd>@template.RewardCopy</dd>
                                             </div>
                                             <div>
                                                 <dt>Current delivery</dt>
-                                                <dd>@template.DeliveryLabel</dd>
+                                                <dd>@template.DeliveryTypeLabel</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Current output</dt>
+                                                <dd>@template.OutputLabel</dd>
                                             </div>
                                         </dl>
                                         <div class="form-actions">
@@ -335,12 +343,13 @@ else
                             <div class="programme-context-bar__title">
                                 <p class="eyebrow">Current programme</p>
                                 <h3>@selectedProgrammeSummary!.RewardHeadline</h3>
+                                <p class="field-hint">Started from @selectedProgrammeSummary.TemplateLabel</p>
                             </div>
                             <div class="programme-context-bar__meta">
                                 <span class="chip">@selectedProgrammeBadge</span>
                                 <span>@selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") - @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
-                                <span class="chip">@selectedProgrammeSummary.TemplateLabel</span>
-                                <span class="chip">@selectedProgrammeSummary.DeliveryLabel</span>
+                                <span class="chip">@selectedProgrammeSummary.ProgrammeTypeLabel</span>
+                                <span class="chip">@selectedProgrammeSummary.DeliveryTypeLabel</span>
                             </div>
                         </section>
 
@@ -365,7 +374,7 @@ else
                                             @((MarkupString)_joinQrSvg)
                                         </div>
                                         <div class="qr-panel__meta">
-                                            <p>Customers scan this QR, join the programme, and keep progress in Apple Wallet.</p>
+                                            <p>Customers scan this QR, join the programme, and receive the current output through @selectedProgrammeSummary.DeliveryTypeLabel.</p>
                                             <p class="field-hint">Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</p>
                                             <code>@_workspace.SelectedJoinUrl</code>
                                             @if (!SelectedProgrammeIsActive)
@@ -488,37 +497,62 @@ else
                                     <div class="panel__header">
                                         <div>
                                             <p class="eyebrow">Programme configuration</p>
-                                            <h3>Rule, schedule, and current delivery</h3>
+                                            <h3>Programme setup and current delivery</h3>
                                         </div>
                                     </div>
-                                    <EditForm Model="_cardForm" OnValidSubmit="HandleCardSaveAsync" FormName="update-card-template" class="form-stack">
+                                    <EditForm Model="_programmeForm" OnValidSubmit="HandleProgrammeSaveAsync" FormName="update-programme" class="form-stack">
                                         <DataAnnotationsValidator />
                                         <ValidationSummary class="validation-summary" />
 
                                         <section class="form-section">
                                             <div class="form-section__header">
-                                                <h4>Programme rule and schedule</h4>
-                                                <p class="field-hint">@selectedProgrammeSummary.TemplateLabel</p>
+                                                <h4>Programme model</h4>
+                                                <p class="field-hint">Template, type, and current delivery for this programme.</p>
+                                            </div>
+                                            <dl class="template-card__facts programme-model-summary">
+                                                <div>
+                                                    <dt>Starter template</dt>
+                                                    <dd>@selectedProgrammeSummary.TemplateLabel</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Programme type</dt>
+                                                    <dd>@selectedProgrammeSummary.ProgrammeTypeLabel</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Delivery type</dt>
+                                                    <dd>@selectedProgrammeSummary.DeliveryTypeLabel</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Current output</dt>
+                                                    <dd>@selectedProgrammeSummary.OutputLabel</dd>
+                                                </div>
+                                            </dl>
+                                        </section>
+
+                                        <section class="form-section">
+                                            <div class="form-section__header">
+                                                <h4>Rule and schedule</h4>
+                                                <p class="field-hint">@selectedProgrammeSummary.ProgrammeTypeLabel</p>
                                             </div>
                                             <div class="form-grid">
                                                 <label class="field">
                                                     <span>Reward item</span>
-                                                    <InputText @bind-Value="_cardForm.RewardItemLabel" class="input" />
+                                                    <InputText @bind-Value="_programmeForm.RewardItemLabel" class="input" />
                                                 </label>
 
                                                 <label class="field">
                                                     <span>Visits before reward</span>
-                                                    <InputNumber @bind-Value="_cardForm.RewardThreshold" class="input" />
+                                                    <InputNumber @bind-Value="_programmeForm.RewardThreshold" class="input" />
                                                 </label>
 
                                                 <label class="field">
                                                     <span>Begins on</span>
-                                                    <InputDate @bind-Value="_cardForm.StartsOn" class="input" />
+                                                    <InputDate @bind-Value="_programmeForm.StartsOn" class="input" />
                                                 </label>
 
                                                 <label class="field">
                                                     <span>Expires on</span>
-                                                    <InputDate @bind-Value="_cardForm.EndsOn" class="input" />
+                                                    <InputDate @bind-Value="_programmeForm.EndsOn" class="input" />
                                                 </label>
                                             </div>
                                         </section>
@@ -526,12 +560,12 @@ else
                                         <section class="form-section">
                                             <div class="form-section__header">
                                                 <h4>Customer delivery</h4>
-                                                <p class="field-hint">@selectedProgrammeSummary.DeliveryLabel</p>
+                                                <p class="field-hint">@selectedProgrammeSummary.DeliveryTypeLabel</p>
                                             </div>
                                             <div class="delivery-options">
                                                 <article class="delivery-option delivery-option--selected">
                                                     <div class="delivery-option__copy">
-                                                        <strong>@selectedProgrammeSummary.DeliveryLabel</strong>
+                                                        <strong>@selectedProgrammeSummary.OutputLabel</strong>
                                                         <span>Current live output for this programme.</span>
                                                     </div>
                                                     <span class="chip chip--accent">Current</span>
@@ -540,19 +574,19 @@ else
                                             <div class="form-grid">
                                                 <label class="field field--full">
                                                     <span>Customer-facing copy</span>
-                                                    <InputText @bind-Value="_cardForm.RewardCopy" class="input" />
+                                                    <InputText @bind-Value="_programmeForm.RewardCopy" class="input" />
                                                 </label>
                                             </div>
                                         </section>
 
-                                        @if (!string.IsNullOrWhiteSpace(_cardMessage))
+                                        @if (!string.IsNullOrWhiteSpace(_programmeMessage))
                                         {
-                                            <p class="field-hint">@_cardMessage</p>
+                                            <p class="field-hint">@_programmeMessage</p>
                                         }
 
                                         <div class="form-actions">
-                                            <button class="button button--primary" type="submit" disabled="@_isSavingCard">Save Programme</button>
-                                            <button class="button button--ghost" type="button" @onclick="ResetCardForm">Reset</button>
+                                            <button class="button button--primary" type="submit" disabled="@_isSavingProgramme">Save Programme</button>
+                                            <button class="button button--ghost" type="button" @onclick="ResetProgrammeForm">Reset</button>
                                         </div>
                                     </EditForm>
                                 </article>
@@ -561,7 +595,7 @@ else
                                     <div class="panel__header">
                                         <div>
                                             <p class="eyebrow">Preview</p>
-                                            <h3>@selectedProgrammeSummary.DeliveryLabel preview</h3>
+                                            <h3>@selectedProgrammeSummary.OutputLabel preview</h3>
                                         </div>
                                     </div>
                                     <div class="wallet-pass @brandPreviewTheme.ThemeClass" style="@brandPreviewTheme.CssVariables">
@@ -577,12 +611,12 @@ else
 
                                         <div class="wallet-pass__body">
                                             <div>
-                                                <p class="wallet-pass__copy">@_cardForm.RewardCopy</p>
-                                                <p class="wallet-pass__progress">2/@_cardForm.RewardThreshold</p>
-                                                <p class="field-hint">Valid @FormatDate(_cardForm.StartsOn) to @FormatDate(_cardForm.EndsOn)</p>
+                                                <p class="wallet-pass__copy">@_programmeForm.RewardCopy</p>
+                                                <p class="wallet-pass__progress">2/@_programmeForm.RewardThreshold</p>
+                                                <p class="field-hint">Valid @FormatDate(_programmeForm.StartsOn) to @FormatDate(_programmeForm.EndsOn)</p>
                                             </div>
                                             <div class="stamp-track" aria-label="wallet template preview">
-                                                @for (var i = 0; i < _cardForm.RewardThreshold; i++)
+                                                @for (var i = 0; i < _programmeForm.RewardThreshold; i++)
                                                 {
                                                     <span class="stamp @(i < 2 ? "stamp--filled" : string.Empty)">@(@i + 1)</span>
                                                 }
@@ -770,14 +804,14 @@ else
     private string _scanCode = string.Empty;
     private string? _scanMessage;
     private string? _shopMessage;
-    private string? _cardMessage;
+    private string? _programmeMessage;
     private bool _isSavingShop;
-    private bool _isSavingCard;
+    private bool _isSavingProgramme;
     private bool _isSetupRoadmapCollapsed;
     private bool _isSetupRoadmapDismissed;
     private bool _didInitializeRoadmapState;
     private readonly ShopForm _shopForm = new();
-    private readonly CardTemplateForm _cardForm = new();
+    private readonly ProgrammeConfigurationForm _programmeForm = new();
     private byte[]? _pendingLogoUploadBytes;
     private string? _pendingLogoPreviewUri;
     private string _pendingLogoFileName = "logo.png";
@@ -840,20 +874,20 @@ else
 
         if (_workspace.SelectedProgramme is { } selectedProgramme)
         {
-            _cardForm.RewardItemLabel = selectedProgramme.RewardItemLabel;
-            _cardForm.RewardThreshold = selectedProgramme.RewardThreshold;
-            _cardForm.RewardCopy = selectedProgramme.RewardCopy;
-            _cardForm.StartsOn = selectedProgramme.StartsOn;
-            _cardForm.EndsOn = selectedProgramme.EndsOn;
+            _programmeForm.RewardItemLabel = selectedProgramme.RewardItemLabel;
+            _programmeForm.RewardThreshold = selectedProgramme.RewardThreshold;
+            _programmeForm.RewardCopy = selectedProgramme.RewardCopy;
+            _programmeForm.StartsOn = selectedProgramme.StartsOn;
+            _programmeForm.EndsOn = selectedProgramme.EndsOn;
         }
         else
         {
             var defaultTemplate = ProgrammeTemplates.First();
-            _cardForm.RewardItemLabel = defaultTemplate.RewardItemLabel;
-            _cardForm.RewardThreshold = defaultTemplate.RewardThreshold;
-            _cardForm.RewardCopy = defaultTemplate.RewardCopy;
-            _cardForm.StartsOn = DateOnly.FromDateTime(DateTime.Today);
-            _cardForm.EndsOn = DateOnly.FromDateTime(DateTime.Today.AddYears(1));
+            _programmeForm.RewardItemLabel = defaultTemplate.RewardItemLabel;
+            _programmeForm.RewardThreshold = defaultTemplate.RewardThreshold;
+            _programmeForm.RewardCopy = defaultTemplate.RewardCopy;
+            _programmeForm.StartsOn = DateOnly.FromDateTime(DateTime.Today);
+            _programmeForm.EndsOn = DateOnly.FromDateTime(DateTime.Today.AddYears(1));
         }
 
         _pendingLogoUploadBytes = null;
@@ -1067,7 +1101,7 @@ else
         return Task.CompletedTask;
     }
 
-    private Task HandleCardSaveAsync()
+    private Task HandleProgrammeSaveAsync()
     {
         var selectedProgramme = _workspace?.SelectedProgramme;
         if (selectedProgramme is null)
@@ -1075,41 +1109,41 @@ else
             return Task.CompletedTask;
         }
 
-        _isSavingCard = true;
+        _isSavingProgramme = true;
 
         try
         {
             var updated = PlatformState.UpdateProgramme(
                 MerchantId,
                 selectedProgramme.ProgrammeId,
-                _cardForm.RewardItemLabel,
-                _cardForm.RewardThreshold,
-                _cardForm.RewardCopy,
-                _cardForm.StartsOn,
-                _cardForm.EndsOn,
+                _programmeForm.RewardItemLabel,
+                _programmeForm.RewardThreshold,
+                _programmeForm.RewardCopy,
+                _programmeForm.StartsOn,
+                _programmeForm.EndsOn,
                 Navigation.BaseUri);
 
             if (updated is not null)
             {
-                _cardMessage = "Programme updated.";
+                _programmeMessage = "Programme updated.";
                 LoadWorkspace(refreshForms: true);
             }
         }
         catch (InvalidOperationException ex)
         {
-            _cardMessage = ex.Message;
+            _programmeMessage = ex.Message;
         }
         finally
         {
-            _isSavingCard = false;
+            _isSavingProgramme = false;
         }
 
         return Task.CompletedTask;
     }
 
-    private void ResetCardForm()
+    private void ResetProgrammeForm()
     {
-        _cardMessage = null;
+        _programmeMessage = null;
         LoadWorkspace(refreshForms: true);
     }
 
@@ -1305,7 +1339,7 @@ else
         public string AccentColor { get; set; } = "#f4c15d";
     }
 
-    private sealed class CardTemplateForm : IValidatableObject
+    private sealed class ProgrammeConfigurationForm : IValidatableObject
     {
         [Required, StringLength(40)]
         public string RewardItemLabel { get; set; } = "coffees";

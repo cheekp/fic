@@ -155,14 +155,17 @@ Completed slice chain to date:
 - `F20`
   - merchant auth and ownership boundary with onboarding credentials, cookie-backed merchant session, and workspace access control
   - validator: `scripts/validate-f20-merchant-auth-boundary.sh`
+- `F21`
+  - onboarding and workspace IA reset so shop signup, billing, first programme setup, and programme delivery read as one natural flow
+  - validator: `scripts/validate-f21-journey-ia-reset.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F21`
-  - onboarding and workspace IA reset so shop signup, billing, first programme setup, and programme delivery read as one natural flow
-  - validator: `scripts/validate-f21-journey-ia-reset.sh`
+- `F22`
+  - programme model and templates so the workspace treats programme type, starter template, and current customer delivery as explicit but distinct concerns
+  - validator: `scripts/validate-f22-programme-model-and-templates.sh`
 
 ## Current Product Reality
 
@@ -201,6 +204,8 @@ The repo now supports:
 - merchant workspace routes now require a cookie-backed merchant session and enforce merchant ownership on route access
 - shop signup now creates the merchant account first, while the first programme is created explicitly after billing inside the workspace
 - starter programme creation now offers explicit templates, including a visit reward and a coffee-plus-food offer shape
+- programme creation now needs to keep separating programme type, starter template, delivery type, and current output so the wallet surface never masquerades as the programme itself
+- the next active refinement is making that separation explicit throughout the live workspace, so programme setup no longer feels like editing a card with extra words around it
 
 The repo does not yet represent finished production behavior for:
 
