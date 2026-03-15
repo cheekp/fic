@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F18-real-wallet-demo.md`
+- `F19-wallet-update-lifecycle.md`

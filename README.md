@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Finish the real signed Apple Wallet founder demo from here: improve readiness diagnostics, prove `.pkpass` generation with automated tests, then wire pass updates and stronger merchant auth/session handling.
+Implement the Apple Wallet pass update lifecycle from here: register passes with the Wallet web service, return updated serials after stamping, fetch refreshed `.pkpass` archives, then harden merchant auth/session handling.
