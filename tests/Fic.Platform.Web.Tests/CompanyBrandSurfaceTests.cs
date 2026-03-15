@@ -41,7 +41,7 @@ public sealed class CompanyBrandSurfaceTests
         var cut = context.Render<PortalSignup>();
 
         Assert.Contains("Create your shop account", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Billing is next, then your workspace opens.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Billing and owner password setup are next", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Continue to Billing", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Next: confirm mock billing", cut.Markup, StringComparison.Ordinal);
     }
@@ -67,8 +67,9 @@ public sealed class CompanyBrandSurfaceTests
         var cut = context.Render<SignupBilling>(parameters => parameters
             .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Final step before the workspace opens", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Set the owner password here", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Open Workspace", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Owner password", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -79,10 +80,14 @@ public sealed class CompanyBrandSurfaceTests
         var login = context.Render<Login>();
         Assert.Contains("North Star account support", login.Markup, StringComparison.Ordinal);
         Assert.Contains("Log in to your FIC workspace", login.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Authentication is still a stub", login.Markup, StringComparison.Ordinal);
 
         var forgotPassword = context.Render<ForgotPassword>();
         Assert.Contains("North Star account support", forgotPassword.Markup, StringComparison.Ordinal);
         Assert.Contains("Reset your password", forgotPassword.Markup, StringComparison.Ordinal);
+
+        var accessDenied = context.Render<AccessDenied>();
+        Assert.Contains("You do not have access to that workspace", accessDenied.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -136,7 +141,7 @@ public sealed class CompanyBrandSurfaceTests
         Assert.Contains("/consultancy", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/support/billing", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/support/account", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("/account/login", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("/account/logout", cut.Markup, StringComparison.Ordinal);
     }
 
     private sealed class FakeAppleWalletPassService : IAppleWalletPassService

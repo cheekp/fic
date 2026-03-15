@@ -1,5 +1,5 @@
 @page "/account/login"
-@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
 
 <PageTitle>Log In</PageTitle>
 
@@ -9,25 +9,23 @@
             <p class="eyebrow">North Star account support</p>
             <h2>Log in to your FIC workspace</h2>
             <p class="lede">
-                Merchant access sits inside the North Star support layer. Authentication is still a stub in this
-                internal MVP, but the route and support framing are now in place.
+                Sign in with the owner email and password set during onboarding. This keeps merchant workspace access
+                separate from the public product lane.
             </p>
         </div>
     </div>
 
-    <EditForm Model="_form" OnValidSubmit="HandleSubmit" FormName="log-in" class="form-stack">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="validation-summary" />
-
+    <form method="post" action="/account/session/login" class="form-stack">
+        <input type="hidden" name="returnUrl" value="@ResolvedReturnUrl" />
         <div class="form-grid">
             <label class="field">
                 <span>Email</span>
-                <InputText @bind-Value="_form.Email" class="input" />
+                <input class="input" type="email" name="email" value="@ResolvedEmail" autocomplete="email" required />
             </label>
 
             <label class="field">
                 <span>Password</span>
-                <InputText @bind-Value="_form.Password" class="input" type="password" />
+                <input class="input" type="password" name="password" autocomplete="current-password" required />
             </label>
         </div>
 
@@ -40,7 +38,7 @@
             <button class="button button--primary" type="submit">Log In</button>
             <a class="button button--ghost" href="/account/forgot-password">Forgot password?</a>
         </div>
-    </EditForm>
+    </form>
 
     <div class="company-support__footer">
         <p>Need help with access, billing, or rollout questions?</p>
@@ -53,18 +51,28 @@
 </section>
 
 @code {
-    private readonly LoginFormModel _form = new();
     private string? _message;
 
-    private void HandleSubmit() =>
-        _message = "Authentication is not wired in this slice yet. This company-branded login surface is the supported entry point for merchants.";
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
 
-    private sealed class LoginFormModel
+    [SupplyParameterFromQuery]
+    public string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "email")]
+    public string? PrefillEmail { get; set; }
+
+    private string? ResolvedReturnUrl => string.IsNullOrWhiteSpace(ReturnUrl) ? null : ReturnUrl;
+    private string ResolvedEmail => string.IsNullOrWhiteSpace(PrefillEmail) ? "owner@joscoffee.test" : PrefillEmail;
+
+    protected override void OnParametersSet()
     {
-        [Required, EmailAddress]
-        public string Email { get; set; } = "owner@joscoffee.test";
-
-        [Required]
-        public string Password { get; set; } = "password";
+        _message = Error switch
+        {
+            "merchant-not-found" => "No merchant account was found for that owner email.",
+            "credentials-not-configured" => "This merchant has not finished account setup yet. Return to onboarding or support.",
+            "invalid-credentials" => "The email or password did not match.",
+            _ => null
+        };
     }
 }

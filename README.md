@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Implement the Apple Wallet pass update lifecycle from here: register passes with the Wallet web service, return updated serials after stamping, fetch refreshed `.pkpass` archives, then harden merchant auth/session handling.
+Implement merchant auth and ownership boundaries from here: create merchant credentials during onboarding, require a signed-in merchant session for workspace access, and stop the shared demo shell from acting like the default access model.

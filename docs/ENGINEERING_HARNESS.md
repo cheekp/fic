@@ -149,14 +149,20 @@ Completed slice chain to date:
 - `F18`
   - real Apple Wallet founder-demo completion with readiness diagnostics and automated `.pkpass` proof
   - validator: `scripts/validate-f18-real-wallet-demo.sh`
+- `F19`
+  - Apple Wallet pass update lifecycle with device registrations, web-service endpoints, updated pass fetch, and automated integration proof
+  - validator: `scripts/validate-f19-wallet-update-lifecycle.sh`
+- `F20`
+  - merchant auth and ownership boundary with onboarding credentials, cookie-backed merchant session, and workspace access control
+  - validator: `scripts/validate-f20-merchant-auth-boundary.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F19`
-  - Apple Wallet pass update lifecycle with device registrations, web-service endpoints, updated pass fetch, and automated integration proof
-  - validator: `scripts/validate-f19-wallet-update-lifecycle.sh`
+- `F20`
+  - merchant auth and ownership boundary with onboarding credentials, cookie-backed merchant session, and workspace access control
+  - validator: `scripts/validate-f20-merchant-auth-boundary.sh`
 
 ## Current Product Reality
 
@@ -190,15 +196,17 @@ The repo now supports:
 - selected-programme operate/configure surfaces should keep shrinking toward day-to-day utility rather than explanatory UI
 - workspace presentation now needs ongoing restraint so the programme rail reads like navigation and the right side reads like one focused tool surface
 - Wallet demo readiness now needs to surface exact signing gaps so founder setup is predictable rather than guesswork
-- Wallet founder-demo work now needs the actual web-service update path after a pass has been issued
+- Wallet founder-demo work now has the actual web-service update path after a pass has been issued
+- merchant onboarding now sets owner access credentials before the workspace opens
+- merchant workspace routes now require a cookie-backed merchant session and enforce merchant ownership on route access
 
 The repo does not yet represent finished production behavior for:
 
-- full merchant auth and tenant isolation
+- full production-grade merchant auth and tenant isolation
 - APNs push hardening for real production-grade Wallet refresh
 - billing
 - production privacy/legal review
-- production-grade workspace/auth model
+- staff-level merchant teams and richer account management
 
 ## Local Proof Loop
 
@@ -216,6 +224,8 @@ Current high-value local loops:
   - use `docs/runbooks/APPLE_WALLET_LOCAL_DEMO.md`
   - use `scripts/run-wallet-demo-lan.sh` when Apple signing material is configured
   - use the Wallet web-service endpoints and validator to prove the pass update lifecycle after stamping
+- merchant auth boundary:
+  - use the F20 validator and auth integration tests to prove login, logout, onboarding password setup, and workspace ownership redirects
 
 ## Entropy Rules
 
@@ -242,7 +252,6 @@ Review the harness when:
 
 The next likely product slices are:
 
-- Apple Wallet pass update lifecycle after `VisitAwarded`
 - stronger Wallet push delivery and APNs hardening
-- stronger merchant account and tenant ownership boundaries
-- production auth/session flow that removes the remaining demo assumptions
+- stronger merchant account and tenant ownership boundaries beyond the current in-memory session baseline
+- production auth/session flow that removes the remaining in-memory and single-owner assumptions

@@ -348,6 +348,62 @@ public sealed class DemoPlatformState(
         }
     }
 
+    public MerchantAuthenticationResult AuthenticateMerchant(string email, string password)
+    {
+        lock (_gate)
+        {
+            var merchant = _merchants.Values
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .FirstOrDefault(x => string.Equals(x.ContactEmail, email.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            if (merchant is null)
+            {
+                return new MerchantAuthenticationResult(MerchantAuthenticationStatus.NotFound);
+            }
+
+            if (string.IsNullOrWhiteSpace(merchant.PasswordHash) || string.IsNullOrWhiteSpace(merchant.PasswordSalt))
+            {
+                return new MerchantAuthenticationResult(MerchantAuthenticationStatus.CredentialsNotConfigured);
+            }
+
+            return MerchantPasswordHasher.VerifyPassword(password, merchant.PasswordHash, merchant.PasswordSalt)
+                ? new MerchantAuthenticationResult(MerchantAuthenticationStatus.Authenticated, ToMerchantSnapshot(merchant))
+                : new MerchantAuthenticationResult(MerchantAuthenticationStatus.InvalidCredentials);
+        }
+    }
+
+    public MerchantCredentialConfigurationResult ConfigureMerchantAccess(Guid merchantId, string password)
+    {
+        lock (_gate)
+        {
+            if (!_merchants.TryGetValue(merchantId, out var merchant))
+            {
+                return new MerchantCredentialConfigurationResult(MerchantCredentialConfigurationStatus.NotFound);
+            }
+
+            try
+            {
+                var (passwordHash, passwordSalt) = MerchantPasswordHasher.HashPassword(password);
+                var updatedMerchant = merchant with
+                {
+                    PasswordHash = passwordHash,
+                    PasswordSalt = passwordSalt
+                };
+
+                _merchants[merchantId] = updatedMerchant;
+                return new MerchantCredentialConfigurationResult(
+                    MerchantCredentialConfigurationStatus.Updated,
+                    ToMerchantSnapshot(updatedMerchant));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return new MerchantCredentialConfigurationResult(
+                    MerchantCredentialConfigurationStatus.InvalidPassword,
+                    ErrorMessage: ex.Message);
+            }
+        }
+    }
+
     public async Task<MerchantWorkspaceSnapshot?> UpdateMerchantBrandAsync(
         Guid merchantId,
         string displayName,
