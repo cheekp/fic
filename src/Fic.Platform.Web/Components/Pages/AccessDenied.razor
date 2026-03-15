@@ -1,0 +1,26 @@
+@page "/account/access-denied"
+@inject NavigationManager Navigation
+
+<PageTitle>Access Denied</PageTitle>
+
+<section class="panel company-support account-panel">
+    <div class="panel__header">
+        <div>
+            <p class="eyebrow">North Star account support</p>
+            <h2>You do not have access to that workspace</h2>
+            <p class="lede">
+                Merchant workspaces now require an owner session. Sign in with the correct merchant account or ask for
+                account support if ownership needs to be corrected.
+            </p>
+        </div>
+    </div>
+
+    <div class="form-stack">
+        <p class="field-hint">If you were expecting to open a different merchant workspace, log out first and sign back in with the right owner email.</p>
+        <div class="form-actions">
+            <a class="button button--primary" href="/account/login">Go to Log In</a>
+            <a class="button button--ghost" href="/support/account">Account support</a>
+            <a class="button button--ghost" href="/">Back to FIC Home</a>
+        </div>
+    </div>
+</section>

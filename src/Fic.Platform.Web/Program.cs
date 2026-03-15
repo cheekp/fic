@@ -2,8 +2,12 @@ using Fic.Platform.Web.Components;
 using Fic.Platform.Web.Services;
 using Fic.WalletPasses;
 using Fic.MerchantAccounts;
+using Fic.Contracts;
 using Microsoft.Extensions.FileProviders;
 using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 using System.Globalization;
 using System.Text.Json;
 
@@ -16,6 +20,17 @@ if (builder.Environment.IsDevelopment())
 
 builder.AddServiceDefaults();
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "fic.merchant.auth";
+        options.LoginPath = "/account/login";
+        options.AccessDeniedPath = "/account/access-denied";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(12);
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -66,9 +81,36 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+app.UseAuthentication();
 app.UseWhen(
     context => !context.Request.Path.StartsWithSegments("/wallet/v1", StringComparison.OrdinalIgnoreCase),
     branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
+app.UseWhen(
+    context => context.Request.Path.StartsWithSegments("/portal/merchant", StringComparison.OrdinalIgnoreCase),
+    branch => branch.Use(async (context, next) =>
+    {
+        if (!TryGetMerchantRouteId(context.Request.Path, out var merchantId))
+        {
+            await next();
+            return;
+        }
+
+        if (!(context.User.Identity?.IsAuthenticated ?? false))
+        {
+            context.Response.Redirect(BuildLoginRedirectUrl(context.Request));
+            return;
+        }
+
+        var signedInMerchantId = MerchantSessionClaims.TryGetMerchantId(context.User);
+        if (!signedInMerchantId.HasValue || signedInMerchantId.Value != merchantId)
+        {
+            context.Response.Redirect($"/account/access-denied?merchantId={merchantId:D}");
+            return;
+        }
+
+        await next();
+    }));
+app.UseAuthorization();
 
 app.Map("/wallet/v1", walletApp =>
 {
@@ -278,6 +320,74 @@ app.Map("/wallet/v1", walletApp =>
 
 app.UseAntiforgery();
 
+app.MapPost("/account/session/login", async (
+    HttpContext context,
+    DemoPlatformState platformState) =>
+{
+    var form = await context.Request.ReadFormAsync(context.RequestAborted);
+    var email = form["email"].ToString().Trim();
+    var password = form["password"].ToString();
+    var returnUrl = NormalizeLocalReturnUrl(form["returnUrl"].ToString());
+
+    var result = platformState.AuthenticateMerchant(email, password);
+    if (result.Status != MerchantAuthenticationStatus.Authenticated || result.Merchant is null)
+    {
+        var error = result.Status switch
+        {
+            MerchantAuthenticationStatus.CredentialsNotConfigured => "credentials-not-configured",
+            MerchantAuthenticationStatus.NotFound => "merchant-not-found",
+            _ => "invalid-credentials"
+        };
+
+        return Results.LocalRedirect(BuildLoginUrl(returnUrl, error, email));
+    }
+
+    await SignInMerchantAsync(context, result.Merchant);
+    return Results.LocalRedirect(returnUrl ?? $"/portal/merchant/{result.Merchant.MerchantId}");
+}).DisableAntiforgery();
+
+app.MapPost("/account/session/complete-signup", async (
+    HttpContext context,
+    DemoPlatformState platformState) =>
+{
+    var form = await context.Request.ReadFormAsync(context.RequestAborted);
+    var merchantIdValue = form["merchantId"].ToString();
+    var password = form["password"].ToString();
+    var confirmPassword = form["confirmPassword"].ToString();
+    var billingReturnUrl = NormalizeLocalReturnUrl(form["returnUrl"].ToString());
+
+    if (!Guid.TryParse(merchantIdValue, out var merchantId))
+    {
+        return Results.LocalRedirect("/portal/signup");
+    }
+
+    if (!string.Equals(password, confirmPassword, StringComparison.Ordinal))
+    {
+        return Results.LocalRedirect($"/portal/signup/billing/{merchantId:D}?error=password-mismatch");
+    }
+
+    var result = platformState.ConfigureMerchantAccess(merchantId, password);
+    if (result.Status != MerchantCredentialConfigurationStatus.Updated || result.Merchant is null)
+    {
+        var error = result.Status switch
+        {
+            MerchantCredentialConfigurationStatus.NotFound => "merchant-not-found",
+            _ => "invalid-password"
+        };
+
+        return Results.LocalRedirect($"/portal/signup/billing/{merchantId:D}?error={error}");
+    }
+
+    await SignInMerchantAsync(context, result.Merchant);
+    return Results.LocalRedirect(billingReturnUrl ?? $"/portal/merchant/{merchantId:D}?tab=programmes&section=configure");
+}).DisableAntiforgery();
+
+app.MapGet("/account/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.LocalRedirect("/");
+});
+
 app.MapGet("/merchant-brand-assets/{**assetPath}", async (
     string assetPath,
     IMerchantBrandAssetStore brandAssetStore,
@@ -371,6 +481,77 @@ static async Task<T?> ReadRequestJsonAsync<T>(HttpRequest request, CancellationT
         : JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
+        });
+}
+
+static string BuildLoginRedirectUrl(HttpRequest request)
+{
+    var returnUrl = request.Path + request.QueryString;
+    return BuildLoginUrl(returnUrl);
+}
+
+static string BuildLoginUrl(string? returnUrl, string? error = null, string? email = null)
+{
+    var query = new List<string>();
+    if (!string.IsNullOrWhiteSpace(returnUrl))
+    {
+        query.Add($"returnUrl={Uri.EscapeDataString(returnUrl)}");
+    }
+
+    if (!string.IsNullOrWhiteSpace(error))
+    {
+        query.Add($"error={Uri.EscapeDataString(error)}");
+    }
+
+    if (!string.IsNullOrWhiteSpace(email))
+    {
+        query.Add($"email={Uri.EscapeDataString(email)}");
+    }
+
+    return query.Count == 0
+        ? "/account/login"
+        : $"/account/login?{string.Join("&", query)}";
+}
+
+static string? NormalizeLocalReturnUrl(string? returnUrl) =>
+    !string.IsNullOrWhiteSpace(returnUrl) && returnUrl.StartsWith("/", StringComparison.Ordinal)
+        ? returnUrl
+        : null;
+
+static bool TryGetMerchantRouteId(PathString path, out Guid merchantId)
+{
+    merchantId = default;
+
+    var segments = path.Value?
+        .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        ?? [];
+
+    return segments.Length >= 3
+        && string.Equals(segments[0], "portal", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(segments[1], "merchant", StringComparison.OrdinalIgnoreCase)
+        && Guid.TryParse(segments[2], out merchantId);
+}
+
+static async Task SignInMerchantAsync(HttpContext context, MerchantAccountSnapshot merchant)
+{
+    var claims = new List<Claim>
+    {
+        new(MerchantSessionClaims.MerchantId, merchant.MerchantId.ToString("D")),
+        new(MerchantSessionClaims.MerchantEmail, merchant.ContactEmail),
+        new(MerchantSessionClaims.MerchantName, merchant.DisplayName)
+    };
+
+    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    var principal = new ClaimsPrincipal(identity);
+
+    await context.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        principal,
+        new AuthenticationProperties
+        {
+            IsPersistent = true,
+            AllowRefresh = true,
+            IssuedUtc = DateTimeOffset.UtcNow
         });
 }
 

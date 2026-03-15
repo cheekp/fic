@@ -8,7 +8,9 @@ public sealed record MerchantAccount(
     string TownOrCity,
     string Postcode,
     string ContactEmail,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string? PasswordHash = null,
+    string? PasswordSalt = null);
 
 public sealed record MerchantAccountCreated(
     Guid MerchantId,

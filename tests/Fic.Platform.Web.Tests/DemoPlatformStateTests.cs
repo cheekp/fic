@@ -144,6 +144,32 @@ public sealed class DemoPlatformStateTests
         Assert.Equal(7, walletCard.TargetCount);
     }
 
+    [Fact]
+    public async Task ConfigureMerchantAccess_StoresCredentials_AndAllowsAuthentication()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantAsync(state);
+
+        var configured = state.ConfigureMerchantAccess(workspace.Merchant.MerchantId, "very-secure-password");
+        var authenticated = state.AuthenticateMerchant(workspace.Merchant.ContactEmail, "very-secure-password");
+
+        Assert.Equal(MerchantCredentialConfigurationStatus.Updated, configured.Status);
+        Assert.Equal(MerchantAuthenticationStatus.Authenticated, authenticated.Status);
+        Assert.Equal(workspace.Merchant.MerchantId, authenticated.Merchant!.MerchantId);
+    }
+
+    [Fact]
+    public async Task AuthenticateMerchant_ReturnsCredentialsNotConfigured_WhenPasswordHasNotBeenSet()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantAsync(state);
+
+        var authenticated = state.AuthenticateMerchant(workspace.Merchant.ContactEmail, "password");
+
+        Assert.Equal(MerchantAuthenticationStatus.CredentialsNotConfigured, authenticated.Status);
+        Assert.Null(authenticated.Merchant);
+    }
+
     private static DemoPlatformState CreateState() =>
         new(NullLogger<DemoPlatformState>.Instance, new InMemoryMerchantBrandAssetStore());
 
