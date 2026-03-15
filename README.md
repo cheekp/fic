@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Separate first-programme launch from the normal workspace so onboarding feels focused, then keep the programme operate flow obvious enough to issue, join, and stamp without guesswork.
+Tighten the first-time merchant workflow so new users stay in a simple programmes-first lane until the first customer join and first stamp are complete.

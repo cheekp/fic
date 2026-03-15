@@ -398,6 +398,45 @@ public sealed class DemoPlatformState(
         }
     }
 
+    public int RemoveWalletPushTokens(Guid cardId, IReadOnlyList<string> pushTokens)
+    {
+        if (pushTokens.Count == 0)
+        {
+            return 0;
+        }
+
+        lock (_gate)
+        {
+            var candidateTokens = pushTokens
+                .Where(token => !string.IsNullOrWhiteSpace(token))
+                .Select(token => token.Trim())
+                .ToHashSet(StringComparer.Ordinal);
+
+            if (candidateTokens.Count == 0)
+            {
+                return 0;
+            }
+
+            var registrationsToRemove = _walletRegistrations
+                .Where(entry =>
+                    entry.Value.CardId == cardId
+                    && candidateTokens.Contains(entry.Value.PushToken))
+                .Select(entry => entry.Key)
+                .ToArray();
+
+            var removedCount = 0;
+            foreach (var registrationKey in registrationsToRemove)
+            {
+                if (_walletRegistrations.TryRemove(registrationKey, out _))
+                {
+                    removedCount++;
+                }
+            }
+
+            return removedCount;
+        }
+    }
+
     public MerchantAuthenticationResult AuthenticateMerchant(string email, string password)
     {
         lock (_gate)

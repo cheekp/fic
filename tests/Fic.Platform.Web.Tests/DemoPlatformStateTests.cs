@@ -250,6 +250,42 @@ public sealed class DemoPlatformStateTests
     }
 
     [Fact]
+    public async Task RemoveWalletPushTokens_RemovesOnlyMatchingTokensForSelectedCard()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+
+        var cardOne = state.JoinCustomer(selectedProgramme.JoinCode);
+        var cardTwo = state.JoinCustomer(selectedProgramme.JoinCode);
+
+        Assert.NotNull(cardOne);
+        Assert.NotNull(cardTwo);
+
+        var deliveryOne = state.GetWalletPassDelivery(cardOne!.CardId);
+        var deliveryTwo = state.GetWalletPassDelivery(cardTwo!.CardId);
+
+        Assert.NotNull(deliveryOne);
+        Assert.NotNull(deliveryTwo);
+
+        Assert.Equal(
+            WalletPassRegistrationStatus.Created,
+            state.RegisterWalletPassDevice("device-card-one-1", cardOne.WalletPassId, deliveryOne!.AuthenticationToken, "push-token-invalid").Status);
+        Assert.Equal(
+            WalletPassRegistrationStatus.Created,
+            state.RegisterWalletPassDevice("device-card-one-2", cardOne.WalletPassId, deliveryOne.AuthenticationToken, "push-token-keep").Status);
+        Assert.Equal(
+            WalletPassRegistrationStatus.Created,
+            state.RegisterWalletPassDevice("device-card-two-1", cardTwo.WalletPassId, deliveryTwo!.AuthenticationToken, "push-token-invalid").Status);
+
+        var removed = state.RemoveWalletPushTokens(cardOne.CardId, ["push-token-invalid"]);
+
+        Assert.Equal(1, removed);
+        Assert.Equal(["push-token-keep"], state.GetWalletPushTokens(cardOne.CardId));
+        Assert.Equal(["push-token-invalid"], state.GetWalletPushTokens(cardTwo.CardId));
+    }
+
+    [Fact]
     public async Task ConfigureMerchantAccess_StoresCredentials_AndAllowsAuthentication()
     {
         var state = CreateState();

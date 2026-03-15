@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using Fic.Contracts;
 
 namespace Fic.WalletPasses;
@@ -11,6 +12,12 @@ public sealed class AppleWalletPassUpdateNotifier(
     HttpMessageHandler? httpMessageHandler = null) : IWalletPassUpdateNotifier
 {
     private const string JsonPayload = "{}";
+    private static readonly string[] InvalidTokenReasons =
+    [
+        "BadDeviceToken",
+        "DeviceTokenNotForTopic",
+        "Unregistered"
+    ];
 
     public WalletPassPushCapability GetCapability()
     {
@@ -73,7 +80,7 @@ public sealed class AppleWalletPassUpdateNotifier(
                 0,
                 0,
                 true,
-                "Wallet refresh was not requested because push delivery is not configured.",
+                "Wallet refresh unavailable because push delivery is not configured.",
                 capability.DiagnosticItems);
         }
 
@@ -84,7 +91,7 @@ public sealed class AppleWalletPassUpdateNotifier(
                 0,
                 0,
                 true,
-                "Wallet refresh will start once a device has registered this pass for updates.");
+                "Wallet refresh skipped until a device has registered this pass for updates.");
         }
 
         var distinctTokens = pushTokens
@@ -100,11 +107,14 @@ public sealed class AppleWalletPassUpdateNotifier(
                 0,
                 0,
                 true,
-                "Wallet refresh will start once a device has registered this pass for updates.");
+                "Wallet refresh skipped until a device has registered this pass for updates.");
         }
 
         using var client = CreateClient();
         var successCount = 0;
+        var retryableFailureCount = 0;
+        var permanentFailureCount = 0;
+        var invalidatedTokens = new List<string>();
         var diagnostics = new List<string>();
 
         foreach (var pushToken in distinctTokens)
@@ -127,11 +137,30 @@ public sealed class AppleWalletPassUpdateNotifier(
                     continue;
                 }
 
-                diagnostics.Add($"APNs rejected push for token {pushToken} with {(int)response.StatusCode} {response.StatusCode}.");
+                var reason = await ReadApnsReasonAsync(response, cancellationToken);
+                var classification = ClassifyFailure(response.StatusCode, reason);
+
+                switch (classification)
+                {
+                    case DispatchFailureClassification.Retryable:
+                        retryableFailureCount++;
+                        diagnostics.Add(BuildRetryableDiagnostic(pushToken, response.StatusCode, reason));
+                        break;
+                    case DispatchFailureClassification.PermanentToken:
+                        permanentFailureCount++;
+                        invalidatedTokens.Add(pushToken);
+                        diagnostics.Add(BuildPermanentTokenDiagnostic(pushToken, response.StatusCode, reason));
+                        break;
+                    default:
+                        permanentFailureCount++;
+                        diagnostics.Add(BuildPermanentDiagnostic(pushToken, response.StatusCode, reason));
+                        break;
+                }
             }
             catch (HttpRequestException ex)
             {
-                diagnostics.Add($"APNs request failed for token {pushToken}: {ex.Message}");
+                retryableFailureCount++;
+                diagnostics.Add($"APNs retryable failure for token {pushToken}: {ex.Message}");
             }
             catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -139,14 +168,16 @@ public sealed class AppleWalletPassUpdateNotifier(
             }
             catch (TaskCanceledException)
             {
-                diagnostics.Add($"APNs request timed out for token {pushToken}.");
+                retryableFailureCount++;
+                diagnostics.Add($"APNs retryable failure for token {pushToken}: request timed out.");
             }
         }
 
-        var failureCount = distinctTokens.Length - successCount;
-        var summary = successCount > 0
-            ? $"Wallet refresh requested for {successCount} registered device{(successCount == 1 ? string.Empty : "s")}."
-            : "Wallet refresh request did not reach any registered devices.";
+        var failureCount = retryableFailureCount + permanentFailureCount;
+        var summary = BuildSummary(successCount, retryableFailureCount, permanentFailureCount);
+        var invalidatedDistinct = invalidatedTokens
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
 
         return new WalletPassUpdateDispatchResult(
             distinctTokens.Length,
@@ -154,7 +185,130 @@ public sealed class AppleWalletPassUpdateNotifier(
             failureCount,
             false,
             summary,
-            diagnostics.Count == 0 ? null : diagnostics);
+            diagnostics.Count == 0 ? null : diagnostics,
+            retryableFailureCount,
+            permanentFailureCount,
+            invalidatedDistinct.Length == 0 ? null : invalidatedDistinct);
+    }
+
+    private static DispatchFailureClassification ClassifyFailure(HttpStatusCode statusCode, string? reason)
+    {
+        if (IsRetryableStatusCode(statusCode))
+        {
+            return DispatchFailureClassification.Retryable;
+        }
+
+        if (IsPermanentTokenFailure(statusCode, reason))
+        {
+            return DispatchFailureClassification.PermanentToken;
+        }
+
+        return (int)statusCode >= 500
+            ? DispatchFailureClassification.Retryable
+            : DispatchFailureClassification.Permanent;
+    }
+
+    private static bool IsRetryableStatusCode(HttpStatusCode statusCode) =>
+        statusCode is HttpStatusCode.RequestTimeout
+            or HttpStatusCode.TooManyRequests
+            or HttpStatusCode.InternalServerError
+            or HttpStatusCode.BadGateway
+            or HttpStatusCode.ServiceUnavailable
+            or HttpStatusCode.GatewayTimeout;
+
+    private static bool IsPermanentTokenFailure(HttpStatusCode statusCode, string? reason)
+    {
+        if (statusCode == HttpStatusCode.Gone)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return false;
+        }
+
+        return InvalidTokenReasons.Any(tokenReason => string.Equals(tokenReason, reason, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static async Task<string?> ReadApnsReasonAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        if (response.Content is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var payload = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return null;
+            }
+
+            using var document = JsonDocument.Parse(payload);
+            return document.RootElement.TryGetProperty("reason", out var reasonElement)
+                ? reasonElement.GetString()
+                : null;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string BuildSummary(int successCount, int retryableFailureCount, int permanentFailureCount)
+    {
+        if (successCount > 0 && retryableFailureCount == 0 && permanentFailureCount == 0)
+        {
+            return $"Wallet refresh sent to {successCount} registered device{(successCount == 1 ? string.Empty : "s")}.";
+        }
+
+        if (successCount == 0 && retryableFailureCount > 0 && permanentFailureCount == 0)
+        {
+            return "Wallet refresh retry needed because APNs did not confirm any device updates.";
+        }
+
+        if (successCount == 0 && retryableFailureCount == 0 && permanentFailureCount > 0)
+        {
+            return "Wallet refresh unavailable because registered devices were no longer valid.";
+        }
+
+        if (successCount > 0 && retryableFailureCount > 0 && permanentFailureCount == 0)
+        {
+            return $"Wallet refresh sent to {successCount} device{(successCount == 1 ? string.Empty : "s")}; retry needed for {retryableFailureCount} device{(retryableFailureCount == 1 ? string.Empty : "s")}.";
+        }
+
+        if (successCount > 0 && retryableFailureCount == 0 && permanentFailureCount > 0)
+        {
+            return $"Wallet refresh sent to {successCount} device{(successCount == 1 ? string.Empty : "s")}; some registered devices were no longer valid.";
+        }
+
+        if (successCount == 0 && retryableFailureCount > 0 && permanentFailureCount > 0)
+        {
+            return "Wallet refresh retry needed and some registered devices were no longer valid.";
+        }
+
+        return $"Wallet refresh sent to {successCount} device{(successCount == 1 ? string.Empty : "s")}; retry needed for {retryableFailureCount} and some registered devices were no longer valid.";
+    }
+
+    private static string BuildRetryableDiagnostic(string pushToken, HttpStatusCode statusCode, string? reason) =>
+        BuildDiagnostic("APNs retryable failure", pushToken, statusCode, reason);
+
+    private static string BuildPermanentDiagnostic(string pushToken, HttpStatusCode statusCode, string? reason) =>
+        BuildDiagnostic("APNs permanent failure", pushToken, statusCode, reason);
+
+    private static string BuildPermanentTokenDiagnostic(string pushToken, HttpStatusCode statusCode, string? reason) =>
+        BuildDiagnostic("APNs permanent token failure", pushToken, statusCode, reason);
+
+    private static string BuildDiagnostic(string prefix, string pushToken, HttpStatusCode statusCode, string? reason)
+    {
+        var reasonSuffix = string.IsNullOrWhiteSpace(reason) ? string.Empty : $" ({reason})";
+        return $"{prefix} for token {pushToken} with {(int)statusCode} {statusCode}{reasonSuffix}.";
     }
 
     private HttpClient CreateClient()
@@ -188,5 +342,12 @@ public sealed class AppleWalletPassUpdateNotifier(
             : "https://api.push.apple.com/";
 
         return new Uri(new Uri(endpoint, UriKind.Absolute), $"3/device/{pushToken}");
+    }
+
+    private enum DispatchFailureClassification
+    {
+        Retryable,
+        Permanent,
+        PermanentToken
     }
 }

@@ -87,7 +87,21 @@ It also prints a Wallet demo readiness URL at `/support/wallet-demo`, which show
 7. Tap `Add to Apple Wallet`.
 8. Safari should download the `.pkpass` and hand off to Wallet.
 9. Back in the merchant workspace, stamp a visit.
-10. The merchant UI should report whether a Wallet refresh request was sent, skipped because no registered device exists yet, or blocked by missing push setup.
+10. The merchant UI should report one of four Wallet refresh outcomes: sent, skipped, retry needed, or unavailable.
+
+## If Refresh Did Not Arrive
+
+Check the merchant outcome first:
+- `sent` means APNs accepted at least one request; wait briefly, then pull-to-refresh Wallet once.
+- `skipped` means no active registration exists for that pass on this device yet.
+- `retry needed` means APNs returned a transient failure; stamp once more and retry.
+- `unavailable` means push setup is incomplete for this environment.
+
+Then verify:
+- the pass is still installed on the same device that joined the programme
+- push is enabled in this environment (`Wallet:AppleWallet:PushNotificationsEnabled=true`)
+- the pass type identifier matches the signing certificate subject
+- the support page at `/support/wallet-demo` does not show signing or push diagnostics
 
 ## If It Falls Back To Preview
 

@@ -85,6 +85,97 @@ public sealed class AppleWalletPassUpdateNotifierTests
         Assert.Contains("registered this pass", result.Summary, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task NotifyPassUpdatedAsync_ReturnsUnavailable_WhenPushIsNotConfigured()
+    {
+        var notifier = new AppleWalletPassUpdateNotifier(new AppleWalletPassOptions
+        {
+            SigningConfigured = true,
+            PushNotificationsEnabled = false,
+            PassTypeIdentifier = "pass.com.fic.demo"
+        });
+
+        var result = await notifier.NotifyPassUpdatedAsync(CreateWalletCard(), ["push-token-one"]);
+
+        Assert.True(result.Skipped);
+        Assert.Equal(1, result.RegistrationCount);
+        Assert.Contains("unavailable", result.Summary, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, result.RetryableFailureCount);
+        Assert.Equal(0, result.PermanentFailureCount);
+    }
+
+    [Fact]
+    public async Task NotifyPassUpdatedAsync_ClassifiesRetryableAndPermanentTokenFailures()
+    {
+        using var tempDirectory = new TemporaryDirectory();
+        var p12Path = CreateSigningCertificate(tempDirectory.Path, out var password);
+        var handler = new RecordingHandler((request, _) =>
+        {
+            var token = request.RequestUri!.Segments[^1];
+            return token switch
+            {
+                "token-success" => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)),
+                "token-retry" => Task.FromResult(CreateApnsError(HttpStatusCode.ServiceUnavailable, "ServiceUnavailable")),
+                "token-invalid" => Task.FromResult(CreateApnsError(HttpStatusCode.Gone, "Unregistered")),
+                _ => Task.FromResult(CreateApnsError(HttpStatusCode.BadRequest, "BadDeviceToken"))
+            };
+        });
+        var notifier = new AppleWalletPassUpdateNotifier(
+            new AppleWalletPassOptions
+            {
+                SigningConfigured = true,
+                PushNotificationsEnabled = true,
+                PassTypeIdentifier = "pass.com.fic.demo",
+                P12CertificatePath = p12Path,
+                P12CertificatePassword = password,
+                PushEndpointOverride = "https://push.example.test/"
+            },
+            handler);
+
+        var result = await notifier.NotifyPassUpdatedAsync(
+            CreateWalletCard(),
+            ["token-success", "token-retry", "token-invalid"]);
+
+        Assert.Equal(3, result.RegistrationCount);
+        Assert.Equal(1, result.SuccessCount);
+        Assert.Equal(2, result.FailureCount);
+        Assert.Equal(1, result.RetryableFailureCount);
+        Assert.Equal(1, result.PermanentFailureCount);
+        Assert.True(result.HasInvalidatedPushTokens);
+        Assert.Equal(["token-invalid"], result.InvalidatedPushTokens);
+        Assert.Contains("retry needed", result.Summary, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("no longer valid", result.Summary, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(result.DiagnosticItems);
+        Assert.Contains(result.DiagnosticItems!, message => message.Contains("retryable", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.DiagnosticItems!, message => message.Contains("permanent token", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task NotifyPassUpdatedAsync_TreatsBadDeviceTokenAsPermanentTokenFailure()
+    {
+        using var tempDirectory = new TemporaryDirectory();
+        var p12Path = CreateSigningCertificate(tempDirectory.Path, out var password);
+        var handler = new RecordingHandler((_, _) =>
+            Task.FromResult(CreateApnsError(HttpStatusCode.BadRequest, "BadDeviceToken")));
+        var notifier = new AppleWalletPassUpdateNotifier(
+            new AppleWalletPassOptions
+            {
+                SigningConfigured = true,
+                PushNotificationsEnabled = true,
+                PassTypeIdentifier = "pass.com.fic.demo",
+                P12CertificatePath = p12Path,
+                P12CertificatePassword = password,
+                PushEndpointOverride = "https://push.example.test/"
+            },
+            handler);
+
+        var result = await notifier.NotifyPassUpdatedAsync(CreateWalletCard(), ["token-bad-device"]);
+
+        Assert.Equal(1, result.PermanentFailureCount);
+        Assert.Equal(["token-bad-device"], result.InvalidatedPushTokens);
+        Assert.Contains("no longer valid", result.Summary, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string CreateSigningCertificate(string directory, out string password)
     {
         password = "fic-demo-password";
@@ -129,14 +220,33 @@ public sealed class AppleWalletPassUpdateNotifierTests
             false,
             DateTimeOffset.UtcNow);
 
-    private sealed class RecordingHandler(HttpStatusCode statusCode) : HttpMessageHandler
+    private static HttpResponseMessage CreateApnsError(HttpStatusCode statusCode, string reason)
     {
+        var response = new HttpResponseMessage(statusCode);
+        response.Content = new StringContent($"{{\"reason\":\"{reason}\"}}", System.Text.Encoding.UTF8, "application/json");
+        return response;
+    }
+
+    private sealed class RecordingHandler : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responseFactory;
+
+        public RecordingHandler(HttpStatusCode statusCode)
+            : this((_, _) => Task.FromResult(new HttpResponseMessage(statusCode)))
+        {
+        }
+
+        public RecordingHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responseFactory)
+        {
+            _responseFactory = responseFactory;
+        }
+
         public List<HttpRequestMessage> Requests { get; } = [];
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(CloneRequest(request));
-            return Task.FromResult(new HttpResponseMessage(statusCode));
+            return await _responseFactory(request, cancellationToken);
         }
 
         private static HttpRequestMessage CloneRequest(HttpRequestMessage request)

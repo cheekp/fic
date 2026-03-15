@@ -3,4 +3,4 @@
 Keep the current delivery plan here.
 
 Current active plan:
-- `F26-launch-mode-separation.md`
+- `F28-first-time-workspace-focus.md`
