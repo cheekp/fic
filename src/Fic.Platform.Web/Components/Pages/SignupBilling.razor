@@ -19,22 +19,24 @@ else
             <div>
                 <p class="eyebrow">Step 2 of 3</p>
                 <h2>Confirm billing</h2>
-                <p class="lede">Final account step before the workspace opens for @_workspace.Merchant.DisplayName. Set the owner password here, then create the first programme inside the shop area.</p>
+                <p class="lede">Final account step before @_workspace.Merchant.DisplayName goes live. Set the owner password here, then we take the owner straight into first-programme setup.</p>
             </div>
         </div>
 
         <form method="post" action="/account/session/complete-signup" class="form-stack">
             <input type="hidden" name="merchantId" value="@MerchantId" />
-            <input type="hidden" name="returnUrl" value="@($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=create")" />
-            <div class="form-grid">
-                <label class="field">
-                    <span>Plan</span>
-                    <select name="plan" class="input">
-                        <option value="founding">Founding coffee shop</option>
-                        <option value="growth">Growth coffee shop</option>
-                    </select>
-                </label>
+            <input type="hidden" name="returnUrl" value="@($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=create&launch=create")" />
+            <input type="hidden" name="plan" value="founding" />
 
+            <section class="delivery-option">
+                <div class="delivery-option__copy">
+                    <strong>Founding coffee shop</strong>
+                    <span>One simple tier for now: everything in the demo flow for £19.99 per month.</span>
+                </div>
+                <span class="chip chip--accent">£19.99/mo</span>
+            </section>
+
+            <div class="form-grid">
                 <label class="field">
                     <span>Billing email</span>
                     <input class="input" type="email" name="billingEmail" value="@_billingEmail" />
@@ -69,7 +71,7 @@ else
             <p class="field-hint">Shop: @_workspace.Merchant.DisplayName, @_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
 
             <div class="form-actions">
-                <button class="button button--primary" type="submit">Open Workspace</button>
+                <button class="button button--primary" type="submit">Continue to first programme</button>
                 <a class="button button--ghost" href="/portal/signup">Back to shop signup</a>
             </div>
         </form>

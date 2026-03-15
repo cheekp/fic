@@ -513,6 +513,84 @@ public sealed class VendorWorkspaceComponentTests
         Assert.DoesNotContain("Open Customer Join", cut.Markup, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ProgrammesSection_LaunchCreateMode_ShowsGuidedSetupFlow()
+    {
+        using var context = CreateContext();
+        var state = CreateState();
+        RegisterServices(context, state);
+        var workspace = await CreateMerchantAsync(state);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "create", launch: "create");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Guided setup", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Create the first live programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Start with this template", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Publish and test", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammesSection_LaunchCreateMode_NavigatesToConfigureAfterTemplateSelection()
+    {
+        using var context = CreateContext();
+        var state = CreateState();
+        RegisterServices(context, state);
+        var workspace = await CreateMerchantAsync(state);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "create", launch: "create");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        cut.FindAll("button")
+            .First(button => button.TextContent.Contains("Start with this template", StringComparison.Ordinal))
+            .Click();
+
+        var navigation = context.Services.GetRequiredService<NavigationManager>();
+        Assert.Contains("programmeSection=configure", navigation.Uri, StringComparison.Ordinal);
+        Assert.Contains("launch=configure", navigation.Uri, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammeConfigure_LaunchMode_SavesIntoOperate()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "configure", programmeId: selectedProgramme.ProgrammeId, launch: "configure");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Save and open operate", cut.Markup, StringComparison.Ordinal);
+
+        cut.FindAll("button")
+            .Single(button => button.TextContent.Contains("Save and open operate", StringComparison.Ordinal))
+            .Click();
+
+        var navigation = context.Services.GetRequiredService<NavigationManager>();
+        Assert.Contains("programmeSection=operate", navigation.Uri, StringComparison.Ordinal);
+        Assert.Contains("launch=operate", navigation.Uri, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ProgrammeOperate_LaunchMode_ShowsPublishAndTestActions()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "operate", programmeId: selectedProgramme.ProgrammeId, launch: "operate");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Publish and test the live programme", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Copy Join Link", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Open Customer Join", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Open the join flow on the demo phone", cut.Markup, StringComparison.Ordinal);
+    }
+
     private static BunitContext CreateContext() => new();
 
     private async Task<MerchantWorkspaceSnapshot> CreateMerchantAndRegisterServicesAsync(BunitContext context)
@@ -545,7 +623,8 @@ public sealed class VendorWorkspaceComponentTests
         string? programmeSection = null,
         Guid? programmeId = null,
         string? legacyTab = null,
-        string? settings = null)
+        string? settings = null,
+        string? launch = null)
     {
         var navigation = context.Services.GetRequiredService<NavigationManager>();
         var queryParts = new List<string>();
@@ -573,6 +652,11 @@ public sealed class VendorWorkspaceComponentTests
         if (!string.IsNullOrWhiteSpace(settings))
         {
             queryParts.Add($"settings={settings}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(launch))
+        {
+            queryParts.Add($"launch={launch}");
         }
 
         var query = queryParts.Count == 0 ? string.Empty : $"?{string.Join("&", queryParts)}";
