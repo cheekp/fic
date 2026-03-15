@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Tighten the founder-demo lane from billing into first live programme setup, then keep the operate flow obvious enough to issue, join, and stamp without guesswork.
+Separate first-programme launch from the normal workspace so onboarding feels focused, then keep the programme operate flow obvious enough to issue, join, and stamp without guesswork.
