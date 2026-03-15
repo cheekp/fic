@@ -66,6 +66,13 @@
             <li>Wallet refresh push enabled for this environment</li>
         </ul>
         <p>Run <code>./scripts/run-wallet-demo-lan.sh</code> once the environment is ready. After the customer adds the pass, stamp a visit from the merchant workspace and check that the refresh request is reported there.</p>
+        <p>Merchant refresh status now reports one of: <strong>sent</strong>, <strong>skipped</strong>, <strong>retry needed</strong>, or <strong>unavailable</strong>.</p>
+        <p>If refresh did not arrive on device:</p>
+        <ul>
+            <li>confirm the merchant message was not <strong>skipped</strong> or <strong>unavailable</strong></li>
+            <li>if status is <strong>retry needed</strong>, repeat the stamp once and watch for APNs transient recovery</li>
+            <li>if status reports invalid registrations, remove and re-add the pass on device to re-register push</li>
+        </ul>
     </div>
 
     <div class="company-support__actions">

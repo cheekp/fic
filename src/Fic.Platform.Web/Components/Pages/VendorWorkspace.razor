@@ -39,6 +39,9 @@ else
     var scheduledProgrammesCount = programmeGroups.FirstOrDefault(group => group.Label == "Scheduled")?.Programmes.Count ?? 0;
     var expiredProgrammesCount = programmeGroups.FirstOrDefault(group => group.Label == "Expired")?.Programmes.Count ?? 0;
     var selectedProgrammeCards = _workspace.SelectedProgrammeCards;
+    var isFirstTimeMode = IsFirstTimeMode;
+    var showProgrammeRail = hasProgrammes && !isFirstTimeMode;
+    var showAdvancedProgrammeSections = !isFirstTimeMode;
     var customerCardGroups = BuildCustomerCardGroups(selectedProgrammeCards);
     var rewardReadyCardsCount = selectedProgrammeCards.Count(card => card.CustomerCardStatus == CustomerCardStatus.RewardReady);
     var redeemedCardsCount = selectedProgrammeCards.Count(card => card.CustomerCardStatus == CustomerCardStatus.Redeemed);
@@ -61,16 +64,22 @@ else
                     }
                 </div>
             </div>
-            <div class="workspace-header__actions">
-                <a class="button button--ghost button--compact" href="/support/wallet-demo">@GetWalletStatusLabel()</a>
-            </div>
+            @if (!isFirstTimeMode)
+            {
+                <div class="workspace-header__actions">
+                    <a class="button button--ghost button--compact" href="/support/wallet-demo">@GetWalletStatusLabel()</a>
+                </div>
+            }
         </section>
 
         <div class="workspace-tabs-bar">
             <nav class="workspace-tabs" aria-label="Shop sections">
-                <a class="workspace-tabs__item @(IsWorkspaceSection("overview") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("overview")">Overview</a>
                 <a class="workspace-tabs__item @(IsWorkspaceSection("programmes") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("programmes")">Programmes</a>
-                <a class="workspace-tabs__item @(IsWorkspaceSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("insights")">Insights</a>
+                @if (!isFirstTimeMode)
+                {
+                    <a class="workspace-tabs__item @(IsWorkspaceSection("overview") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("overview")">Overview</a>
+                    <a class="workspace-tabs__item @(IsWorkspaceSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("insights")">Insights</a>
+                }
             </nav>
         </div>
 
@@ -240,8 +249,8 @@ else
         }
         else
         {
-            <section class="workspace-detail-grid @(hasProgrammes ? "workspace-detail-grid--programme-shell" : "workspace-detail-grid--single-pane")">
-                @if (hasProgrammes)
+            <section class="workspace-detail-grid @(showProgrammeRail ? "workspace-detail-grid--programme-shell" : "workspace-detail-grid--single-pane")">
+                @if (showProgrammeRail)
                 {
                     <aside class="programme-sidebar programme-rail">
                         <div class="programme-rail__header">
@@ -291,33 +300,6 @@ else
                                     <p class="lede">Choose the programme template first. The current customer delivery output is then configured inside the programme workspace.</p>
                                 </div>
                             </div>
-
-                            @if (HasLaunchFlow)
-                            {
-                                <section class="launch-flow-panel">
-                                    <div class="launch-flow-panel__header">
-                                        <div>
-                                            <p class="eyebrow">Guided setup</p>
-                                            <h4>Create the first live programme</h4>
-                                            <p class="field-hint">Choose the starting template first. We then take you into configure, then into operate so the join and Wallet demo path is easy to test.</p>
-                                        </div>
-                                        <a class="button button--ghost button--compact" href="@GetDismissLaunchUrl()">Exit guided setup</a>
-                                    </div>
-                                    <div class="launch-flow-panel__steps">
-                                        @foreach (var step in BuildLaunchFlowSteps())
-                                        {
-                                            <article class="launch-flow-step @(step.IsComplete ? "launch-flow-step--complete" : string.Empty) @(step.IsCurrent ? "launch-flow-step--current" : string.Empty)">
-                                                <span class="launch-flow-step__index">@step.Order</span>
-                                                <div class="launch-flow-step__copy">
-                                                    <strong>@step.Label</strong>
-                                                    <span>@step.Description</span>
-                                                </div>
-                                                <span class="chip @(step.IsCurrent ? "chip--accent" : string.Empty)">@step.StatusLabel</span>
-                                            </article>
-                                        }
-                                    </div>
-                                </section>
-                            }
 
                             <div class="template-grid">
                                 @foreach (var template in ProgrammeTemplates)
@@ -384,9 +366,12 @@ else
 
                         <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
                             <a class="workspace-tabs__item @(IsProgrammeSection("operate") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("operate")">Operate</a>
-                            <a class="workspace-tabs__item @(IsProgrammeSection("customers") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("customers")">Customers</a>
                             <a class="workspace-tabs__item @(IsProgrammeSection("configure") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("configure")">Configure</a>
-                            <a class="workspace-tabs__item @(IsProgrammeSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("insights")">Insights</a>
+                            @if (showAdvancedProgrammeSections)
+                            {
+                                <a class="workspace-tabs__item @(IsProgrammeSection("customers") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("customers")">Customers</a>
+                                <a class="workspace-tabs__item @(IsProgrammeSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("insights")">Insights</a>
+                            }
                         </nav>
 
                         @if (IsProgrammeSection("operate"))
@@ -458,65 +443,81 @@ else
                                         <p class="field-hint">@_scanMessage</p>
                                     }
                                 </article>
+
+                                @if (isFirstTimeMode)
+                                {
+                                    <article class="panel">
+                                        <div class="panel__header">
+                                            <div>
+                                                <p class="eyebrow">Next step</p>
+                                                <h3>Join one customer pass first</h3>
+                                            </div>
+                                        </div>
+                                        <p class="field-hint">Open Customer Join on your phone, add the pass, then come back and stamp the first visit.</p>
+                                    </article>
+                                }
                             </section>
 
-                            <section class="workspace-detail-grid workspace-detail-grid--programme-operate-secondary">
-                                <article class="panel">
-                                    <div class="panel__header">
-                                        <div>
-                                            <p class="eyebrow">Daily use</p>
-                                            <h3>Quick programme picture</h3>
+                            @if (!isFirstTimeMode)
+                            {
+                                <section class="workspace-detail-grid workspace-detail-grid--programme-operate-secondary">
+                                    <article class="panel">
+                                        <div class="panel__header">
+                                            <div>
+                                                <p class="eyebrow">Daily use</p>
+                                                <h3>Quick programme picture</h3>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="workspace-overview-strip workspace-summary-grid">
-                                        <article class="workspace-overview-card">
-                                            <span class="workspace-overview-card__label">Issued</span>
-                                            <strong class="workspace-overview-card__value">@selectedProgrammeCards.Count</strong>
-                                            <p class="workspace-overview-card__copy">Customer passes currently issued on this programme.</p>
-                                        </article>
-                                        <article class="workspace-overview-card">
-                                            <span class="workspace-overview-card__label">Reward ready</span>
-                                            <strong class="workspace-overview-card__value">@rewardReadyCardsCount</strong>
-                                            <p class="workspace-overview-card__copy">Ready to redeem right now.</p>
-                                        </article>
-                                        <article class="workspace-overview-card">
-                                            <span class="workspace-overview-card__label">Redeemed</span>
-                                            <strong class="workspace-overview-card__value">@redeemedCardsCount</strong>
-                                            <p class="workspace-overview-card__copy">Most recently completed and reset.</p>
-                                        </article>
-                                        <article class="workspace-overview-card">
-                                            <span class="workspace-overview-card__label">Inactive</span>
-                                            <strong class="workspace-overview-card__value">@inactiveCardsCount</strong>
-                                            <p class="workspace-overview-card__copy">Currently outside the programme’s active date window.</p>
-                                        </article>
-                                    </div>
-                                    <div class="form-actions">
-                                        <a class="button button--secondary" href="@GetProgrammeSectionUrl("customers")">Manage customer passes</a>
-                                    </div>
-                                </article>
-
-                                <article class="panel">
-                                    <div class="panel__header">
-                                        <div>
-                                            <p class="eyebrow">Recent activity</p>
-                                            <h3>Programme timeline</h3>
-                                        </div>
-                                    </div>
-                                    <div class="timeline">
-                                        @foreach (var entry in _workspace.Timeline)
-                                        {
-                                            <article class="timeline__entry">
-                                                <div class="timeline__dot"></div>
-                                                <div>
-                                                    <p class="timeline__event">@entry.EventType</p>
-                                                    <p>@entry.Summary</p>
-                                                    <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
-                                                </div>
+                                        <div class="workspace-overview-strip workspace-summary-grid">
+                                            <article class="workspace-overview-card">
+                                                <span class="workspace-overview-card__label">Issued</span>
+                                                <strong class="workspace-overview-card__value">@selectedProgrammeCards.Count</strong>
+                                                <p class="workspace-overview-card__copy">Customer passes currently issued on this programme.</p>
                                             </article>
-                                        }
-                                    </div>
-                                </article>
-                            </section>
+                                            <article class="workspace-overview-card">
+                                                <span class="workspace-overview-card__label">Reward ready</span>
+                                                <strong class="workspace-overview-card__value">@rewardReadyCardsCount</strong>
+                                                <p class="workspace-overview-card__copy">Ready to redeem right now.</p>
+                                            </article>
+                                            <article class="workspace-overview-card">
+                                                <span class="workspace-overview-card__label">Redeemed</span>
+                                                <strong class="workspace-overview-card__value">@redeemedCardsCount</strong>
+                                                <p class="workspace-overview-card__copy">Most recently completed and reset.</p>
+                                            </article>
+                                            <article class="workspace-overview-card">
+                                                <span class="workspace-overview-card__label">Inactive</span>
+                                                <strong class="workspace-overview-card__value">@inactiveCardsCount</strong>
+                                                <p class="workspace-overview-card__copy">Currently outside the programme’s active date window.</p>
+                                            </article>
+                                        </div>
+                                        <div class="form-actions">
+                                            <a class="button button--secondary" href="@GetProgrammeSectionUrl("customers")">Manage customer passes</a>
+                                        </div>
+                                    </article>
+
+                                    <article class="panel">
+                                        <div class="panel__header">
+                                            <div>
+                                                <p class="eyebrow">Recent activity</p>
+                                                <h3>Programme timeline</h3>
+                                            </div>
+                                        </div>
+                                        <div class="timeline">
+                                            @foreach (var entry in _workspace.Timeline)
+                                            {
+                                                <article class="timeline__entry">
+                                                    <div class="timeline__dot"></div>
+                                                    <div>
+                                                        <p class="timeline__event">@entry.EventType</p>
+                                                        <p>@entry.Summary</p>
+                                                        <small>@entry.OccurredAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")</small>
+                                                    </div>
+                                                </article>
+                                            }
+                                        </div>
+                                    </article>
+                                </section>
+                            }
                         }
                         else if (IsProgrammeSection("customers"))
                         {
@@ -945,8 +946,10 @@ else
                 : _workspace!.Programmes.FirstOrDefault(x => x.ProgrammeId == selectedProgrammeId.Value);
         }
     }
-    private string? ActiveLaunchStage => NormalizeLaunchStage(Launch);
-    private bool HasLaunchFlow => ActiveLaunchStage is not null;
+    private bool IsFirstTimeMode =>
+        _workspace is not null
+        && _workspace.Programmes.Count <= 1
+        && _workspace.ShopInsights.ActiveCards == 0;
     private bool IsFinishingFirstProgrammeSetup => _isFinishingFirstProgrammeSetup && _workspace?.Programmes.Count == 1;
     private bool ShowFirstProgrammeSetupStrip =>
         IsFinishingFirstProgrammeSetup
@@ -963,6 +966,7 @@ else
     protected override void OnParametersSet()
     {
         LoadWorkspace(refreshForms: true);
+        EnforceFirstTimeRouteGuard();
     }
 
     private void LoadWorkspace(bool refreshForms)
@@ -1039,9 +1043,7 @@ else
         IsWorkspaceSection("programmes") && string.Equals(GetActiveProgrammeSection(), section, StringComparison.OrdinalIgnoreCase);
 
     private bool IsShopSettingsOpen() =>
-        string.Equals(Settings, "shop", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(Section, "edit", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(Tab, "brand", StringComparison.OrdinalIgnoreCase);
+        NormalizeRequestedSettings() is not null;
 
     private bool IsSetupStepActive(SetupStepView step) =>
         (string.Equals(step.Section, "edit", StringComparison.OrdinalIgnoreCase)
@@ -1051,10 +1053,57 @@ else
             || string.Equals(GetActiveProgrammeSection(), step.ProgrammeSection ?? "operate", StringComparison.OrdinalIgnoreCase));
 
     private string GetActiveSection() =>
-        NormalizeWorkspaceSection(Tab, Section);
+        IsFirstTimeMode && !IsShopSettingsOpen()
+            ? "programmes"
+            : NormalizeWorkspaceSection(Tab, Section);
 
     private string GetActiveProgrammeSection() =>
-        NormalizeProgrammeSection(Tab, Section, ProgrammeSection);
+        IsFirstTimeMode
+            ? _workspace?.SetupChecklist.HasAnyProgramme == true
+                ? NormalizeFirstTimeProgrammeSection(NormalizeProgrammeSection(Tab, Section, ProgrammeSection))
+                : "create"
+            : NormalizeProgrammeSection(Tab, Section, ProgrammeSection);
+
+    private string? NormalizeRequestedSettings() =>
+        string.Equals(Settings, "shop", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Section, "edit", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Tab, "brand", StringComparison.OrdinalIgnoreCase)
+            ? "shop"
+            : null;
+
+    private static string NormalizeFirstTimeProgrammeSection(string programmeSection) =>
+        programmeSection.ToLowerInvariant() switch
+        {
+            "create" => "create",
+            "configure" => "configure",
+            "operate" => "operate",
+            _ => "operate"
+        };
+
+    private void EnforceFirstTimeRouteGuard()
+    {
+        if (_workspace is null || !IsFirstTimeMode)
+        {
+            return;
+        }
+
+        var requestedProgrammeSection = NormalizeProgrammeSection(Tab, Section, ProgrammeSection);
+        var settings = NormalizeRequestedSettings();
+        var guardedProgrammeSection = _workspace.SetupChecklist.HasAnyProgramme
+            ? NormalizeFirstTimeProgrammeSection(requestedProgrammeSection)
+            : "create";
+        var guardedUrl = GetWorkspaceUrl(
+            "programmes",
+            guardedProgrammeSection,
+            _workspace.SelectedProgramme?.ProgrammeId,
+            settings,
+            launch: null);
+
+        if (!string.Equals(guardedUrl, Navigation.Uri, StringComparison.Ordinal))
+        {
+            Navigation.NavigateTo(guardedUrl, replace: true);
+        }
+    }
 
     private string GetWorkspaceSectionUrl(string section) =>
         GetWorkspaceUrl(
@@ -1076,14 +1125,6 @@ else
         GetWorkspaceUrl(
             GetActiveSection(),
             IsWorkspaceSection("programmes") ? GetActiveProgrammeSection() : null,
-            _workspace?.SelectedProgramme?.ProgrammeId,
-            settings: null,
-            launch: null);
-
-    private string GetDismissLaunchUrl() =>
-        GetWorkspaceUrl(
-            "programmes",
-            _workspace?.SetupChecklist.HasAnyProgramme == true ? GetActiveProgrammeSection() : "create",
             _workspace?.SelectedProgramme?.ProgrammeId,
             settings: null,
             launch: null);
@@ -1155,14 +1196,6 @@ else
                 _ => _workspace?.SetupChecklist.HasAnyProgramme == true ? "operate" : "create"
             }
         }
-    };
-
-    private static string? NormalizeLaunchStage(string? launch) => launch?.Trim().ToLowerInvariant() switch
-    {
-        "create" => "create",
-        "configure" => "configure",
-        "operate" => "operate",
-        _ => null
     };
 
     private async Task HandleBrandLogoSelectedAsync(InputFileChangeEventArgs args)
@@ -1396,7 +1429,14 @@ else
         }
 
         var pushTokens = PlatformState.GetWalletPushTokens(card.CardId);
-        return await WalletPushes.NotifyPassUpdatedAsync(card, pushTokens);
+        var refresh = await WalletPushes.NotifyPassUpdatedAsync(card, pushTokens);
+
+        if (refresh.HasInvalidatedPushTokens)
+        {
+            PlatformState.RemoveWalletPushTokens(card.CardId, refresh.InvalidatedPushTokens!);
+        }
+
+        return refresh;
     }
 
     private void UseScanCode(string cardCode)
@@ -1409,39 +1449,6 @@ else
     {
         _scanCode = string.Empty;
         _scanMessage = null;
-    }
-
-    private IReadOnlyList<LaunchFlowStepView> BuildLaunchFlowSteps()
-    {
-        if (!HasLaunchFlow)
-        {
-            return [];
-        }
-
-        return
-        [
-            new LaunchFlowStepView(
-                1,
-                "Template",
-                "Choose the starting shape for the programme.",
-                ActiveLaunchStage is "configure" or "operate",
-                ActiveLaunchStage == "create",
-                ActiveLaunchStage == "create" ? "Current" : "Complete"),
-            new LaunchFlowStepView(
-                2,
-                "Configure",
-                "Confirm the rule, dates, and customer delivery.",
-                ActiveLaunchStage is "operate",
-                ActiveLaunchStage == "configure",
-                ActiveLaunchStage == "configure" ? "Current" : ActiveLaunchStage == "operate" ? "Complete" : "Next"),
-            new LaunchFlowStepView(
-                3,
-                "Publish and test",
-                "Open join, add the Wallet pass, then stamp once.",
-                false,
-                ActiveLaunchStage == "operate",
-                ActiveLaunchStage == "operate" ? "Current" : "Next")
-        ];
     }
 
     private async Task SuggestPaletteFromLogoAsync(string logoPreviewUri)
@@ -1668,11 +1675,4 @@ else
         string Label,
         IReadOnlyList<WalletCardSnapshot> Cards);
 
-    private sealed record LaunchFlowStepView(
-        int Order,
-        string Label,
-        string Description,
-        bool IsComplete,
-        bool IsCurrent,
-        string StatusLabel);
 }
