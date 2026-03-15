@@ -160,9 +160,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F20`
-  - merchant auth and ownership boundary with onboarding credentials, cookie-backed merchant session, and workspace access control
-  - validator: `scripts/validate-f20-merchant-auth-boundary.sh`
+- `F21`
+  - onboarding and workspace IA reset so shop signup, billing, first programme setup, and programme delivery read as one natural flow
+  - validator: `scripts/validate-f21-journey-ia-reset.sh`
 
 ## Current Product Reality
 
@@ -199,6 +199,8 @@ The repo now supports:
 - Wallet founder-demo work now has the actual web-service update path after a pass has been issued
 - merchant onboarding now sets owner access credentials before the workspace opens
 - merchant workspace routes now require a cookie-backed merchant session and enforce merchant ownership on route access
+- shop signup now creates the merchant account first, while the first programme is created explicitly after billing inside the workspace
+- starter programme creation now offers explicit templates, including a visit reward and a coffee-plus-food offer shape
 
 The repo does not yet represent finished production behavior for:
 

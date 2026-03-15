@@ -17,6 +17,9 @@ public sealed record BrandProfileSnapshot(
 
 public sealed record LoyaltyProgrammeSnapshot(
     Guid ProgrammeId,
+    string TemplateKey,
+    string TemplateLabel,
+    string DeliveryLabel,
     string RewardItemLabel,
     int RewardThreshold,
     string RewardCopy,
@@ -26,6 +29,9 @@ public sealed record LoyaltyProgrammeSnapshot(
 
 public sealed record ProgrammeSummarySnapshot(
     Guid ProgrammeId,
+    string TemplateKey,
+    string TemplateLabel,
+    string DeliveryLabel,
     string RewardHeadline,
     string RewardItemLabel,
     int RewardThreshold,
@@ -98,7 +104,7 @@ public sealed record MerchantWorkspaceSnapshot(
     MerchantSetupChecklistSnapshot SetupChecklist,
     MerchantInsightsSnapshot ShopInsights,
     IReadOnlyList<ProgrammeSummarySnapshot> Programmes,
-    LoyaltyProgrammeSnapshot SelectedProgramme,
-    string SelectedJoinUrl,
+    LoyaltyProgrammeSnapshot? SelectedProgramme,
+    string? SelectedJoinUrl,
     IReadOnlyList<WalletCardSnapshot> SelectedProgrammeCards,
     IReadOnlyList<TimelineEventSnapshot> Timeline);

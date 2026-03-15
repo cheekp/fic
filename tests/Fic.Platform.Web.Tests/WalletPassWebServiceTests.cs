@@ -44,8 +44,10 @@ public sealed class WalletPassWebServiceTests
             primaryColor: "#1f3731",
             accentColor: "#f4c15d",
             baseUri: client.BaseAddress!.ToString());
+        workspace = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-visits", client.BaseAddress!.ToString())!;
+        var selectedProgramme = Assert.IsType<Fic.Contracts.LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
 
-        var card = state.JoinCustomer(workspace.SelectedProgramme.JoinCode)!;
+        var card = state.JoinCustomer(selectedProgramme.JoinCode)!;
         var delivery = state.GetWalletPassDelivery(card.CardId)!;
         var baseline = delivery.Card.LastUpdatedUtc.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
 
@@ -61,7 +63,7 @@ public sealed class WalletPassWebServiceTests
 
         var updated = state.AwardVisit(
             workspace.Merchant.MerchantId,
-            workspace.SelectedProgramme.ProgrammeId,
+            selectedProgramme.ProgrammeId,
             delivery.Card.CardCode,
             client.BaseAddress!.ToString());
 
@@ -127,8 +129,10 @@ public sealed class WalletPassWebServiceTests
             primaryColor: "#1f3731",
             accentColor: "#f4c15d",
             baseUri: client.BaseAddress!.ToString());
+        workspace = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-visits", client.BaseAddress!.ToString())!;
+        var selectedProgramme = Assert.IsType<Fic.Contracts.LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
 
-        var card = state.JoinCustomer(workspace.SelectedProgramme.JoinCode)!;
+        var card = state.JoinCustomer(selectedProgramme.JoinCode)!;
         var delivery = state.GetWalletPassDelivery(card.CardId)!;
         var baseline = delivery.Card.LastUpdatedUtc.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
 
@@ -149,7 +153,7 @@ public sealed class WalletPassWebServiceTests
 
         state.AwardVisit(
             workspace.Merchant.MerchantId,
-            workspace.SelectedProgramme.ProgrammeId,
+            selectedProgramme.ProgrammeId,
             delivery.Card.CardCode,
             client.BaseAddress!.ToString());
 

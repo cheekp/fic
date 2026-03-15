@@ -40,8 +40,9 @@ public sealed class CompanyBrandSurfaceTests
 
         var cut = context.Render<PortalSignup>();
 
-        Assert.Contains("Create your shop account", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Create your shop", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Billing and owner password setup are next", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Step 1 of 3", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Continue to Billing", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Next: confirm mock billing", cut.Markup, StringComparison.Ordinal);
     }

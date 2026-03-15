@@ -379,7 +379,7 @@ app.MapPost("/account/session/complete-signup", async (
     }
 
     await SignInMerchantAsync(context, result.Merchant);
-    return Results.LocalRedirect(billingReturnUrl ?? $"/portal/merchant/{merchantId:D}?tab=programmes&section=configure");
+    return Results.LocalRedirect(billingReturnUrl ?? $"/portal/merchant/{merchantId:D}?tab=programmes&section=programmes&programmeSection=create");
 }).DisableAntiforgery();
 
 app.MapGet("/account/logout", async (HttpContext context) =>

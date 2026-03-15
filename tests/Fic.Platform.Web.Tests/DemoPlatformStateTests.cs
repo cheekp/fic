@@ -14,47 +14,63 @@ public sealed class DemoPlatformStateTests
     private const string FallbackLogoUrl = "data:image/svg+xml;base64,ZmFrZQ==";
 
     [Fact]
-    public async Task CreateMerchantAsync_CreatesStarterProgrammeWithOneYearWindow()
+    public async Task CreateMerchantAsync_CreatesShopWithoutProgrammeUntilProgrammeIsConfigured()
     {
         var state = CreateState();
 
         var workspace = await CreateMerchantAsync(state);
 
-        Assert.Single(workspace.Programmes);
-        Assert.Equal(workspace.SelectedProgramme.StartsOn.AddDays(365), workspace.SelectedProgramme.EndsOn);
-        Assert.True(workspace.SetupChecklist.HasAnyProgramme);
-        Assert.Equal(workspace.SelectedProgramme.ProgrammeId, workspace.Programmes[0].ProgrammeId);
+        Assert.Empty(workspace.Programmes);
+        Assert.Null(workspace.SelectedProgramme);
+        Assert.False(workspace.SetupChecklist.HasAnyProgramme);
+        Assert.Null(workspace.SelectedJoinUrl);
     }
 
     [Fact]
-    public async Task CreateProgramme_AddsSecondProgrammeAndSelectsIt()
+    public async Task CreateProgramme_FirstProgrammeUsesTemplateAndOneYearWindow()
     {
         var state = CreateState();
         var workspace = await CreateMerchantAsync(state);
 
-        var updated = state.CreateProgramme(workspace.Merchant.MerchantId, BaseUri);
+        var updated = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-visits", BaseUri);
 
         Assert.NotNull(updated);
-        Assert.Equal(2, updated!.Programmes.Count);
-        Assert.NotEqual(workspace.SelectedProgramme.ProgrammeId, updated.SelectedProgramme.ProgrammeId);
-        Assert.Contains(updated.SelectedProgramme.JoinCode, updated.SelectedJoinUrl, StringComparison.Ordinal);
+        Assert.Single(updated!.Programmes);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(updated.SelectedProgramme);
+        Assert.Equal("coffee-visits", selectedProgramme.TemplateKey);
+        Assert.Equal("Coffee stamp card", selectedProgramme.TemplateLabel);
+        Assert.Equal("Wallet loyalty card", selectedProgramme.DeliveryLabel);
+        Assert.Equal(selectedProgramme.StartsOn.AddDays(365), selectedProgramme.EndsOn);
+        Assert.Contains(selectedProgramme.JoinCode, updated.SelectedJoinUrl, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GetProgrammeTemplates_ExposesVisitAndFoodOfferStarters()
+    {
+        var state = CreateState();
+
+        var templates = state.GetProgrammeTemplates();
+
+        Assert.Contains(templates, template => template.TemplateKey == "coffee-visits");
+        Assert.Contains(templates, template => template.TemplateKey == "coffee-food-offer");
     }
 
     [Fact]
     public async Task UpdateProgramme_RejectsExpiryBeforeBegin()
     {
         var state = CreateState();
-        var workspace = await CreateMerchantAsync(state);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(10);
         var endsOn = startsOn.AddDays(-1);
 
         var error = Assert.Throws<InvalidOperationException>(() =>
             state.UpdateProgramme(
                 workspace.Merchant.MerchantId,
-                workspace.SelectedProgramme.ProgrammeId,
-                workspace.SelectedProgramme.RewardItemLabel,
-                workspace.SelectedProgramme.RewardThreshold,
-                workspace.SelectedProgramme.RewardCopy,
+                selectedProgramme.ProgrammeId,
+                selectedProgramme.RewardItemLabel,
+                selectedProgramme.RewardThreshold,
+                selectedProgramme.RewardCopy,
                 startsOn,
                 endsOn,
                 BaseUri));
@@ -66,21 +82,23 @@ public sealed class DemoPlatformStateTests
     public async Task JoinCustomer_ReturnsNull_WhenProgrammeHasNotStarted()
     {
         var state = CreateState();
-        var workspace = await CreateMerchantAsync(state);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(7);
         var endsOn = startsOn.AddDays(30);
 
         var updated = state.UpdateProgramme(
             workspace.Merchant.MerchantId,
-            workspace.SelectedProgramme.ProgrammeId,
-            workspace.SelectedProgramme.RewardItemLabel,
-            workspace.SelectedProgramme.RewardThreshold,
-            workspace.SelectedProgramme.RewardCopy,
+            selectedProgramme.ProgrammeId,
+            selectedProgramme.RewardItemLabel,
+            selectedProgramme.RewardThreshold,
+            selectedProgramme.RewardCopy,
             startsOn,
             endsOn,
             BaseUri);
 
-        var joined = state.JoinCustomer(updated!.SelectedProgramme.JoinCode);
+        var updatedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(updated!.SelectedProgramme);
+        var joined = state.JoinCustomer(updatedProgramme.JoinCode);
 
         Assert.Null(joined);
     }
@@ -89,25 +107,27 @@ public sealed class DemoPlatformStateTests
     public async Task AwardVisit_ReturnsNull_WhenProgrammeHasExpired()
     {
         var state = CreateState();
-        var workspace = await CreateMerchantAsync(state);
-        var joined = state.JoinCustomer(workspace.SelectedProgramme.JoinCode);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        var joined = state.JoinCustomer(selectedProgramme.JoinCode);
         Assert.NotNull(joined);
 
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-30);
         var endsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-1);
         var expired = state.UpdateProgramme(
             workspace.Merchant.MerchantId,
-            workspace.SelectedProgramme.ProgrammeId,
-            workspace.SelectedProgramme.RewardItemLabel,
-            workspace.SelectedProgramme.RewardThreshold,
-            workspace.SelectedProgramme.RewardCopy,
+            selectedProgramme.ProgrammeId,
+            selectedProgramme.RewardItemLabel,
+            selectedProgramme.RewardThreshold,
+            selectedProgramme.RewardCopy,
             startsOn,
             endsOn,
             BaseUri);
 
+        var expiredProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(expired!.SelectedProgramme);
         var result = state.AwardVisit(
             workspace.Merchant.MerchantId,
-            expired!.SelectedProgramme.ProgrammeId,
+            expiredProgramme.ProgrammeId,
             joined!.CardCode,
             BaseUri);
 
@@ -118,8 +138,9 @@ public sealed class DemoPlatformStateTests
     public async Task WalletCardSnapshot_TracksUpdatedProgrammeDates()
     {
         var state = CreateState();
-        var workspace = await CreateMerchantAsync(state);
-        var joined = state.JoinCustomer(workspace.SelectedProgramme.JoinCode);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        var joined = state.JoinCustomer(selectedProgramme.JoinCode);
         Assert.NotNull(joined);
 
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(-2);
@@ -127,7 +148,7 @@ public sealed class DemoPlatformStateTests
 
         state.UpdateProgramme(
             workspace.Merchant.MerchantId,
-            workspace.SelectedProgramme.ProgrammeId,
+            selectedProgramme.ProgrammeId,
             "espressos",
             7,
             "Buy 7 espressos, get one free.",
@@ -184,6 +205,12 @@ public sealed class DemoPlatformStateTests
             primaryColor: DefaultPrimaryColor,
             accentColor: DefaultAccentColor,
             baseUri: BaseUri);
+
+    private static async Task<MerchantWorkspaceSnapshot> CreateMerchantWithProgrammeAsync(DemoPlatformState state, string templateKey = "coffee-visits")
+    {
+        var workspace = await CreateMerchantAsync(state);
+        return state.CreateProgramme(workspace.Merchant.MerchantId, templateKey, BaseUri)!;
+    }
 
     private sealed class InMemoryMerchantBrandAssetStore : IMerchantBrandAssetStore
     {
