@@ -21,7 +21,9 @@ public sealed class DemoPlatformState(
     private readonly ConcurrentDictionary<string, Guid> _joinCodes = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<Guid, CustomerCard> _cards = new();
     private readonly ConcurrentDictionary<string, Guid> _cardCodes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, Guid> _walletPassIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<Guid, CustomerProgress> _progress = new();
+    private readonly ConcurrentDictionary<string, WalletPassDeviceRegistration> _walletRegistrations = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<TimelineEventSnapshot> _timeline = [];
 
     public event Action? Changed;
@@ -179,6 +181,7 @@ public sealed class DemoPlatformState(
                 programme.ProgrammeId,
                 $"card-{Guid.NewGuid():N}"[..14],
                 $"wallet-{Guid.NewGuid():N}"[..16],
+                $"auth-{Guid.NewGuid():N}",
                 now);
 
             var progress = new CustomerProgress(
@@ -191,6 +194,7 @@ public sealed class DemoPlatformState(
 
             _cards[card.CardId] = card;
             _cardCodes[card.CardCode] = card.CardId;
+            _walletPassIds[card.WalletPassId] = card.CardId;
             _progress[card.CardId] = progress;
 
             AppendEvent(new CustomerJoined(
@@ -217,6 +221,130 @@ public sealed class DemoPlatformState(
         lock (_gate)
         {
             return _cards.ContainsKey(cardId) ? BuildWalletCardSnapshot(cardId) : null;
+        }
+    }
+
+    public WalletPassDeliverySnapshot? GetWalletPassDelivery(Guid cardId)
+    {
+        lock (_gate)
+        {
+            if (!_cards.TryGetValue(cardId, out var card))
+            {
+                return null;
+            }
+
+            var snapshot = BuildWalletCardSnapshot(cardId);
+            return snapshot is null ? null : new WalletPassDeliverySnapshot(snapshot, card.WalletAuthenticationToken);
+        }
+    }
+
+    public WalletPassDeliverySnapshot? GetWalletPassDeliveryBySerialNumber(string serialNumber)
+    {
+        lock (_gate)
+        {
+            if (!_walletPassIds.TryGetValue(serialNumber, out var cardId) || !_cards.TryGetValue(cardId, out var card))
+            {
+                return null;
+            }
+
+            var snapshot = BuildWalletCardSnapshot(cardId);
+            return snapshot is null ? null : new WalletPassDeliverySnapshot(snapshot, card.WalletAuthenticationToken);
+        }
+    }
+
+    public WalletPassRegistrationResult RegisterWalletPassDevice(
+        string deviceLibraryIdentifier,
+        string serialNumber,
+        string authenticationToken,
+        string pushToken)
+    {
+        lock (_gate)
+        {
+            if (!_walletPassIds.TryGetValue(serialNumber, out var cardId) || !_cards.TryGetValue(cardId, out var card))
+            {
+                return new WalletPassRegistrationResult(WalletPassRegistrationStatus.NotFound);
+            }
+
+            if (!string.Equals(card.WalletAuthenticationToken, authenticationToken, StringComparison.Ordinal))
+            {
+                return new WalletPassRegistrationResult(WalletPassRegistrationStatus.Unauthorized);
+            }
+
+            var key = BuildWalletRegistrationKey(deviceLibraryIdentifier, serialNumber);
+            var status = _walletRegistrations.ContainsKey(key)
+                ? WalletPassRegistrationStatus.Updated
+                : WalletPassRegistrationStatus.Created;
+
+            _walletRegistrations[key] = new WalletPassDeviceRegistration(
+                deviceLibraryIdentifier,
+                serialNumber,
+                cardId,
+                pushToken.Trim(),
+                DateTimeOffset.UtcNow);
+
+            return new WalletPassRegistrationResult(status);
+        }
+    }
+
+    public WalletPassRegistrationResult RemoveWalletPassDeviceRegistration(
+        string deviceLibraryIdentifier,
+        string serialNumber,
+        string authenticationToken)
+    {
+        lock (_gate)
+        {
+            if (!_walletPassIds.TryGetValue(serialNumber, out var cardId) || !_cards.TryGetValue(cardId, out var card))
+            {
+                return new WalletPassRegistrationResult(WalletPassRegistrationStatus.NotFound);
+            }
+
+            if (!string.Equals(card.WalletAuthenticationToken, authenticationToken, StringComparison.Ordinal))
+            {
+                return new WalletPassRegistrationResult(WalletPassRegistrationStatus.Unauthorized);
+            }
+
+            var key = BuildWalletRegistrationKey(deviceLibraryIdentifier, serialNumber);
+            _walletRegistrations.TryRemove(key, out _);
+            return new WalletPassRegistrationResult(WalletPassRegistrationStatus.Updated);
+        }
+    }
+
+    public WalletPassSerialUpdateSnapshot GetUpdatedWalletPassSerialNumbers(
+        string deviceLibraryIdentifier,
+        DateTimeOffset? passesUpdatedSince)
+    {
+        lock (_gate)
+        {
+            var matches = _walletRegistrations.Values
+                .Where(registration => string.Equals(registration.DeviceLibraryIdentifier, deviceLibraryIdentifier, StringComparison.Ordinal))
+                .Select(registration =>
+                {
+                    var card = BuildWalletCardSnapshot(registration.CardId);
+                    return new
+                    {
+                        registration.SerialNumber,
+                        Card = card
+                    };
+                })
+                .Where(x => x.Card is not null)
+                .ToArray();
+
+            var changed = matches
+                .Where(x => !passesUpdatedSince.HasValue || x.Card!.LastUpdatedUtc > passesUpdatedSince.Value)
+                .OrderBy(x => x.Card!.LastUpdatedUtc)
+                .ToArray();
+
+            var lastUpdatedUtc = changed.Length > 0
+                ? changed.Max(x => x.Card!.LastUpdatedUtc)
+                : matches.Select(x => x.Card!.LastUpdatedUtc).DefaultIfEmpty().Max();
+
+            var lastUpdatedTag = lastUpdatedUtc == default
+                ? null
+                : BuildWalletUpdateTag(lastUpdatedUtc);
+
+            return new WalletPassSerialUpdateSnapshot(
+                changed.Select(x => x.SerialNumber).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+                lastUpdatedTag);
         }
     }
 
@@ -669,6 +797,12 @@ public sealed class DemoPlatformState(
 
     private static bool IsProgrammeActiveOn(LoyaltyProgramme programme, DateOnly onDate) =>
         onDate >= programme.StartsOn && onDate <= programme.EndsOn;
+
+    private static string BuildWalletRegistrationKey(string deviceLibraryIdentifier, string serialNumber) =>
+        $"{deviceLibraryIdentifier.Trim()}::{serialNumber.Trim()}";
+
+    private static string BuildWalletUpdateTag(DateTimeOffset updatedAtUtc) =>
+        updatedAtUtc.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     private void AppendEvent(Fic.BuildingBlocks.DomainEvent domainEvent, string summary)
     {

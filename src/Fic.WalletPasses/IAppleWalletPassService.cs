@@ -6,5 +6,9 @@ public interface IAppleWalletPassService
 {
     WalletPassCapability GetCapability();
 
-    Task<WalletPassPackage> CreatePackageAsync(WalletCardSnapshot card, CancellationToken cancellationToken = default);
+    Task<WalletPassPackage> CreatePackageAsync(
+        WalletCardSnapshot card,
+        string authenticationToken,
+        string webServiceUrl,
+        CancellationToken cancellationToken = default);
 }

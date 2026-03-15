@@ -97,7 +97,10 @@ public sealed class AppleWalletPassServiceTests
             WwdrCertificatePath = wwdrPath
         });
 
-        var package = await service.CreatePackageAsync(CreateWalletCard());
+        var package = await service.CreatePackageAsync(
+            CreateWalletCard(),
+            "auth-demo-token",
+            "https://demo.fic.test/wallet/v1/");
 
         Assert.Equal("application/vnd.apple.pkpass", package.ContentType);
         Assert.EndsWith(".pkpass", package.FileName, StringComparison.Ordinal);
@@ -119,6 +122,8 @@ public sealed class AppleWalletPassServiceTests
         Assert.Equal("pass.com.fic.demo", passDocument.RootElement.GetProperty("passTypeIdentifier").GetString());
         Assert.Equal("FIC Demo", passDocument.RootElement.GetProperty("organizationName").GetString());
         Assert.Equal("Jo's Coffee", passDocument.RootElement.GetProperty("logoText").GetString());
+        Assert.Equal("auth-demo-token", passDocument.RootElement.GetProperty("authenticationToken").GetString());
+        Assert.Equal("https://demo.fic.test/wallet/v1/", passDocument.RootElement.GetProperty("webServiceURL").GetString());
     }
 
     private static WalletCardSnapshot CreateWalletCard() =>

@@ -27,7 +27,11 @@ public sealed class AppleWalletPassService(
         return EvaluateCapability();
     }
 
-    public async Task<WalletPassPackage> CreatePackageAsync(WalletCardSnapshot card, CancellationToken cancellationToken = default)
+    public async Task<WalletPassPackage> CreatePackageAsync(
+        WalletCardSnapshot card,
+        string authenticationToken,
+        string webServiceUrl,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -37,7 +41,7 @@ public sealed class AppleWalletPassService(
             throw new InvalidOperationException(capability.HelperText);
         }
 
-        var packageFiles = await BuildUnsignedPackageFilesAsync(card, cancellationToken);
+        var packageFiles = await BuildUnsignedPackageFilesAsync(card, authenticationToken, webServiceUrl, cancellationToken);
         var manifestBytes = BuildManifest(packageFiles);
         var signatureBytes = BuildSignature(manifestBytes);
 
@@ -118,11 +122,17 @@ public sealed class AppleWalletPassService(
             diagnostics);
     }
 
-    private async Task<Dictionary<string, byte[]>> BuildUnsignedPackageFilesAsync(WalletCardSnapshot card, CancellationToken cancellationToken)
+    private async Task<Dictionary<string, byte[]>> BuildUnsignedPackageFilesAsync(
+        WalletCardSnapshot card,
+        string authenticationToken,
+        string webServiceUrl,
+        CancellationToken cancellationToken)
     {
         var files = new Dictionary<string, byte[]>(StringComparer.Ordinal)
         {
-            ["pass.json"] = JsonSerializer.SerializeToUtf8Bytes(BuildPassDocument(card), JsonOptions),
+            ["pass.json"] = JsonSerializer.SerializeToUtf8Bytes(
+                BuildPassDocument(card, authenticationToken, webServiceUrl),
+                JsonOptions),
             ["icon.png"] = LoadDefaultAssetBytes("icon.png"),
             ["icon@2x.png"] = LoadDefaultAssetBytes("icon@2x.png"),
             ["icon@3x.png"] = LoadDefaultAssetBytes("icon@3x.png")
@@ -148,7 +158,10 @@ public sealed class AppleWalletPassService(
         return files;
     }
 
-    private AppleWalletPassDocument BuildPassDocument(WalletCardSnapshot card)
+    private AppleWalletPassDocument BuildPassDocument(
+        WalletCardSnapshot card,
+        string authenticationToken,
+        string webServiceUrl)
     {
         var theme = MerchantBrandThemeCompiler.Compile(
             card.PrimaryColor,
@@ -170,6 +183,8 @@ public sealed class AppleWalletPassService(
             Description = string.IsNullOrWhiteSpace(options.Description)
                 ? $"{card.VendorDisplayName} loyalty card"
                 : options.Description,
+            AuthenticationToken = authenticationToken,
+            WebServiceUrl = webServiceUrl,
             LogoText = card.VendorDisplayName,
             BackgroundColor = background,
             ForegroundColor = foreground,
@@ -485,6 +500,12 @@ public sealed class AppleWalletPassService(
 
         [JsonPropertyName("description")]
         public string Description { get; init; } = string.Empty;
+
+        [JsonPropertyName("authenticationToken")]
+        public string AuthenticationToken { get; init; } = string.Empty;
+
+        [JsonPropertyName("webServiceURL")]
+        public string WebServiceUrl { get; init; } = string.Empty;
 
         [JsonPropertyName("logoText")]
         public string LogoText { get; init; } = string.Empty;

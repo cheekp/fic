@@ -148,7 +148,11 @@ public sealed class CompanyBrandSurfaceTests
                 "Finish the Apple Wallet signing checklist to issue a real pass.",
                 ["Signing certificate path is missing."]);
 
-        public Task<WalletPassPackage> CreatePackageAsync(Fic.Contracts.WalletCardSnapshot card, CancellationToken cancellationToken = default) =>
+        public Task<WalletPassPackage> CreatePackageAsync(
+            Fic.Contracts.WalletCardSnapshot card,
+            string authenticationToken,
+            string webServiceUrl,
+            CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("Company support tests do not issue Apple Wallet packages.");
     }
 

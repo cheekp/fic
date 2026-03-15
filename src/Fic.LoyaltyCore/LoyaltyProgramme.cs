@@ -27,6 +27,7 @@ public sealed record CustomerCard(
     Guid ProgrammeId,
     string CardCode,
     string WalletPassId,
+    string WalletAuthenticationToken,
     DateTimeOffset JoinedAtUtc);
 
 public sealed record CustomerProgress(

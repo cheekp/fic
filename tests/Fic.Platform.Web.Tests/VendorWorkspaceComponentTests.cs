@@ -501,7 +501,11 @@ public sealed class VendorWorkspaceComponentTests
                 "Open Card Preview",
                 "Preview only for component tests.");
 
-        public Task<WalletPassPackage> CreatePackageAsync(WalletCardSnapshot card, CancellationToken cancellationToken = default) =>
+        public Task<WalletPassPackage> CreatePackageAsync(
+            WalletCardSnapshot card,
+            string authenticationToken,
+            string webServiceUrl,
+            CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("Component tests do not issue Apple Wallet packages.");
     }
 
