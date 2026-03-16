@@ -1,6 +1,9 @@
 @page "/portal/signup/billing/{MerchantId:guid}"
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.DependencyInjection
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
+@inject IServiceProvider Services
 
 <PageTitle>Billing Setup</PageTitle>
 
@@ -14,89 +17,133 @@
 }
 else
 {
-    <section class="signup-journey-strip signup-journey-strip--billing">
-        <OnboardingJourney CurrentStep="billing"
-                           AccountComplete="true"
-                           PlanComplete="true"
-                           BillingComplete="false"
-                           ShopComplete="false"
-                           ProgrammeComplete="false"
-                           IsStrip="true"
-                           AccountUrl="/portal/signup"
-                           PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")"
-                           BillingUrl="@BuildBillingUrl(MerchantId, _plan)" />
-    </section>
+    <main class="onboarding-flow">
+        <section class="signup-journey-strip onboarding-flow__journey">
+            <OnboardingJourney CurrentStep="billing"
+                               AccountComplete="true"
+                               PlanComplete="true"
+                               BillingComplete="false"
+                               ShopComplete="false"
+                               ProgrammeComplete="false"
+                               IsStrip="true"
+                               AccountUrl="/portal/signup"
+                               PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")"
+                               BillingUrl="@BuildBillingUrl(MerchantId, _plan)" />
+        </section>
 
-    <section class="panel signup-panel signup-panel--billing onboarding-step">
-        <div class="panel__header onboarding-step__header">
-            <div class="onboarding-step__copy">
-                <p class="eyebrow">Step 3 of 5</p>
-                <h2>Set payment and owner access</h2>
-                <p class="lede">Starter is selected for this shop. Choose payment preference, then create owner access before entering first-programme setup.</p>
-            </div>
-        </div>
-
-        <form method="post" action="/account/session/complete-signup" class="form-stack onboarding-form" aria-describedby="billing-required-note">
-            <input type="hidden" name="merchantId" value="@MerchantId" />
-            <input type="hidden" name="returnUrl" value="@($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=create&launch=create")" />
-            <input type="hidden" name="plan" value="@_plan" />
-
-            <section class="billing-plan-summary" aria-label="Selected plan summary">
-                <div>
-                    <p class="eyebrow">Selected plan</p>
-                    <h3>Starter</h3>
-                    <p class="field-hint">£19.99/mo self-serve onboarding path.</p>
+        <section class="panel signup-panel onboarding-step onboarding-flow__panel">
+            <div class="panel__header onboarding-step__header">
+                <div class="onboarding-step__copy">
+                    <p class="eyebrow">Step 3 of 5</p>
+                    <h2>Set payment and owner access</h2>
+                    <p class="lede">Starter is selected for this shop. Choose payment preference, then create owner access before entering first-programme setup.</p>
                 </div>
-                <a class="button button--secondary button--compact" href="@($"/portal/signup/plan/{MerchantId:D}")">Change plan</a>
-            </section>
-
-            <label class="field field--full billing-payment-inline">
-                <span>Payment method</span>
-                <select class="input" name="paymentMethod">
-                    <option value="apple-pay" selected>Apple Pay</option>
-                    <option value="card">Card</option>
-                </select>
-                <span class="field-hint">Starter billing uses this method after onboarding.</span>
-            </label>
-
-            <section class="form-section">
-                <div class="form-section__header">
-                    <h4>Owner access</h4>
-                    <p id="billing-required-note" class="field-hint">Set an owner password now so Step 4 can continue with required shop details and optional branding.</p>
-                </div>
-
-                <div class="form-grid">
-                    <label class="field">
-                        <span>Owner email</span>
-                        <input class="input" type="email" value="@_workspace.Merchant.ContactEmail" readonly />
-                    </label>
-
-                    <label class="field">
-                        <span>Owner password</span>
-                        <input class="input" type="password" name="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters" />
-                    </label>
-
-                    <label class="field">
-                        <span>Confirm password</span>
-                        <input class="input" type="password" name="confirmPassword" autocomplete="new-password" required minlength="8" placeholder="Re-enter password" />
-                    </label>
-                </div>
-            </section>
-
-            @if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <p class="field-error field-error--inline">@_message</p>
-            }
-
-            <p class="field-hint billing-shop-summary">@BuildShopSummary(_workspace.Merchant.DisplayName, _workspace.Merchant.TownOrCity, _workspace.Merchant.Postcode)</p>
-
-            <div class="form-actions form-actions--onboarding">
-                <button class="button button--primary button--wide" type="submit">Continue to shop details</button>
             </div>
 
-            <p class="onboarding-back-link"><a class="inline-link" href="@($"/portal/signup/plan/{MerchantId:D}")">Back to plan selection</a></p>
-        </form>
-    </section>
+            <form method="post" action="/account/session/complete-signup" class="form-stack onboarding-form" aria-describedby="billing-required-note">
+                <input type="hidden" name="merchantId" value="@MerchantId" />
+                <input type="hidden" name="returnUrl" value="@($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=create&launch=create")" />
+                <input type="hidden" name="plan" value="@_plan" />
+
+                <section class="billing-plan-summary" aria-label="Selected plan summary">
+                    <div>
+                        <p class="eyebrow">Selected plan</p>
+                        <h3>Starter</h3>
+                        <p class="field-hint">£19.99/mo self-serve onboarding path.</p>
+                    </div>
+                    <a class="button button--secondary button--compact" href="@($"/portal/signup/plan/{MerchantId:D}")">Change plan</a>
+                </section>
+
+                <section class="billing-payment-panel" aria-label="Payment details">
+                    <div class="form-section__header">
+                        <h4>Payment method</h4>
+                        <p class="field-hint">Choose your preferred method now. Card details can be entered in this setup flow.</p>
+                    </div>
+
+                    <div class="billing-method-grid">
+                        <label class="billing-method-option billing-method-option--active">
+                            <input type="radio" name="paymentMethod" value="apple-pay" checked />
+                            <span class="billing-method-option__body">
+                                <img class="billing-method-option__mark" src="/images/apple-pay-mark.svg" alt="Apple Pay" />
+                                <span class="field-hint">Fastest setup on supported devices and browsers.</span>
+                            </span>
+                        </label>
+
+                        <label class="billing-method-option">
+                            <input type="radio" name="paymentMethod" value="card" />
+                            <span class="billing-method-option__body">
+                                <strong>Card</strong>
+                                <span class="field-hint">Use a business debit or credit card.</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="form-grid billing-card-grid">
+                        <label class="field">
+                            <span>Cardholder name</span>
+                            <input class="input" type="text" name="cardholderName" @bind-value="_cardholderName" @bind-value:event="oninput" autocomplete="cc-name" placeholder="Name on card" />
+                        </label>
+
+                        <label class="field">
+                            <span>Card number</span>
+                            <input class="input" type="text" name="cardNumber" @bind-value="_cardNumber" @bind-value:event="oninput" autocomplete="cc-number" inputmode="numeric" placeholder="1234 5678 9012 3456" />
+                        </label>
+
+                        <label class="field">
+                            <span>Expiry</span>
+                            <input class="input" type="text" name="cardExpiry" @bind-value="_cardExpiry" @bind-value:event="oninput" autocomplete="cc-exp" inputmode="numeric" placeholder="MM/YY" />
+                        </label>
+
+                        <label class="field">
+                            <span>CVC</span>
+                            <input class="input" type="text" name="cardCvc" @bind-value="_cardCvc" @bind-value:event="oninput" autocomplete="cc-csc" inputmode="numeric" placeholder="123" />
+                        </label>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <div class="form-section__header">
+                        <h4>Owner access</h4>
+                        <p id="billing-required-note" class="field-hint">Set an owner password now so Step 4 can continue with required shop details and optional branding.</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <label class="field">
+                            <span>Owner email</span>
+                            <input class="input" type="email" value="@_workspace.Merchant.ContactEmail" readonly />
+                        </label>
+
+                        <label class="field">
+                            <span>Owner password</span>
+                            <input class="input" type="password" name="password" @bind-value="_ownerPassword" @bind-value:event="oninput" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters" />
+                        </label>
+
+                        <label class="field">
+                            <span>Confirm password</span>
+                            <input class="input" type="password" name="confirmPassword" @bind-value="_confirmPassword" @bind-value:event="oninput" autocomplete="new-password" required minlength="8" placeholder="Re-enter password" />
+                        </label>
+                    </div>
+                </section>
+
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <p class="field-error field-error--inline">@_message</p>
+                }
+
+                <p class="field-hint billing-shop-summary">@BuildShopSummary(_workspace.Merchant.DisplayName, _workspace.Merchant.TownOrCity, _workspace.Merchant.Postcode)</p>
+
+                <div class="form-actions form-actions--onboarding">
+                    @if (IsSignupDemoSeedEnabled)
+                    {
+                        <button class="button button--secondary button--wide" type="button" @onclick="ApplyDemoSeed">Use demo payment details</button>
+                    }
+                    <button class="button button--primary button--wide" type="submit">Continue to shop details</button>
+                </div>
+
+                <p class="onboarding-back-link"><a class="inline-link" href="@($"/portal/signup/plan/{MerchantId:D}")">Back to plan selection</a></p>
+            </form>
+        </section>
+    </main>
 }
 
 @code {
@@ -114,6 +161,14 @@ else
     private MerchantWorkspaceSnapshot? _workspace;
     private string? _message;
     private string _plan = "starter";
+    private string _cardholderName = string.Empty;
+    private string _cardNumber = string.Empty;
+    private string _cardExpiry = string.Empty;
+    private string _cardCvc = string.Empty;
+    private string _ownerPassword = string.Empty;
+    private string _confirmPassword = string.Empty;
+    private bool IsSignupDemoSeedEnabled =>
+        Services.GetService<IConfiguration>()?.GetValue<bool>("Features:SignupDemoSeedEnabled") ?? false;
 
     protected override void OnParametersSet()
     {
@@ -151,6 +206,16 @@ else
 
     private static string BuildBillingUrl(Guid merchantId, string plan) =>
         $"/portal/signup/billing/{merchantId:D}?plan={plan}";
+
+    private void ApplyDemoSeed()
+    {
+        _cardholderName = "Jo Cheek";
+        _cardNumber = "4242 4242 4242 4242";
+        _cardExpiry = "12/30";
+        _cardCvc = "424";
+        _ownerPassword = "jo-demo-setup";
+        _confirmPassword = "jo-demo-setup";
+    }
 
     private static string BuildShopSummary(string displayName, string townOrCity, string postcode)
     {

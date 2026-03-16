@@ -12,3 +12,6 @@ Recommended contents for the first architecture note:
 
 Current draft:
 - `FIC_PLATFORM_ARCHITECTURE_DRAFT.md`
+
+Current supporting notes:
+- `F30_UX_QUALITY_GATE_ARCHITECTURE_NOTE.md`

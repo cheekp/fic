@@ -9,58 +9,60 @@
 
 <PageTitle>Set Up Your Shop</PageTitle>
 
-<section class="signup-journey-strip signup-journey-strip--entry">
-    <OnboardingJourney CurrentStep="account"
-                       AccountComplete="false"
-                       PlanComplete="false"
-                       BillingComplete="false"
-                       ShopComplete="false"
-                       ProgrammeComplete="false"
-                       IsStrip="true"
-                       AccountUrl="/portal/signup" />
-</section>
+<main class="onboarding-flow">
+    <section class="signup-journey-strip onboarding-flow__journey">
+        <OnboardingJourney CurrentStep="account"
+                           AccountComplete="false"
+                           PlanComplete="false"
+                           BillingComplete="false"
+                           ShopComplete="false"
+                           ProgrammeComplete="false"
+                           IsStrip="true"
+                           AccountUrl="/portal/signup" />
+    </section>
 
-<section class="panel signup-panel signup-panel--entry onboarding-step">
-    <div class="panel__header onboarding-step__header">
-        <div class="onboarding-step__copy">
-            <p class="eyebrow">Step 1 of 5</p>
-            <h2>Create your shop</h2>
-            <p class="lede">Start with shop details. Next, choose a plan, set billing and owner access, then pick your first programme template.</p>
-        </div>
-    </div>
-
-    <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-shop" class="form-stack onboarding-form" aria-describedby="signup-required-note">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="validation-summary" />
-
-        <div class="form-grid">
-            <label class="field">
-                <span>Coffee shop name</span>
-                <InputText @bind-Value="_form.DisplayName" class="input" autocomplete="organization" placeholder="Jo's Coffee" />
-                <ValidationMessage For="() => _form.DisplayName" class="field-error" />
-            </label>
-
-            <label class="field">
-                <span>Owner email</span>
-                <InputText @bind-Value="_form.ContactEmail" class="input" autocomplete="email" placeholder="owner@shop.com" />
-                <ValidationMessage For="() => _form.ContactEmail" class="field-error" />
-            </label>
-
+    <section class="panel signup-panel onboarding-step onboarding-flow__panel">
+        <div class="panel__header onboarding-step__header">
+            <div class="onboarding-step__copy">
+                <p class="eyebrow">Step 1 of 5</p>
+                <h2>Create your shop</h2>
+                <p class="lede">Start with shop details. Next, choose a plan, set billing and owner access, then pick your first programme template.</p>
+            </div>
         </div>
 
-        <p id="signup-required-note" class="field-hint onboarding-required-note">Both fields are required to create your workspace and continue to plan selection.</p>
+        <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-shop" class="form-stack onboarding-form" aria-describedby="signup-required-note">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
 
-        <div class="form-actions form-actions--onboarding">
-            <button class="button button--primary button--wide" type="submit" disabled="@_isSubmitting">Continue to Plan</button>
-            @if (IsSignupDemoSeedEnabled)
-            {
-                <button class="button button--secondary button--wide" type="button" disabled="@_isSubmitting" @onclick="ApplyDemoSeed">Use demo details</button>
-            }
-        </div>
+            <div class="form-grid">
+                <label class="field">
+                    <span>Coffee shop name</span>
+                    <InputText @bind-Value="_form.DisplayName" class="input" autocomplete="organization" placeholder="Jo's Coffee" />
+                    <ValidationMessage For="() => _form.DisplayName" class="field-error" />
+                </label>
 
-        <p class="onboarding-back-link"><a class="inline-link" href="/">Back to start</a></p>
-    </EditForm>
-</section>
+                <label class="field">
+                    <span>Owner email</span>
+                    <InputText @bind-Value="_form.ContactEmail" class="input" autocomplete="email" placeholder="owner@shop.com" />
+                    <ValidationMessage For="() => _form.ContactEmail" class="field-error" />
+                </label>
+
+            </div>
+
+            <p id="signup-required-note" class="field-hint onboarding-required-note">Both fields are required to create your workspace and continue to plan selection.</p>
+
+            <div class="form-actions form-actions--onboarding">
+                <button class="button button--primary button--wide" type="submit" disabled="@_isSubmitting">Continue to Plan</button>
+                @if (IsSignupDemoSeedEnabled)
+                {
+                    <button class="button button--secondary button--wide" type="button" disabled="@_isSubmitting" @onclick="ApplyDemoSeed">Use demo details</button>
+                }
+            </div>
+
+            <p class="onboarding-back-link"><a class="inline-link" href="/">Back to start</a></p>
+        </EditForm>
+    </section>
+</main>
 
 @code {
     private readonly SignupFormModel _form = new();

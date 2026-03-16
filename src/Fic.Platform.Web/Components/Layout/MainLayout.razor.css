@@ -67,7 +67,7 @@
 
 .merchant-shell-bar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 0.85rem;
     align-items: center;
     padding: 0.2rem 0 1rem;
@@ -113,7 +113,7 @@
 .merchant-shell-bar__actions {
     position: absolute;
     top: calc(100% + 0.65rem);
-    right: 0;
+    left: 0;
     z-index: 60;
     display: none;
     width: min(18rem, calc(100vw - 2rem));
@@ -383,7 +383,7 @@
     }
 
     .merchant-shell-bar {
-        justify-content: space-between;
+        justify-content: flex-start;
         align-items: center;
     }
 
@@ -408,7 +408,7 @@
     }
 
     .merchant-shell-bar__menu {
-        align-self: end;
+        align-self: start;
     }
 
     .merchant-shell-bar__actions {

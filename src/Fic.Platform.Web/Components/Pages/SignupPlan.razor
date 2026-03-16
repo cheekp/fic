@@ -1,6 +1,9 @@
 @page "/portal/signup/plan/{MerchantId:guid}"
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.DependencyInjection
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
+@inject IServiceProvider Services
 
 <PageTitle>Plan Selection</PageTitle>
 
@@ -14,78 +17,84 @@
 }
 else
 {
-    <section class="signup-journey-strip signup-journey-strip--plan">
-        <OnboardingJourney CurrentStep="plan"
-                           AccountComplete="true"
-                           PlanComplete="false"
-                           BillingComplete="false"
-                           ShopComplete="false"
-                           ProgrammeComplete="false"
-                           IsStrip="true"
-                           AccountUrl="/portal/signup"
-                           PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")" />
-    </section>
-
-    <section class="panel signup-panel signup-panel--plan onboarding-step">
-        <div class="panel__header onboarding-step__header">
-            <div class="onboarding-step__copy">
-                <p class="eyebrow">Step 2 of 5</p>
-                <h2>Choose your launch plan</h2>
-                <p class="lede">Pick the tier that fits today. Starter stays self-serve; Growth and Enterprise route to North Star support.</p>
-            </div>
-        </div>
-
-        @if (!string.IsNullOrWhiteSpace(_message))
-        {
-            <p class="field-error field-error--inline">@_message</p>
-        }
-
-        <section class="tier-grid" aria-label="Product tiers">
-            @foreach (var tier in BillingTiers)
-            {
-                <article class="tier-card @(tier.IsSelfServeEnabled ? "tier-card--enabled" : "tier-card--sales")">
-                    <div class="tier-card__header">
-                        <div>
-                            <p class="eyebrow">@tier.Tagline</p>
-                            <h3>
-                                @tier.Name
-                                @if (tier.IsSelfServeEnabled)
-                                {
-                                    <span class="tier-card__flag">Recommended</span>
-                                }
-                            </h3>
-                            <p class="field-hint">@tier.Description</p>
-                        </div>
-                        <span class="chip @(tier.IsSelfServeEnabled ? "chip--accent" : string.Empty)">@tier.PriceLabel</span>
-                    </div>
-
-                    <ul class="tier-card__features">
-                        @foreach (var feature in tier.Features)
-                        {
-                            <li>@feature</li>
-                        }
-                    </ul>
-
-                    <div class="form-actions tier-card__actions">
-                        @if (tier.IsSelfServeEnabled)
-                        {
-                            <a class="button button--primary button--wide" href="@($"/portal/signup/billing/{MerchantId:D}?plan=starter")">Continue with Starter</a>
-                        }
-                        else
-                        {
-                            <a class="button button--secondary button--wide" href="/consultancy">Contact us</a>
-                        }
-                    </div>
-                </article>
-            }
+    <main class="onboarding-flow">
+        <section class="signup-journey-strip onboarding-flow__journey">
+            <OnboardingJourney CurrentStep="plan"
+                               AccountComplete="true"
+                               PlanComplete="false"
+                               BillingComplete="false"
+                               ShopComplete="false"
+                               ProgrammeComplete="false"
+                               IsStrip="true"
+                               AccountUrl="/portal/signup"
+                               PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")" />
         </section>
 
-        <p class="field-hint onboarding-required-note">Next step is billing and owner access. Shop details and branding continue after that in your workspace.</p>
+        <section class="panel signup-panel onboarding-step onboarding-flow__panel">
+            <div class="panel__header onboarding-step__header">
+                <div class="onboarding-step__copy">
+                    <p class="eyebrow">Step 2 of 5</p>
+                    <h2>Choose your launch plan</h2>
+                    <p class="lede">Pick the tier that fits today. Starter stays self-serve; Growth and Enterprise route to North Star support.</p>
+                </div>
+            </div>
 
-        <div class="form-actions form-actions--onboarding">
-            <a class="button button--secondary button--wide" href="/portal/signup">Back to create shop</a>
-        </div>
-    </section>
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <p class="field-error field-error--inline">@_message</p>
+            }
+
+            <section class="tier-grid" aria-label="Product tiers">
+                @foreach (var tier in BillingTiers)
+                {
+                    <article class="tier-card @(tier.IsSelfServeEnabled ? "tier-card--enabled" : "tier-card--sales")">
+                        <div class="tier-card__header">
+                            <div>
+                                <p class="eyebrow">@tier.Tagline</p>
+                                <h3>
+                                    @tier.Name
+                                    @if (tier.IsSelfServeEnabled)
+                                    {
+                                        <span class="tier-card__flag">Recommended</span>
+                                    }
+                                </h3>
+                                <p class="field-hint">@tier.Description</p>
+                            </div>
+                            <span class="chip @(tier.IsSelfServeEnabled ? "chip--accent" : string.Empty)">@tier.PriceLabel</span>
+                        </div>
+
+                        <ul class="tier-card__features">
+                            @foreach (var feature in tier.Features)
+                            {
+                                <li>@feature</li>
+                            }
+                        </ul>
+
+                        <div class="form-actions tier-card__actions">
+                            @if (tier.IsSelfServeEnabled)
+                            {
+                                <a class="button button--primary button--wide" href="@($"/portal/signup/billing/{MerchantId:D}?plan=starter")">Continue with Starter</a>
+                            }
+                            else
+                            {
+                                <a class="button button--secondary button--wide" href="/consultancy">Contact us</a>
+                            }
+                        </div>
+                    </article>
+                }
+            </section>
+
+            <p class="field-hint onboarding-required-note">Next step is billing and owner access. Shop details and branding continue after that in your workspace.</p>
+
+            <div class="form-actions form-actions--onboarding">
+                <a class="button button--secondary button--wide" href="/portal/signup">Back to create shop</a>
+                @if (IsSignupDemoSeedEnabled)
+                {
+                    <a class="button button--secondary button--wide" href="@BuildBillingUrl(MerchantId)">Use demo plan</a>
+                }
+            </div>
+        </section>
+    </main>
 }
 
 @code {
@@ -98,6 +107,8 @@ else
 
     private MerchantWorkspaceSnapshot? _workspace;
     private string? _message;
+    private bool IsSignupDemoSeedEnabled =>
+        Services.GetService<IConfiguration>()?.GetValue<bool>("Features:SignupDemoSeedEnabled") ?? false;
 
     private static IReadOnlyList<BillingTierView> BillingTiers =>
     [
@@ -149,6 +160,9 @@ else
             _ => null
         };
     }
+
+    private static string BuildBillingUrl(Guid merchantId) =>
+        $"/portal/signup/billing/{merchantId:D}?plan=starter";
 
     private sealed record BillingTierView(
         string Key,
