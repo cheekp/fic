@@ -98,6 +98,7 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("Billing and access", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Branding settings (optional)", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("workspace-stage--first-time", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Setup complete", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -116,6 +117,9 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.DoesNotContain("Onboarding journey", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Branding settings (optional)", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Setup complete", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Open overview", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Open insights", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -155,7 +159,8 @@ public sealed class VendorWorkspaceComponentTests
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        cut.FindAll("button")
+        cut.Find(".setup-roadmap")
+            .QuerySelectorAll("button")
             .Single(button => button.TextContent.Contains("Dismiss", StringComparison.Ordinal))
             .Click();
 

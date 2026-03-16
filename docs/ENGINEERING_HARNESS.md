@@ -179,14 +179,17 @@ Completed slice chain to date:
 - `F28`
   - first-time workspace focus so new merchants stay in a simple programmes-first lane until first customer join removes route and navigation gating
   - validator: `scripts/validate-f28-first-time-workspace-focus.sh`
+- `F29`
+  - onboarding guardrails and tiered billing presentation so first-run setup is production-ready, route-safe, and still demo-friendly via feature flag
+  - validator: `scripts/validate-f29-onboarding-guardrails.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F29`
-  - onboarding guardrails and tiered billing presentation so first-run setup is production-ready, route-safe, and still demo-friendly via feature flag
-  - validator: `scripts/validate-f29-onboarding-guardrails.sh`
+- `F30`
+  - onboarding surface polish so entry is CTA-first, billing expectations are explicit, and the first-time completion handoff is clear
+  - validator: `scripts/validate-f30-onboarding-surface-polish.sh`
 
 ## Current Product Reality
 

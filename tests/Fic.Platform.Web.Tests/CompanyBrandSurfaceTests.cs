@@ -23,12 +23,10 @@ public sealed class CompanyBrandSurfaceTests
 
         var cut = context.Render<Home>();
 
-        Assert.Contains("North Star Customer Solutions", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Set up your wallet loyalty programme in minutes.", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Set Up Your Shop", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Already have an account?", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Sign up now.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Sign up now", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("I already have an account", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/portal/signup", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("/consultancy", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Consultancy", cut.Find("nav[aria-label='Company links']").TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain("company-logo.png", cut.Markup, StringComparison.Ordinal);
     }
@@ -138,6 +136,7 @@ public sealed class CompanyBrandSurfaceTests
         Assert.Contains("Owner password", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Payment method", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Apple Pay", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("apple-pay-mark.svg", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Selected plan", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Starter", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Change plan", cut.Markup, StringComparison.Ordinal);
@@ -145,7 +144,7 @@ public sealed class CompanyBrandSurfaceTests
         Assert.Contains("button--wide", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Growth", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Enterprise", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Card number", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Card number", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("launch=create", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -217,12 +216,12 @@ public sealed class CompanyBrandSurfaceTests
         var cut = context.Render<MainLayout>(parameters => parameters
             .Add(layout => layout.Body, (RenderFragment)(_ => { })));
 
-        Assert.Contains("Support by North Star", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/support/wallet-demo", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/consultancy", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/support/billing", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/support/account", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/account/logout", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Support by North Star", cut.Markup, StringComparison.Ordinal);
     }
 
     private sealed class FakeAppleWalletPassService : IAppleWalletPassService

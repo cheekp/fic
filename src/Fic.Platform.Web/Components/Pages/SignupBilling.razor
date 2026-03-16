@@ -50,14 +50,52 @@ else
                 <a class="button button--secondary button--compact" href="@($"/portal/signup/plan/{MerchantId:D}")">Change plan</a>
             </section>
 
-            <label class="field field--full billing-payment-inline">
-                <span>Payment method</span>
-                <select class="input" name="paymentMethod">
-                    <option value="apple-pay" selected>Apple Pay</option>
-                    <option value="card">Card</option>
-                </select>
-                <span class="field-hint">Starter billing uses this method after onboarding.</span>
-            </label>
+            <section class="billing-payment-panel" aria-label="Payment details">
+                <div class="form-section__header">
+                    <h4>Payment method</h4>
+                    <p class="field-hint">Choose your preferred method now. Card details can be entered in this setup flow.</p>
+                </div>
+
+                <div class="billing-method-grid">
+                    <label class="billing-method-option billing-method-option--active">
+                        <input type="radio" name="paymentMethod" value="apple-pay" checked />
+                        <span class="billing-method-option__body">
+                            <img class="billing-method-option__mark" src="/images/apple-pay-mark.svg" alt="Apple Pay" />
+                            <span class="field-hint">Fastest setup on supported devices and browsers.</span>
+                        </span>
+                    </label>
+
+                    <label class="billing-method-option">
+                        <input type="radio" name="paymentMethod" value="card" />
+                        <span class="billing-method-option__body">
+                            <strong>Card</strong>
+                            <span class="field-hint">Use a business debit or credit card.</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="form-grid billing-card-grid">
+                    <label class="field">
+                        <span>Cardholder name</span>
+                        <input class="input" type="text" name="cardholderName" autocomplete="cc-name" placeholder="Name on card" />
+                    </label>
+
+                    <label class="field">
+                        <span>Card number</span>
+                        <input class="input" type="text" name="cardNumber" autocomplete="cc-number" inputmode="numeric" placeholder="1234 5678 9012 3456" />
+                    </label>
+
+                    <label class="field">
+                        <span>Expiry</span>
+                        <input class="input" type="text" name="cardExpiry" autocomplete="cc-exp" inputmode="numeric" placeholder="MM/YY" />
+                    </label>
+
+                    <label class="field">
+                        <span>CVC</span>
+                        <input class="input" type="text" name="cardCvc" autocomplete="cc-csc" inputmode="numeric" placeholder="123" />
+                    </label>
+                </div>
+            </section>
 
             <section class="form-section">
                 <div class="form-section__header">

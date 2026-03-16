@@ -49,6 +49,7 @@ else
     var inactiveCardsCount = selectedProgrammeCards.Count(card =>
         card.CustomerCardStatus is CustomerCardStatus.Scheduled or CustomerCardStatus.Expired);
     var firstTimeProgrammeStepComplete = _workspace.SetupChecklist.HasAnyProgramme && !IsFinishingFirstProgrammeSetup;
+    var showSetupCompletionNotice = ShowSetupCompletionNotice;
 
     <div class="workspace-stage @workspaceTheme.ThemeClass @(isFirstTimeMode ? "workspace-stage--first-time" : string.Empty)" style="@workspaceTheme.CssVariables">
         <section class="workspace-header">
@@ -110,6 +111,21 @@ else
                     }
                 </Actions>
             </OnboardingJourney>
+        }
+        else if (showSetupCompletionNotice)
+        {
+            <section class="panel setup-complete-banner" aria-label="Setup complete banner">
+                <div class="setup-complete-banner__copy">
+                    <p class="eyebrow">Setup complete</p>
+                    <h3>Your full workspace is now unlocked.</h3>
+                    <p class="field-hint">Programmes, overview, and insights are now available for day-to-day operation.</p>
+                </div>
+                <div class="setup-complete-banner__actions">
+                    <a class="button button--secondary button--compact" href='@GetWorkspaceSectionUrl("overview")'>Open overview</a>
+                    <a class="button button--secondary button--compact" href='@GetWorkspaceSectionUrl("insights")'>Open insights</a>
+                    <button class="button button--ghost button--compact" type="button" @onclick="DismissSetupCompletionNotice">Dismiss</button>
+                </div>
+            </section>
         }
 
         @if (IsWorkspaceSection("overview"))
@@ -963,6 +979,7 @@ else
     private bool _isSavingProgramme;
     private bool _isSetupRoadmapCollapsed;
     private bool _isSetupRoadmapDismissed;
+    private bool _isSetupCompletionNoticeDismissed;
     private bool _isFinishingFirstProgrammeSetup;
     private bool _didInitializeRoadmapState;
     private readonly ShopForm _shopForm = new();
@@ -994,6 +1011,12 @@ else
         IsFinishingFirstProgrammeSetup
         && IsWorkspaceSection("programmes")
         && IsProgrammeSection("configure");
+    private bool ShowSetupCompletionNotice =>
+        !_isSetupCompletionNoticeDismissed
+        && _workspace is not null
+        && !IsFirstTimeMode
+        && _workspace.Programmes.Count == 1
+        && _workspace.SetupChecklist.JoinReady;
     private bool SelectedProgrammeIsActive =>
         _workspace?.SelectedProgramme is { } selectedProgramme && IsProgrammeActiveOn(selectedProgramme.StartsOn, selectedProgramme.EndsOn);
 
@@ -1601,6 +1624,7 @@ else
     private void ToggleSetupRoadmap() => _isSetupRoadmapCollapsed = !_isSetupRoadmapCollapsed;
 
     private void DismissSetupRoadmap() => _isSetupRoadmapDismissed = true;
+    private void DismissSetupCompletionNotice() => _isSetupCompletionNoticeDismissed = true;
 
     private string GetWalletStatusLabel()
     {

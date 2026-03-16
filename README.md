@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Harden onboarding guardrails so signup and billing feel production-ready, expose demo seeding only by feature flag, and keep first-programme setup as one simple guided lane.
+Polish onboarding surfaces so acquisition is CTA-first, payment setup expectations are explicit, and first-time completion handoff into full workspace sections is unmistakable.
