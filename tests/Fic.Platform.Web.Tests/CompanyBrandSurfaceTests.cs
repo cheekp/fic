@@ -23,12 +23,20 @@ public sealed class CompanyBrandSurfaceTests
 
         var cut = context.Render<Home>();
 
-        Assert.Contains("Set up your wallet loyalty programme in minutes.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Set up your Apple Wallet loyalty programme in minutes.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("North Star loyalty platform", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/images/home-hero.jpeg", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Sign up now", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("I already have an account", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Merchant log in", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Apple Wallet first", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/portal/signup", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("/account/login", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("/images/social/instagram.svg", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("https://www.facebook.com", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("https://www.tiktok.com", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("https://x.com", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("I already have an account", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain(">FIC<", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Consultancy", cut.Find("nav[aria-label='Company links']").TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain("company-logo.png", cut.Markup, StringComparison.Ordinal);
     }
@@ -107,6 +115,7 @@ public sealed class CompanyBrandSurfaceTests
         Assert.Contains("£79/mo", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Custom", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/consultancy", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Use demo plan", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Owner password", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Payment method", cut.Markup, StringComparison.Ordinal);
     }
@@ -144,10 +153,45 @@ public sealed class CompanyBrandSurfaceTests
         Assert.Contains("Change plan", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("form-actions--onboarding", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("button--wide", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Use demo payment details", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Growth", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Enterprise", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Card number", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("launch=create", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PlanAndBillingPages_ShowDemoSeedActions_WhenFeatureFlagIsEnabled()
+    {
+        using var context = new BunitContext();
+        var state = new DemoPlatformState(NullLogger<DemoPlatformState>.Instance, new InMemoryMerchantBrandAssetStore());
+        context.Services.AddSingleton(state);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Features:SignupDemoSeedEnabled"] = "true"
+            })
+            .Build();
+        context.Services.AddSingleton<IConfiguration>(config);
+
+        var workspace = await state.CreateMerchantAsync(
+            "Jo's Coffee",
+            "Bristol",
+            "BS1 4DJ",
+            "owner@joscoffee.test",
+            logoUpload: null,
+            fallbackLogoUrl: FallbackLogoUrl,
+            primaryColor: "#1f3731",
+            accentColor: "#f4c15d",
+            baseUri: BaseUri);
+
+        var plan = context.Render<SignupPlan>(parameters => parameters
+            .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
+        var billing = context.Render<SignupBilling>(parameters => parameters
+            .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Use demo plan", plan.Markup, StringComparison.Ordinal);
+        Assert.Contains("Use demo payment details", billing.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

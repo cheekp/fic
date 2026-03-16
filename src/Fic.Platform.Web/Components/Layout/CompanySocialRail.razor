@@ -1,0 +1,38 @@
+<section class="company-social @(Compact ? "company-social--compact" : string.Empty)" aria-label="North Star social channels">
+    @if (!Compact)
+    {
+        <p class="eyebrow">Follow North Star</p>
+    }
+
+    <ul class="company-social__list">
+        @foreach (var channel in Channels)
+        {
+            <li>
+                <a class="company-social__link"
+                   href="@channel.Url"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   title="@channel.Label"
+                   aria-label="@($"Follow North Star on {channel.Label}")">
+                    <img src="@channel.IconPath" alt="" aria-hidden="true" />
+                    <span class="@(Compact ? "company-social__label--hidden" : string.Empty)">@channel.Label</span>
+                </a>
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    [Parameter]
+    public bool Compact { get; set; }
+
+    private static readonly IReadOnlyList<SocialChannel> Channels =
+    [
+        new("Facebook", "https://www.facebook.com", "/images/social/facebook.svg"),
+        new("Instagram", "https://www.instagram.com", "/images/social/instagram.svg"),
+        new("TikTok", "https://www.tiktok.com", "/images/social/tiktok.svg"),
+        new("X", "https://x.com", "/images/social/x.svg")
+    ];
+
+    private sealed record SocialChannel(string Label, string Url, string IconPath);
+}

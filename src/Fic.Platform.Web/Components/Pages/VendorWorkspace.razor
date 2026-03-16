@@ -3,6 +3,8 @@
 @using System.ComponentModel.DataAnnotations
 @using Fic.Contracts
 @using Fic.MerchantAccounts
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.DependencyInjection
 @inject DemoPlatformState PlatformState
 @inject JoinQrCodeService QrCodes
 @inject IJSRuntime JS
@@ -10,6 +12,7 @@
 @inject IAppleWalletPassService WalletPasses
 @inject IWalletPassUpdateNotifier WalletPushes
 @inject MerchantBrandPresentationService BrandPresentation
+@inject IServiceProvider Services
 
 <PageTitle>Your Shop</PageTitle>
 
@@ -40,6 +43,7 @@ else
     var expiredProgrammesCount = programmeGroups.FirstOrDefault(group => group.Label == "Expired")?.Programmes.Count ?? 0;
     var selectedProgrammeCards = _workspace.SelectedProgrammeCards;
     var isFirstTimeMode = IsFirstTimeMode;
+    var isProgrammeWorkspaceSection = IsWorkspaceSection("programmes");
     var shopDetailsReady = _workspace.SetupChecklist.ShopDetailsComplete;
     var showProgrammeRail = hasProgrammes && !isFirstTimeMode;
     var showAdvancedProgrammeSections = !isFirstTimeMode;
@@ -50,40 +54,57 @@ else
         card.CustomerCardStatus is CustomerCardStatus.Scheduled or CustomerCardStatus.Expired);
     var firstTimeProgrammeStepComplete = _workspace.SetupChecklist.HasAnyProgramme && !IsFinishingFirstProgrammeSetup;
     var showSetupCompletionNotice = ShowSetupCompletionNotice;
+    var isSignupDemoSeedEnabled = IsSignupDemoSeedEnabled;
+    var onboardingHint = shopDetailsReady
+        ? "Choose your first template to unlock the full workspace."
+        : "Complete shop details first, then choose your first template.";
 
     <div class="workspace-stage @workspaceTheme.ThemeClass @(isFirstTimeMode ? "workspace-stage--first-time" : string.Empty)" style="@workspaceTheme.CssVariables">
-        <section class="workspace-header">
-            <div class="workspace-brand">
-                <div class="brand-lockup brand-lockup--merchant">
-                    <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName logo" />
+        <div class="workspace-chrome-shell">
+            <section class="workspace-header">
+                <div class="workspace-brand">
+                    <div class="brand-lockup brand-lockup--merchant">
+                        <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="@_shopForm.DisplayName logo" />
+                    </div>
+                    <div class="workspace-brand__copy">
+                        <p class="eyebrow">Your shop</p>
+                        <h2>@_workspace.Merchant.DisplayName</h2>
+                        <p class="field-hint">@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
+                        @if (!isFirstTimeMode && !IsShopSettingsOpen())
+                        {
+                            <a class="workspace-inline-link" href="@GetShopSettingsUrl()">Shop settings</a>
+                        }
+                    </div>
                 </div>
-                <div class="workspace-brand__copy">
-                    <p class="eyebrow">Your shop</p>
-                    <h2>@_workspace.Merchant.DisplayName</h2>
-                    <p class="field-hint">@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
-                    @if (!isFirstTimeMode && !IsShopSettingsOpen())
-                    {
-                        <a class="workspace-inline-link" href="@GetShopSettingsUrl()">Shop settings</a>
-                    }
-                </div>
-            </div>
-            @if (!isFirstTimeMode)
-            {
-                <div class="workspace-header__actions">
-                    <a class="button button--ghost button--compact" href="/support/wallet-demo">@GetWalletStatusLabel()</a>
-                </div>
-            }
-        </section>
-
-        <div class="workspace-tabs-bar">
-            <nav class="workspace-tabs" aria-label="Shop sections">
-                <a class="workspace-tabs__item @(IsWorkspaceSection("programmes") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("programmes")">Programmes</a>
                 @if (!isFirstTimeMode)
                 {
-                    <a class="workspace-tabs__item @(IsWorkspaceSection("overview") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("overview")">Overview</a>
-                    <a class="workspace-tabs__item @(IsWorkspaceSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("insights")">Insights</a>
+                    <div class="workspace-header__actions">
+                        <a class="button button--ghost button--compact" href="/support/wallet-demo">@GetWalletStatusLabel()</a>
+                    </div>
                 }
-            </nav>
+            </section>
+
+            @if (!isFirstTimeMode)
+            {
+                <div class="workspace-tabs-bar @(isProgrammeWorkspaceSection ? "workspace-tabs-bar--programme" : string.Empty)">
+                    <nav class="workspace-tabs workspace-tabs--primary segmented-control" aria-label="Shop sections">
+                        <a class="workspace-tabs__item segmented-control__item @(IsWorkspaceSection("overview") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("overview")">Overview</a>
+                        <a class="workspace-tabs__item segmented-control__item @(isProgrammeWorkspaceSection ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("programmes")">Programmes</a>
+                        <a class="workspace-tabs__item segmented-control__item @(IsWorkspaceSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetWorkspaceSectionUrl("insights")">Insights</a>
+                    </nav>
+                    @if (showSetupCompletionNotice)
+                    {
+                        <div class="workspace-chrome-status" aria-live="polite">
+                            <span class="workspace-chrome-status__label">Setup complete</span>
+                            <div class="workspace-chrome-status__actions">
+                                <a class="workspace-chrome-status__link" aria-label="Open overview" href='@GetWorkspaceSectionUrl("overview")'>Overview</a>
+                                <a class="workspace-chrome-status__link" aria-label="Open insights" href='@GetWorkspaceSectionUrl("insights")'>Insights</a>
+                                <button class="workspace-chrome-status__link workspace-chrome-status__link--button" type="button" @onclick="DismissSetupCompletionNotice">Dismiss</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
         </div>
 
         @if (isFirstTimeMode)
@@ -99,7 +120,7 @@ else
                                BillingUrl="@($"/portal/signup/billing/{MerchantId:D}?plan=starter")"
                                ShopUrl="@GetShopSettingsUrl()"
                                ProgrammeUrl="@GetProgrammeSectionUrl(_workspace.SetupChecklist.HasAnyProgramme ? "configure" : "create")"
-                               Hint="Complete shop details first, then choose a template and save once in Configure before your first customer join.">
+                               Hint="@onboardingHint">
                 <Actions>
                     @if (!IsShopSettingsOpen())
                     {
@@ -111,21 +132,6 @@ else
                     }
                 </Actions>
             </OnboardingJourney>
-        }
-        else if (showSetupCompletionNotice)
-        {
-            <section class="panel setup-complete-banner" aria-label="Setup complete banner">
-                <div class="setup-complete-banner__copy">
-                    <p class="eyebrow">Setup complete</p>
-                    <h3>Your full workspace is now unlocked.</h3>
-                    <p class="field-hint">Programmes, overview, and insights are now available for day-to-day operation.</p>
-                </div>
-                <div class="setup-complete-banner__actions">
-                    <a class="button button--secondary button--compact" href='@GetWorkspaceSectionUrl("overview")'>Open overview</a>
-                    <a class="button button--secondary button--compact" href='@GetWorkspaceSectionUrl("insights")'>Open insights</a>
-                    <button class="button button--ghost button--compact" type="button" @onclick="DismissSetupCompletionNotice">Dismiss</button>
-                </div>
-            </section>
         }
 
         @if (IsWorkspaceSection("overview"))
@@ -294,119 +300,170 @@ else
         }
         else
         {
-            <section class="workspace-detail-grid @(showProgrammeRail ? "workspace-detail-grid--programme-shell" : "workspace-detail-grid--single-pane")">
-                @if (showProgrammeRail)
-                {
-                    <aside class="programme-sidebar programme-rail">
-                        <div class="programme-rail__header">
-                            <div>
-                                <p class="eyebrow">Programmes</p>
-                                <h3>Programmes</h3>
-                            </div>
-                            <a class="button button--secondary" href="@GetProgrammeSectionUrl("create")">New programme</a>
-                        </div>
-
-                        <div class="programme-groups">
-                            @foreach (var group in programmeGroups)
-                            {
-                                <section class="programme-group">
-                                    <div class="programme-group__header">
-                                        <h4>@group.Label</h4>
-                                        <span class="chip">@group.Programmes.Count</span>
-                                    </div>
-                                    <div class="programme-list">
-                                        @foreach (var programme in group.Programmes)
-                                        {
-                                            <a class="programme-list__item @(programme.ProgrammeId == selectedProgramme?.ProgrammeId ? "programme-list__item--active" : string.Empty)"
-                                               href="@GetProgrammeUrl(programme.ProgrammeId)">
-                                                <div>
-                                                    <h4>@programme.RewardHeadline</h4>
-                                                    <p class="field-hint">@programme.ProgrammeTypeLabel · @programme.TemplateLabel</p>
-                                                    <p class="field-hint">@BuildProgrammeWindowMessage(programme.StartsOn, programme.EndsOn)</p>
-                                                </div>
-                                                <span class="chip">@BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn)</span>
-                                            </a>
-                                        }
-                                    </div>
-                                </section>
-                            }
-                        </div>
-                    </aside>
-                }
-
-                <div class="workspace-stack workspace-stack--programme programme-workpane">
-                    @if (!hasProgrammes || IsProgrammeSection("create"))
+            <section class="workspace-programme-shell">
+                <section class="workspace-detail-grid @(showProgrammeRail ? "workspace-detail-grid--programme-shell" : "workspace-detail-grid--single-pane")">
+                    @if (showProgrammeRail)
                     {
-                        <section class="panel programme-setup-flow @(hasProgrammes ? string.Empty : "onboarding-step onboarding-step--workspace")">
-                            <div class="panel__header onboarding-step__header">
-                                <div class="onboarding-step__copy">
-                                    <p class="eyebrow">@(hasProgrammes ? "New programme" : "Step 5 of 5")</p>
-                                    <h3>@(hasProgrammes ? "Add another programme" : "Create your first programme")</h3>
-                                    <p class="lede">Pick one template to launch. You can fine-tune reward rules immediately after this step.</p>
+                        <aside class="programme-sidebar programme-rail">
+                            <div class="programme-rail__header">
+                                <div class="programme-rail__title">
+                                    <p class="eyebrow">Programmes</p>
+                                    <h3>Programmes</h3>
                                 </div>
                             </div>
 
-                            @if (!shopDetailsReady)
-                            {
-                                <p class="field-hint onboarding-required-note">Complete shop details first. Branding can be adjusted now or skipped for later.</p>
-                            }
+                            <div class="programme-rail__controls">
+                                <a class="button button--secondary button--compact programme-rail__new-button" href="@GetProgrammeSectionUrl("create")" aria-label="Add programme">
+                                    <span class="programme-rail__new-icon" aria-hidden="true">+</span>
+                                    <span>Add programme</span>
+                                </a>
+                                <label class="programme-rail__sort" for="programme-rail-sort">
+                                    <span>Sort</span>
+                                    <select id="programme-rail-sort" class="programme-rail__select" value="@_programmeGroupSort" @onchange="HandleProgrammeGroupSortChanged">
+                                        <option value="end-date">Ends soonest</option>
+                                        <option value="name">Name A-Z</option>
+                                        <option value="start-date">Starts soonest</option>
+                                    </select>
+                                </label>
+                            </div>
 
-                            <div class="template-grid">
-                                @foreach (var template in ProgrammeTemplates)
+                            <div class="programme-groups">
+                                @foreach (var group in programmeGroups)
                                 {
-                                    <article class="template-card">
-                                        <div class="template-card__header">
-                                            <div>
-                                                <p class="eyebrow">@template.ProgrammeTypeLabel</p>
-                                                <h4>@template.TemplateLabel</h4>
+                                    <section class="programme-group">
+                                        <button class="programme-group__toggle"
+                                                type="button"
+                                                aria-expanded="@(group.IsCollapsed ? "false" : "true")"
+                                                aria-controls="@BuildProgrammeGroupContentId(group.Label)"
+                                                @onclick="@(() => ToggleProgrammeGroup(group.Label))">
+                                            <span class="programme-group__label">@group.Label</span>
+                                            <span class="chip">@group.Programmes.Count</span>
+                                            <span class="programme-group__action">@(group.IsCollapsed ? "Show" : "Hide")</span>
+                                        </button>
+
+                                        @if (!group.IsCollapsed)
+                                        {
+                                            <div id="@BuildProgrammeGroupContentId(group.Label)" class="programme-list">
+                                                @foreach (var programme in group.Programmes)
+                                                {
+                                                    var programmeWindowBadge = BuildProgrammeWindowBadge(programme.StartsOn, programme.EndsOn);
+                                                    var programmeWindowClass = BuildProgrammeWindowClass(programmeWindowBadge);
+                                                    var programmeTypeClass = BuildProgrammeTypeClass(programme.ProgrammeTypeKey);
+                                                    var isSelectedProgramme = programme.ProgrammeId == selectedProgramme?.ProgrammeId;
+
+                                                    <a class="programme-list__item programme-list__item--pass @programmeWindowClass @programmeTypeClass @(isSelectedProgramme ? "programme-list__item--active" : string.Empty)"
+                                                       href="@GetProgrammeUrl(programme.ProgrammeId)"
+                                                       aria-current="@(isSelectedProgramme ? "page" : null)"
+                                                       aria-controls="programme-detail-panel">
+                                                        <div class="programme-list__pass-face">
+                                                            <div class="programme-list__pass-top">
+                                                                <p class="eyebrow">Wallet pass preview</p>
+                                                                @if (isSelectedProgramme)
+                                                                {
+                                                                    <span class="chip chip--accent programme-list__selection-chip">Viewing</span>
+                                                                }
+                                                            </div>
+                                                            <div class="programme-list__pass-body">
+                                                                <div class="programme-list__pass-copy">
+                                                                    <h4>@programme.RewardHeadline</h4>
+                                                                    <p class="field-hint">@programme.ProgrammeTypeLabel · @programme.TemplateLabel</p>
+                                                                </div>
+                                                                <div class="brand-lockup brand-lockup--mini" aria-hidden="true">
+                                                                    <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="programme-list__meta">
+                                                                <span>@programme.OutputLabel</span>
+                                                                <span>@BuildProgrammeWindowSummary(programme.StartsOn, programme.EndsOn)</span>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                }
                                             </div>
-                                            <span class="chip chip--accent">@template.DeliveryTypeLabel</span>
-                                        </div>
-                                        <p class="template-card__headline">@template.Headline</p>
-                                        <p class="field-hint">@template.Description</p>
-                                        <p class="field-hint">Reward rule: @template.RewardCopy</p>
-                                        <p class="field-hint">Output: @template.OutputLabel</p>
-                                        <div class="form-actions form-actions--onboarding">
-                                            <button class="button button--primary button--wide button--block" type="button" disabled="@(!shopDetailsReady)" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">@(hasProgrammes ? "Use this template" : "Start with this template")</button>
-                                        </div>
-                                    </article>
+                                        }
+                                    </section>
                                 }
                             </div>
-                        </section>
+                        </aside>
                     }
-                    else
-                    {
-                        @if (ShowFirstProgrammeSetupStrip)
+
+                    <div class="workspace-stack workspace-stack--programme programme-workpane @(_animateProgrammeSelection ? "programme-workpane--refresh" : string.Empty)" @key="selectedProgrammeSummary?.ProgrammeId">
+                        @if (!hasProgrammes || IsProgrammeSection("create"))
                         {
-                            <section class="programme-setup-strip">
-                                <p class="eyebrow">First programme setup</p>
-                                <p class="field-hint">Step 2 of 2. Confirm the reward rule and save once before running the normal Operate flow.</p>
+                            <section class="panel programme-setup-flow @(hasProgrammes ? string.Empty : "onboarding-step onboarding-step--workspace")">
+                                <div class="panel__header onboarding-step__header">
+                                    <div class="onboarding-step__copy">
+                                        <p class="eyebrow">@(hasProgrammes ? "New programme" : "Step 5 of 5")</p>
+                                        <h3>@(hasProgrammes ? "Add another programme" : "Create your first programme")</h3>
+                                        <p class="lede">Pick one template to launch. You can fine-tune reward rules immediately after this step.</p>
+                                    </div>
+                                    @if (!hasProgrammes && isSignupDemoSeedEnabled)
+                                    {
+                                        <div class="workspace-actions">
+                                            <button class="button button--secondary button--compact" type="button" disabled="@(!shopDetailsReady)" @onclick="ApplyProgrammeDemoSeedAsync">Use demo template</button>
+                                        </div>
+                                    }
+                                </div>
+
+                                @if (!shopDetailsReady)
+                                {
+                                    <p class="field-hint onboarding-required-note">Complete shop details first. Branding can be adjusted now or skipped for later.</p>
+                                }
+
+                                <div class="template-grid">
+                                    @foreach (var template in ProgrammeTemplates)
+                                    {
+                                        <article class="template-card">
+                                            <div class="template-card__header">
+                                                <div>
+                                                    <p class="eyebrow">@template.ProgrammeTypeLabel</p>
+                                                    <h4>@template.TemplateLabel</h4>
+                                                </div>
+                                                <span class="chip chip--accent">@template.DeliveryTypeLabel</span>
+                                            </div>
+                                            <p class="template-card__headline">@template.Headline</p>
+                                            <p class="field-hint">@template.Description</p>
+                                            <p class="field-hint">Reward rule: @template.RewardCopy</p>
+                                            <p class="field-hint">Output: @template.OutputLabel</p>
+                                            <div class="form-actions form-actions--onboarding">
+                                                <button class="button button--primary button--wide button--block" type="button" disabled="@(!shopDetailsReady)" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">@(hasProgrammes ? "Use this template" : "Start with this template")</button>
+                                            </div>
+                                        </article>
+                                    }
+                                </div>
                             </section>
                         }
+                        else
+                        {
+                            <section class="programme-selection-strip @(showProgrammeRail ? "programme-selection-strip--linked" : string.Empty) @(_animateProgrammeSelection ? "programme-selection-strip--refresh" : string.Empty)" id="programme-detail-panel">
+                                <section class="programme-context-bar">
+                                    <div class="programme-context-bar__identity">
+                                        <div class="brand-lockup brand-lockup--mini programme-context-bar__logo" aria-hidden="true">
+                                            <img src="@(_pendingLogoPreviewUri ?? _workspace.BrandProfile.LogoUrl)" alt="" />
+                                        </div>
+                                        <div class="programme-context-bar__title">
+                                            <p class="eyebrow">Selected programme</p>
+                                            <h3>@selectedProgrammeSummary!.RewardHeadline</h3>
+                                            <p class="field-hint">From Programmes list · Started from @selectedProgrammeSummary.TemplateLabel</p>
+                                        </div>
+                                    </div>
+                                    <div class="programme-context-bar__meta">
+                                        <span class="chip">@selectedProgrammeBadge</span>
+                                        <span class="programme-context-bar__window">@selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") - @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
+                                        <span class="programme-context-bar__descriptor">@selectedProgrammeSummary.ProgrammeTypeLabel · @selectedProgrammeSummary.DeliveryTypeLabel</span>
+                                    </div>
+                                </section>
 
-                        <section class="programme-context-bar">
-                            <div class="programme-context-bar__title">
-                                <p class="eyebrow">Current programme</p>
-                                <h3>@selectedProgrammeSummary!.RewardHeadline</h3>
-                                <p class="field-hint">Started from @selectedProgrammeSummary.TemplateLabel</p>
-                            </div>
-                            <div class="programme-context-bar__meta">
-                                <span class="chip">@selectedProgrammeBadge</span>
-                                <span>@selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") - @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
-                                <span class="chip">@selectedProgrammeSummary.ProgrammeTypeLabel</span>
-                                <span class="chip">@selectedProgrammeSummary.DeliveryTypeLabel</span>
-                            </div>
-                        </section>
-
-                        <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme" aria-label="Programme sections">
-                            <a class="workspace-tabs__item @(IsProgrammeSection("operate") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("operate")">Operate</a>
-                            <a class="workspace-tabs__item @(IsProgrammeSection("configure") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("configure")">Configure</a>
-                            @if (showAdvancedProgrammeSections)
-                            {
-                                <a class="workspace-tabs__item @(IsProgrammeSection("customers") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("customers")">Customers</a>
-                                <a class="workspace-tabs__item @(IsProgrammeSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("insights")">Insights</a>
-                            }
-                        </nav>
+                                <nav class="workspace-tabs workspace-tabs--sub workspace-tabs--programme segmented-control" aria-label="Programme sections">
+                                    <a class="workspace-tabs__item segmented-control__item @(IsProgrammeSection("operate") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("operate")">Operate</a>
+                                    <a class="workspace-tabs__item segmented-control__item @(IsProgrammeSection("configure") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("configure")">Configure</a>
+                                    @if (showAdvancedProgrammeSections)
+                                    {
+                                        <a class="workspace-tabs__item segmented-control__item @(IsProgrammeSection("customers") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("customers")">Customers</a>
+                                        <a class="workspace-tabs__item segmented-control__item @(IsProgrammeSection("insights") ? "workspace-tabs__item--active" : string.Empty)" href="@GetProgrammeSectionUrl("insights")">Insights</a>
+                                    }
+                                </nav>
+                            </section>
 
                         @if (IsProgrammeSection("operate"))
                         {
@@ -425,7 +482,7 @@ else
                                         <div class="qr-panel__meta">
                                             <p>Customers scan this QR, join the programme, and receive the current output through @selectedProgrammeSummary.DeliveryTypeLabel.</p>
                                             <p class="field-hint">Valid @selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") to @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</p>
-                                            <code>@_workspace.SelectedJoinUrl</code>
+                                            <code class="join-link-code">@_workspace.SelectedJoinUrl</code>
                                             @if (!string.IsNullOrWhiteSpace(_operateMessage))
                                             {
                                                 <p class="field-hint">@_operateMessage</p>
@@ -434,7 +491,7 @@ else
                                             {
                                                 <p class="field-hint">@BuildProgrammeWindowMessage(selectedProgramme!.StartsOn, selectedProgramme.EndsOn)</p>
                                             }
-                                            <div class="form-actions">
+                                            <div class="form-actions form-actions--join">
                                                 @if (SelectedProgrammeIsActive)
                                                 {
                                                     <a class="button button--secondary" href="@_workspace.SelectedJoinUrl" target="_blank">Open Customer Join</a>
@@ -638,7 +695,7 @@ else
                         else if (IsProgrammeSection("configure"))
                         {
                             <section class="workspace-detail-grid workspace-detail-grid--programme-configure">
-                                <article class="panel">
+                                <article class="panel programme-configure-editor">
                                     <div class="panel__header">
                                         <div>
                                             <p class="eyebrow">Programme configuration</p>
@@ -769,6 +826,21 @@ else
                                             <p class="wallet-pass__status">Uses the shop brand defaults for this programme.</p>
                                         </div>
                                     </div>
+                                    <div class="workspace-preview-panel__details">
+                                        <div>
+                                            <span>Template</span>
+                                            <strong>@selectedProgrammeSummary.TemplateLabel</strong>
+                                        </div>
+                                        <div>
+                                            <span>Delivery</span>
+                                            <strong>@selectedProgrammeSummary.OutputLabel</strong>
+                                        </div>
+                                        <div>
+                                            <span>Programme window</span>
+                                            <strong>@FormatDate(_programmeForm.StartsOn) to @FormatDate(_programmeForm.EndsOn)</strong>
+                                        </div>
+                                    </div>
+                                    <p class="field-hint workspace-preview-panel__hint">Preview updates as you edit reward rules, dates, and customer-facing copy.</p>
                                 </article>
                             </section>
                         }
@@ -830,8 +902,9 @@ else
                                 </article>
                             </section>
                         }
-                    }
-                </div>
+                        }
+                    </div>
+                </section>
             </section>
         }
 
@@ -937,6 +1010,10 @@ else
 
                         <div class="form-actions form-actions--onboarding form-actions--drawer">
                             <button class="button button--primary button--wide" type="submit" disabled="@_isSavingShop">Save Shop</button>
+                            @if (isSignupDemoSeedEnabled)
+                            {
+                                <button class="button button--secondary button--wide" type="button" @onclick="ApplyShopDemoSeed">Use demo details</button>
+                            }
                             <button class="button button--secondary button--wide" type="button" @onclick="ResetShopForm">Reset</button>
                         </div>
                     </EditForm>
@@ -982,8 +1059,16 @@ else
     private bool _isSetupCompletionNoticeDismissed;
     private bool _isFinishingFirstProgrammeSetup;
     private bool _didInitializeRoadmapState;
+    private bool _animateProgrammeSelection;
+    private string _programmeGroupSort = "end-date";
+    private Guid? _lastObservedMerchantId;
+    private Guid? _lastSelectedProgrammeId;
     private readonly ShopForm _shopForm = new();
     private readonly ProgrammeConfigurationForm _programmeForm = new();
+    private readonly HashSet<string> _collapsedProgrammeGroups = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Expired"
+    };
     private byte[]? _pendingLogoUploadBytes;
     private string? _pendingLogoPreviewUri;
     private string _pendingLogoFileName = "logo.png";
@@ -1004,21 +1089,19 @@ else
     }
     private bool IsFirstTimeMode =>
         _workspace is not null
-        && _workspace.Programmes.Count <= 1
-        && _workspace.ShopInsights.ActiveCards == 0;
+        && !_workspace.SetupChecklist.HasAnyProgramme;
     private bool IsFinishingFirstProgrammeSetup => _isFinishingFirstProgrammeSetup && _workspace?.Programmes.Count == 1;
-    private bool ShowFirstProgrammeSetupStrip =>
-        IsFinishingFirstProgrammeSetup
-        && IsWorkspaceSection("programmes")
-        && IsProgrammeSection("configure");
     private bool ShowSetupCompletionNotice =>
         !_isSetupCompletionNoticeDismissed
         && _workspace is not null
         && !IsFirstTimeMode
         && _workspace.Programmes.Count == 1
-        && _workspace.SetupChecklist.JoinReady;
+        && _workspace.SetupChecklist.JoinReady
+        && !IsFinishingFirstProgrammeSetup;
     private bool SelectedProgrammeIsActive =>
         _workspace?.SelectedProgramme is { } selectedProgramme && IsProgrammeActiveOn(selectedProgramme.StartsOn, selectedProgramme.EndsOn);
+    private bool IsSignupDemoSeedEnabled =>
+        Services.GetService<IConfiguration>()?.GetValue<bool>("Features:SignupDemoSeedEnabled") ?? false;
 
     protected override void OnInitialized()
     {
@@ -1027,6 +1110,13 @@ else
 
     protected override void OnParametersSet()
     {
+        if (_lastObservedMerchantId != MerchantId)
+        {
+            _lastObservedMerchantId = MerchantId;
+            _lastSelectedProgrammeId = null;
+            _animateProgrammeSelection = false;
+        }
+
         LoadWorkspace(refreshForms: true);
         EnforceFirstTimeRouteGuard();
     }
@@ -1037,6 +1127,7 @@ else
         _joinQrSvg = _workspace?.SelectedJoinUrl is { Length: > 0 } selectedJoinUrl
             ? QrCodes.RenderSvg(selectedJoinUrl)
             : string.Empty;
+        UpdateProgrammeSelectionAnimation(_workspace?.SelectedProgramme?.ProgrammeId);
 
         if (_workspace is null)
         {
@@ -1337,6 +1428,20 @@ else
         LoadWorkspace(refreshForms: true);
     }
 
+    private void ApplyShopDemoSeed()
+    {
+        _shopForm.DisplayName = "Jo's Coffee";
+        _shopForm.ContactEmail = "owner@joscoffee.test";
+        _shopForm.TownOrCity = "Ipswich";
+        _shopForm.Postcode = "IP4 2XP";
+        _shopForm.PrimaryColor = "#1f3731";
+        _shopForm.AccentColor = "#f4c15d";
+        _shopMessage = "Demo shop details applied. Save shop to continue.";
+    }
+
+    private Task ApplyProgrammeDemoSeedAsync() =>
+        HandleCreateProgrammeAsync("coffee-visits");
+
     private Task HandleCreateProgrammeAsync(string templateKey)
     {
         if (_workspace?.SetupChecklist.ShopDetailsComplete != true)
@@ -1574,19 +1679,38 @@ else
                         StringComparison.OrdinalIgnoreCase))
                 .ToArray();
 
-        var active = FilterByStatus(_workspace.Programmes, "Active");
-        var scheduled = FilterByStatus(_workspace.Programmes, "Scheduled");
-        var expired = FilterByStatus(_workspace.Programmes, "Expired");
+        var active = SortProgrammesForRail(FilterByStatus(_workspace.Programmes, "Active"));
+        var scheduled = SortProgrammesForRail(FilterByStatus(_workspace.Programmes, "Scheduled"));
+        var expired = SortProgrammesForRail(FilterByStatus(_workspace.Programmes, "Expired"));
 
         return new[]
         {
-            new ProgrammeGroupView("Active", active),
-            new ProgrammeGroupView("Scheduled", scheduled),
-            new ProgrammeGroupView("Expired", expired)
+            new ProgrammeGroupView("Active", active, IsProgrammeGroupCollapsed("Active")),
+            new ProgrammeGroupView("Scheduled", scheduled, IsProgrammeGroupCollapsed("Scheduled")),
+            new ProgrammeGroupView("Expired", expired, IsProgrammeGroupCollapsed("Expired"))
         }
         .Where(group => group.Programmes.Count > 0)
         .ToArray();
     }
+
+    private IReadOnlyList<ProgrammeSummarySnapshot> SortProgrammesForRail(IReadOnlyList<ProgrammeSummarySnapshot> programmes) =>
+        _programmeGroupSort switch
+        {
+            "name" => programmes
+                .OrderBy(programme => programme.RewardHeadline, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(programme => programme.EndsOn)
+                .ToArray(),
+            "start-date" => programmes
+                .OrderBy(programme => programme.StartsOn)
+                .ThenBy(programme => programme.EndsOn)
+                .ThenBy(programme => programme.RewardHeadline, StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            _ => programmes
+                .OrderBy(programme => programme.EndsOn)
+                .ThenBy(programme => programme.StartsOn)
+                .ThenBy(programme => programme.RewardHeadline, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+        };
 
     private static IReadOnlyList<CustomerCardGroupView> BuildCustomerCardGroups(IReadOnlyList<WalletCardSnapshot> cards)
     {
@@ -1626,6 +1750,45 @@ else
     private void DismissSetupRoadmap() => _isSetupRoadmapDismissed = true;
     private void DismissSetupCompletionNotice() => _isSetupCompletionNoticeDismissed = true;
 
+    private void UpdateProgrammeSelectionAnimation(Guid? selectedProgrammeId)
+    {
+        if (!selectedProgrammeId.HasValue)
+        {
+            _animateProgrammeSelection = false;
+            _lastSelectedProgrammeId = null;
+            return;
+        }
+
+        _animateProgrammeSelection = _lastSelectedProgrammeId.HasValue
+            && _lastSelectedProgrammeId.Value != selectedProgrammeId.Value;
+        _lastSelectedProgrammeId = selectedProgrammeId.Value;
+    }
+
+    private void HandleProgrammeGroupSortChanged(ChangeEventArgs args)
+    {
+        var requestedSort = args.Value?.ToString()?.Trim().ToLowerInvariant();
+        _programmeGroupSort = requestedSort switch
+        {
+            "name" => "name",
+            "start-date" => "start-date",
+            _ => "end-date"
+        };
+    }
+
+    private bool IsProgrammeGroupCollapsed(string label) =>
+        _collapsedProgrammeGroups.Contains(label);
+
+    private void ToggleProgrammeGroup(string label)
+    {
+        if (!_collapsedProgrammeGroups.Add(label))
+        {
+            _collapsedProgrammeGroups.Remove(label);
+        }
+    }
+
+    private static string BuildProgrammeGroupContentId(string label) =>
+        $"programme-group-{new string(label.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray())}";
+
     private string GetWalletStatusLabel()
     {
         if (!WalletCapability.SupportsAppleWalletPass)
@@ -1653,6 +1816,23 @@ else
         return today > endsOn ? "Expired" : "Active";
     }
 
+    private static string BuildProgrammeWindowClass(string badge) =>
+        badge switch
+        {
+            "Active" => "programme-list__item--window-active",
+            "Scheduled" => "programme-list__item--window-scheduled",
+            "Expired" => "programme-list__item--window-expired",
+            _ => string.Empty
+        };
+
+    private static string BuildProgrammeTypeClass(string programmeTypeKey) =>
+        programmeTypeKey switch
+        {
+            "visit-reward" => "programme-list__item--type-visit",
+            "conditional-offer" => "programme-list__item--type-offer",
+            _ => string.Empty
+        };
+
     private static string BuildProgrammeWindowMessage(DateOnly startsOn, DateOnly endsOn)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -1667,6 +1847,22 @@ else
         }
 
         return $"This programme is live until {FormatDate(endsOn)}.";
+    }
+
+    private static string BuildProgrammeWindowSummary(DateOnly startsOn, DateOnly endsOn)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (today < startsOn)
+        {
+            return $"Starts {FormatDate(startsOn)}";
+        }
+
+        if (today > endsOn)
+        {
+            return $"Expired {FormatDate(endsOn)}";
+        }
+
+        return $"Live until {FormatDate(endsOn)}";
     }
 
     private void HandleStateChanged() =>
@@ -1740,7 +1936,8 @@ else
 
     private sealed record ProgrammeGroupView(
         string Label,
-        IReadOnlyList<ProgrammeSummarySnapshot> Programmes);
+        IReadOnlyList<ProgrammeSummarySnapshot> Programmes,
+        bool IsCollapsed);
 
     private sealed record CustomerCardGroupView(
         string Label,

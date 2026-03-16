@@ -32,6 +32,7 @@ require_file "docs/plans/active/F30-onboarding-surface-polish-and-completion-han
 require_file "docs/plans/completed/F29-onboarding-guardrails-and-tiered-billing.md"
 require_file "docs/specs/F30-onboarding-surface-polish-and-completion-handoff/REQUIREMENTS.md"
 require_file "docs/specs/F30-onboarding-surface-polish-and-completion-handoff/ACCEPTANCE.md"
+require_file "docs/runbooks/UX_QA_PLAYBOOK.md"
 require_file "src/Fic.Platform.Web/Components/Pages/Home.razor"
 require_file "src/Fic.Platform.Web/Components/Pages/SignupBilling.razor"
 require_file "src/Fic.Platform.Web/Components/Pages/VendorWorkspace.razor"
@@ -41,6 +42,7 @@ require_file "src/Fic.Platform.Web/wwwroot/images/apple-pay-mark.svg"
 require_file "src/Fic.Platform.Web/wwwroot/app.css"
 require_file "tests/Fic.Platform.Web.Tests/CompanyBrandSurfaceTests.cs"
 require_file "tests/Fic.Platform.Web.Tests/VendorWorkspaceComponentTests.cs"
+require_file "tests/Fic.Platform.Web.Tests/UxQualityGateTests.cs"
 
 require_text "F30-onboarding-surface-polish-and-completion-handoff.md" "docs/plans/active/README.md"
 require_text "Polish onboarding surfaces" "README.md"
@@ -57,6 +59,8 @@ require_text "billing-method-option" "src/Fic.Platform.Web/wwwroot/app.css"
 require_text "setup-complete-banner" "src/Fic.Platform.Web/wwwroot/app.css"
 require_text "apple-pay-mark.svg" "tests/Fic.Platform.Web.Tests/CompanyBrandSurfaceTests.cs"
 require_text "Open insights" "tests/Fic.Platform.Web.Tests/VendorWorkspaceComponentTests.cs"
+require_text "scripts/validate-ux-surface.sh" "docs/runbooks/UX_QA_PLAYBOOK.md"
+require_text "UxQualityGateTests" "tests/Fic.Platform.Web.Tests/UxQualityGateTests.cs"
 
 env DOTNET_CLI_HOME="${DOTNET_CLI_HOME}" \
     NUGET_PACKAGES="${NUGET_PACKAGES}" \
@@ -68,6 +72,6 @@ env DOTNET_CLI_HOME="${DOTNET_CLI_HOME}" \
     MSBuildEnableWorkloadResolver="${MSBuildEnableWorkloadResolver}" \
     dotnet test "${ROOT_DIR}/tests/Fic.Platform.Web.Tests/Fic.Platform.Web.Tests.csproj" \
       --disable-build-servers -m:1 -p:BuildInParallel=false -p:UseSharedCompilation=false -p:RestoreIgnoreFailedSources=true -p:NuGetAudit=false \
-      --filter "FullyQualifiedName~CompanyBrandSurfaceTests|FullyQualifiedName~VendorWorkspaceComponentTests|FullyQualifiedName~MerchantAuthBoundaryTests"
+      --filter "FullyQualifiedName~CompanyBrandSurfaceTests|FullyQualifiedName~VendorWorkspaceComponentTests|FullyQualifiedName~MerchantAuthBoundaryTests|FullyQualifiedName~UxQualityGateTests"
 
 echo "F30 onboarding surface polish validation passed."

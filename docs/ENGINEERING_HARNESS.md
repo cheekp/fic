@@ -233,7 +233,7 @@ The repo now supports:
 - programme creation now needs to keep separating programme type, starter template, delivery type, and current output so the wallet surface never masquerades as the programme itself
 - Wallet critical-path feedback now reports whether refresh was sent, skipped for missing registered devices, or unavailable due to push readiness gaps
 - first-programme onboarding now opens in a dedicated launch surface and hands off into normal configure/operate workflow without sticky launch state
-- first-time merchant workspace routing now gates secondary sections until the first real customer join exists
+- first-time merchant workspace routing now gates secondary sections until the first programme template is selected
 
 The repo does not yet represent finished production behavior for:
 
@@ -253,6 +253,9 @@ Current high-value local loops:
   - run the focused xUnit suite for state-heavy behavior before trusting UI-only changes
 - component test loop:
   - use bUnit for merchant-workspace interaction rules where UI behavior is meaningful but a full browser test is still too heavy
+- UX quality gate loop:
+  - run `scripts/validate-ux-surface.sh` for contract-level UX checks
+  - optionally set `FIC_UX_BROWSER_SMOKE=1` to run Playwright overflow smoke checks with screenshot artifacts
 - direct web preview:
   - run the Blazor app with the local profile for browser and LAN demos
 - wallet demo:
