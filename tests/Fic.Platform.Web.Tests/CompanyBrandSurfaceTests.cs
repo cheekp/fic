@@ -23,9 +23,11 @@ public sealed class CompanyBrandSurfaceTests
 
         var cut = context.Render<Home>();
 
-        Assert.Contains("Sign up now.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Set up your wallet loyalty programme in minutes.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("/images/home-hero.jpeg", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Sign up now", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("I already have an account", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Apple Wallet first", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/portal/signup", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Consultancy", cut.Find("nav[aria-label='Company links']").TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain("company-logo.png", cut.Markup, StringComparison.Ordinal);
