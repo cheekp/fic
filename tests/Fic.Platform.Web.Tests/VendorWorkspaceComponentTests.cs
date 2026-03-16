@@ -84,6 +84,64 @@ public sealed class VendorWorkspaceComponentTests
     }
 
     [Fact]
+    public async Task Workspace_ShowsOnboardingJourney_InFirstTimeMode()
+    {
+        using var context = CreateContext();
+        var workspace = await CreateMerchantAndRegisterServicesAsync(context);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId);
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.Contains("Onboarding journey", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Choose plan", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Billing and access", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Branding settings (optional)", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("workspace-stage--first-time", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Workspace_HidesOnboardingJourney_AfterFirstCustomerJoin()
+    {
+        var state = CreateState();
+        using var context = CreateContext();
+        RegisterServices(context, state);
+        var workspace = await CreateMerchantWithProgrammeAsync(state);
+        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
+        Assert.NotNull(state.JoinCustomer(selectedProgramme.JoinCode));
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId);
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.DoesNotContain("Onboarding journey", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Branding settings (optional)", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task FirstTimeRouteGuard_RequiresShopDetailsBeforeTemplateCreation()
+    {
+        var state = CreateState();
+        using var context = CreateContext();
+        RegisterServices(context, state);
+        var workspace = await CreateLeadOnlyMerchantAsync(state);
+        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "programmes", programmeSection: "create");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
+
+        var navigation = context.Services.GetRequiredService<NavigationManager>();
+        Assert.Contains("settings=shop", navigation.Uri, StringComparison.Ordinal);
+        Assert.Contains("Complete shop details", cut.Markup, StringComparison.Ordinal);
+
+        var startButton = cut.FindAll("button")
+            .First(button => button.TextContent.Contains("Start with this template", StringComparison.Ordinal));
+
+        Assert.True(startButton.HasAttribute("disabled"));
+        Assert.Contains("Complete shop details first", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ShopOverview_DismissesRoadmapWhenRequested()
     {
         var state = CreateState();
@@ -141,8 +199,8 @@ public sealed class VendorWorkspaceComponentTests
         Assert.DoesNotContain("Overview", topLevelLinks);
         Assert.DoesNotContain("Insights", topLevelLinks);
         Assert.DoesNotContain("Edit Shop", topLevelLinks);
-        Assert.Contains("Shop settings", cut.Markup, StringComparison.Ordinal);
-        Assert.Equal(1, CountOccurrences(cut.Markup, "Shop settings"));
+        Assert.DoesNotContain("Shop settings", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Branding settings (optional)", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -797,6 +855,18 @@ public sealed class VendorWorkspaceComponentTests
             "Jo's Coffee",
             "Bristol",
             "BS1 4DJ",
+            "owner@joscoffee.test",
+            logoUpload: null,
+            fallbackLogoUrl: FallbackLogoUrl,
+            primaryColor: "#1f3731",
+            accentColor: "#f4c15d",
+            baseUri: BaseUri);
+
+    private static Task<MerchantWorkspaceSnapshot> CreateLeadOnlyMerchantAsync(DemoPlatformState state) =>
+        state.CreateMerchantAsync(
+            "Jo's Coffee",
+            string.Empty,
+            string.Empty,
             "owner@joscoffee.test",
             logoUpload: null,
             fallbackLogoUrl: FallbackLogoUrl,

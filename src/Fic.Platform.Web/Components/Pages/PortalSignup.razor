@@ -1,57 +1,72 @@
 @page "/portal/signup"
 @using System.ComponentModel.DataAnnotations
 @using System.Text
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.DependencyInjection
 @inject DemoPlatformState PlatformState
 @inject NavigationManager Navigation
+@inject IServiceProvider Services
 
 <PageTitle>Set Up Your Shop</PageTitle>
 
-<section class="panel signup-panel signup-panel--entry">
-        <div class="panel__header">
-            <div>
-                <p class="eyebrow">Step 1 of 3</p>
-                <h2>Create your shop</h2>
-                <p class="lede">Enter the shop details first. Billing and owner password setup are next, then you create the first programme inside the workspace.</p>
-            </div>
-        </div>
+<section class="signup-journey-strip signup-journey-strip--entry">
+    <OnboardingJourney CurrentStep="account"
+                       AccountComplete="false"
+                       PlanComplete="false"
+                       BillingComplete="false"
+                       ShopComplete="false"
+                       ProgrammeComplete="false"
+                       IsStrip="true"
+                       AccountUrl="/portal/signup" />
+</section>
 
-    <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-shop" class="form-stack">
+<section class="panel signup-panel signup-panel--entry onboarding-step">
+    <div class="panel__header onboarding-step__header">
+        <div class="onboarding-step__copy">
+            <p class="eyebrow">Step 1 of 5</p>
+            <h2>Create your shop</h2>
+            <p class="lede">Start with shop details. Next, choose a plan, set billing and owner access, then pick your first programme template.</p>
+        </div>
+    </div>
+
+    <EditForm Model="_form" OnValidSubmit="HandleSubmitAsync" FormName="create-shop" class="form-stack onboarding-form" aria-describedby="signup-required-note">
         <DataAnnotationsValidator />
         <ValidationSummary class="validation-summary" />
 
         <div class="form-grid">
             <label class="field">
                 <span>Coffee shop name</span>
-                <InputText @bind-Value="_form.DisplayName" class="input" />
+                <InputText @bind-Value="_form.DisplayName" class="input" autocomplete="organization" placeholder="Jo's Coffee" />
+                <ValidationMessage For="() => _form.DisplayName" class="field-error" />
             </label>
 
             <label class="field">
                 <span>Owner email</span>
-                <InputText @bind-Value="_form.ContactEmail" class="input" />
-            </label>
-
-            <label class="field">
-                <span>Town or city</span>
-                <InputText @bind-Value="_form.TownOrCity" class="input" />
-            </label>
-
-            <label class="field">
-                <span>Postcode</span>
-                <InputText @bind-Value="_form.Postcode" class="input" />
+                <InputText @bind-Value="_form.ContactEmail" class="input" autocomplete="email" placeholder="owner@shop.com" />
+                <ValidationMessage For="() => _form.ContactEmail" class="field-error" />
             </label>
 
         </div>
 
-        <div class="form-actions">
-            <button class="button button--primary" type="submit" disabled="@_isSubmitting">Continue to Billing</button>
-            <a class="button button--ghost" href="/">Back to start</a>
+        <p id="signup-required-note" class="field-hint onboarding-required-note">Both fields are required to create your workspace and continue to plan selection.</p>
+
+        <div class="form-actions form-actions--onboarding">
+            <button class="button button--primary button--wide" type="submit" disabled="@_isSubmitting">Continue to Plan</button>
+            @if (IsSignupDemoSeedEnabled)
+            {
+                <button class="button button--secondary button--wide" type="button" disabled="@_isSubmitting" @onclick="ApplyDemoSeed">Use demo details</button>
+            }
         </div>
+
+        <p class="onboarding-back-link"><a class="inline-link" href="/">Back to start</a></p>
     </EditForm>
 </section>
 
 @code {
     private readonly SignupFormModel _form = new();
     private bool _isSubmitting;
+    private bool IsSignupDemoSeedEnabled =>
+        Services.GetService<IConfiguration>()?.GetValue<bool>("Features:SignupDemoSeedEnabled") ?? false;
 
     private async Task HandleSubmitAsync()
     {
@@ -61,8 +76,8 @@
         {
             var workspace = await PlatformState.CreateMerchantAsync(
                 _form.DisplayName,
-                _form.TownOrCity,
-                _form.Postcode,
+                string.Empty,
+                string.Empty,
                 _form.ContactEmail,
                 null,
                 BuildFallbackLogo(_form.DisplayName, DefaultPrimaryColor, DefaultAccentColor),
@@ -70,12 +85,18 @@
                 DefaultAccentColor,
                 Navigation.BaseUri);
 
-            Navigation.NavigateTo($"/portal/signup/billing/{workspace.Merchant.MerchantId}");
+            Navigation.NavigateTo($"/portal/signup/plan/{workspace.Merchant.MerchantId}");
         }
         finally
         {
             _isSubmitting = false;
         }
+    }
+
+    private void ApplyDemoSeed()
+    {
+        _form.DisplayName = "Jo's Coffee";
+        _form.ContactEmail = "owner@joscoffee.test";
     }
 
     private static string GetInitials(string name)
@@ -118,15 +139,10 @@
     private sealed class SignupFormModel
     {
         [Required, StringLength(80)]
-        public string DisplayName { get; set; } = "Jo's Coffee";
+        public string DisplayName { get; set; } = string.Empty;
 
         [Required, EmailAddress]
-        public string ContactEmail { get; set; } = "owner@joscoffee.test";
+        public string ContactEmail { get; set; } = string.Empty;
 
-        [Required, StringLength(60)]
-        public string TownOrCity { get; set; } = "Bristol";
-
-        [Required, StringLength(12)]
-        public string Postcode { get; set; } = "BS1 4DJ";
     }
 }

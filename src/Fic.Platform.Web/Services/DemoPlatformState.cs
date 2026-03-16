@@ -470,6 +470,13 @@ public sealed class DemoPlatformState(
                 return new MerchantCredentialConfigurationResult(MerchantCredentialConfigurationStatus.NotFound);
             }
 
+            if (!string.IsNullOrWhiteSpace(merchant.PasswordHash) && !string.IsNullOrWhiteSpace(merchant.PasswordSalt))
+            {
+                return new MerchantCredentialConfigurationResult(
+                    MerchantCredentialConfigurationStatus.AlreadyConfigured,
+                    ToMerchantSnapshot(merchant));
+            }
+
             try
             {
                 var (passwordHash, passwordSalt) = MerchantPasswordHasher.HashPassword(password);
@@ -978,6 +985,8 @@ public sealed class DemoPlatformState(
             && !string.IsNullOrWhiteSpace(brand.PrimaryColor)
             && !string.IsNullOrWhiteSpace(brand.AccentColor),
             programmeSummaries.Count > 0,
+            !string.IsNullOrWhiteSpace(merchant.PasswordHash)
+            && !string.IsNullOrWhiteSpace(merchant.PasswordSalt),
             programmeSummaries.Any(summary => !string.IsNullOrWhiteSpace(summary.JoinCode)));
 
     private static string BuildRewardHeadline(string templateKey, int rewardThreshold, string rewardItemLabel) =>

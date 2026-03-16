@@ -176,14 +176,17 @@ Completed slice chain to date:
 - `F27`
   - Wallet push hardening so pass refresh outcomes are explicit, retryable APNs failures are diagnosable, and permanent token failures are cleaned up
   - validator: `scripts/validate-f27-wallet-push-hardening.sh`
+- `F28`
+  - first-time workspace focus so new merchants stay in a simple programmes-first lane until first customer join removes route and navigation gating
+  - validator: `scripts/validate-f28-first-time-workspace-focus.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F28`
-  - first-time workspace focus so new merchants stay in a simple programmes-first lane until first customer join removes route and navigation gating
-  - validator: `scripts/validate-f28-first-time-workspace-focus.sh`
+- `F29`
+  - onboarding guardrails and tiered billing presentation so first-run setup is production-ready, route-safe, and still demo-friendly via feature flag
+  - validator: `scripts/validate-f29-onboarding-guardrails.sh`
 
 ## Current Product Reality
 
@@ -221,7 +224,8 @@ The repo now supports:
 - merchant onboarding now sets owner access credentials before the workspace opens
 - merchant workspace routes now require a cookie-backed merchant session and enforce merchant ownership on route access
 - shop signup now creates the merchant account first, while the first programme is created explicitly after billing inside the workspace
-- billing currently uses one clear founding tier so the founder-demo lane stays simple and believable
+- first-time onboarding now captures owner email early, then requires shop details before first template selection while leaving branding skippable
+- billing now presents starter/growth/enterprise positioning while keeping only one enabled self-serve tier for onboarding
 - starter programme creation now offers explicit templates, including a visit reward and a coffee-plus-food offer shape
 - programme creation now needs to keep separating programme type, starter template, delivery type, and current output so the wallet surface never masquerades as the programme itself
 - Wallet critical-path feedback now reports whether refresh was sent, skipped for missing registered devices, or unavailable due to push readiness gaps
