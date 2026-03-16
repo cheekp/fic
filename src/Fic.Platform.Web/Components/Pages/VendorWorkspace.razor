@@ -40,6 +40,7 @@ else
     var expiredProgrammesCount = programmeGroups.FirstOrDefault(group => group.Label == "Expired")?.Programmes.Count ?? 0;
     var selectedProgrammeCards = _workspace.SelectedProgrammeCards;
     var isFirstTimeMode = IsFirstTimeMode;
+    var shopDetailsReady = _workspace.SetupChecklist.ShopDetailsComplete;
     var showProgrammeRail = hasProgrammes && !isFirstTimeMode;
     var showAdvancedProgrammeSections = !isFirstTimeMode;
     var customerCardGroups = BuildCustomerCardGroups(selectedProgrammeCards);
@@ -47,8 +48,9 @@ else
     var redeemedCardsCount = selectedProgrammeCards.Count(card => card.CustomerCardStatus == CustomerCardStatus.Redeemed);
     var inactiveCardsCount = selectedProgrammeCards.Count(card =>
         card.CustomerCardStatus is CustomerCardStatus.Scheduled or CustomerCardStatus.Expired);
+    var firstTimeProgrammeStepComplete = _workspace.SetupChecklist.HasAnyProgramme && !IsFinishingFirstProgrammeSetup;
 
-    <div class="workspace-stage @workspaceTheme.ThemeClass" style="@workspaceTheme.CssVariables">
+    <div class="workspace-stage @workspaceTheme.ThemeClass @(isFirstTimeMode ? "workspace-stage--first-time" : string.Empty)" style="@workspaceTheme.CssVariables">
         <section class="workspace-header">
             <div class="workspace-brand">
                 <div class="brand-lockup brand-lockup--merchant">
@@ -58,7 +60,7 @@ else
                     <p class="eyebrow">Your shop</p>
                     <h2>@_workspace.Merchant.DisplayName</h2>
                     <p class="field-hint">@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
-                    @if (!IsShopSettingsOpen())
+                    @if (!isFirstTimeMode && !IsShopSettingsOpen())
                     {
                         <a class="workspace-inline-link" href="@GetShopSettingsUrl()">Shop settings</a>
                     }
@@ -82,6 +84,33 @@ else
                 }
             </nav>
         </div>
+
+        @if (isFirstTimeMode)
+        {
+            <OnboardingJourney CurrentStep="@(shopDetailsReady ? "programme" : "shop")"
+                               AccountComplete="true"
+                               PlanComplete="_workspace.SetupChecklist.OwnerAccessConfigured"
+                               BillingComplete="_workspace.SetupChecklist.OwnerAccessConfigured"
+                               ShopComplete="shopDetailsReady"
+                               ProgrammeComplete="firstTimeProgrammeStepComplete"
+                               AccountUrl="/portal/signup"
+                               PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")"
+                               BillingUrl="@($"/portal/signup/billing/{MerchantId:D}?plan=starter")"
+                               ShopUrl="@GetShopSettingsUrl()"
+                               ProgrammeUrl="@GetProgrammeSectionUrl(_workspace.SetupChecklist.HasAnyProgramme ? "configure" : "create")"
+                               Hint="Complete shop details first, then choose a template and save once in Configure before your first customer join.">
+                <Actions>
+                    @if (!IsShopSettingsOpen())
+                    {
+                        <a class="button button--ghost button--compact" href="@GetShopSettingsUrl()">@(shopDetailsReady ? "Branding settings (optional)" : "Complete shop details")</a>
+                    }
+                    else
+                    {
+                        <a class="button button--ghost button--compact" href="@GetCloseShopSettingsUrl()">Close shop settings</a>
+                    }
+                </Actions>
+            </OnboardingJourney>
+        }
 
         @if (IsWorkspaceSection("overview"))
         {
@@ -292,14 +321,19 @@ else
                 <div class="workspace-stack workspace-stack--programme programme-workpane">
                     @if (!hasProgrammes || IsProgrammeSection("create"))
                     {
-                        <section class="panel programme-setup-flow">
-                            <div class="panel__header">
-                                <div>
-                                    <p class="eyebrow">@(hasProgrammes ? "New programme" : "Step 3 of 3")</p>
+                        <section class="panel programme-setup-flow @(hasProgrammes ? string.Empty : "onboarding-step onboarding-step--workspace")">
+                            <div class="panel__header onboarding-step__header">
+                                <div class="onboarding-step__copy">
+                                    <p class="eyebrow">@(hasProgrammes ? "New programme" : "Step 5 of 5")</p>
                                     <h3>@(hasProgrammes ? "Add another programme" : "Create your first programme")</h3>
-                                    <p class="lede">Choose the programme template first. The current customer delivery output is then configured inside the programme workspace.</p>
+                                    <p class="lede">Pick one template to launch. You can fine-tune reward rules immediately after this step.</p>
                                 </div>
                             </div>
+
+                            @if (!shopDetailsReady)
+                            {
+                                <p class="field-hint onboarding-required-note">Complete shop details first. Branding can be adjusted now or skipped for later.</p>
+                            }
 
                             <div class="template-grid">
                                 @foreach (var template in ProgrammeTemplates)
@@ -314,26 +348,10 @@ else
                                         </div>
                                         <p class="template-card__headline">@template.Headline</p>
                                         <p class="field-hint">@template.Description</p>
-                                        <dl class="template-card__facts">
-                                            <div>
-                                                <dt>Programme type</dt>
-                                                <dd>@template.ProgrammeTypeLabel</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Reward rule</dt>
-                                                <dd>@template.RewardCopy</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Current delivery</dt>
-                                                <dd>@template.DeliveryTypeLabel</dd>
-                                            </div>
-                                            <div>
-                                                <dt>Current output</dt>
-                                                <dd>@template.OutputLabel</dd>
-                                            </div>
-                                        </dl>
-                                        <div class="form-actions">
-                                            <button class="button button--primary" type="button" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">@(hasProgrammes ? "Use this template" : "Start with this template")</button>
+                                        <p class="field-hint">Reward rule: @template.RewardCopy</p>
+                                        <p class="field-hint">Output: @template.OutputLabel</p>
+                                        <div class="form-actions form-actions--onboarding">
+                                            <button class="button button--primary button--wide button--block" type="button" disabled="@(!shopDetailsReady)" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">@(hasProgrammes ? "Use this template" : "Start with this template")</button>
                                         </div>
                                     </article>
                                 }
@@ -804,7 +822,7 @@ else
         @if (IsShopSettingsOpen())
         {
             <div class="workspace-drawer-backdrop">
-                <aside class="panel workspace-drawer" aria-label="Shop settings drawer">
+                <aside class="panel workspace-drawer @(isFirstTimeMode ? "workspace-drawer--onboarding" : string.Empty)" aria-label="Shop settings drawer">
                     <div class="panel__header">
                         <div>
                             <p class="eyebrow">Shop settings</p>
@@ -818,49 +836,70 @@ else
 
                     <p class="field-hint">These defaults apply across the shop. Programmes inherit them unless a customer delivery output introduces its own overrides later.</p>
 
-                    <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack">
+                    <section class="shop-settings-callout">
+                        <p class="eyebrow">@(shopDetailsReady ? "Shop details complete" : "Required now")</p>
+                        <p class="field-hint">Complete shop name, owner email, town/city, and postcode before creating the first programme. Branding is optional and can be refined later.</p>
+                    </section>
+
+                    <EditForm Model="_shopForm" OnValidSubmit="HandleShopSaveAsync" FormName="update-shop" class="form-stack onboarding-form">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="validation-summary" />
 
-                        <div class="form-grid">
-                            <label class="field">
-                                <span>Coffee shop name</span>
-                                <InputText @bind-Value="_shopForm.DisplayName" class="input" />
-                            </label>
+                        <section class="shop-settings-group">
+                            <div class="shop-settings-group__header">
+                                <h4>Shop details</h4>
+                                <span class="chip chip--accent">Required</span>
+                            </div>
 
-                            <label class="field">
-                                <span>Owner email</span>
-                                <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
-                            </label>
+                            <div class="form-grid">
+                                <label class="field">
+                                    <span>Coffee shop name</span>
+                                    <InputText @bind-Value="_shopForm.DisplayName" class="input" />
+                                </label>
 
-                            <label class="field">
-                                <span>Town or city</span>
-                                <InputText @bind-Value="_shopForm.TownOrCity" class="input" />
-                            </label>
+                                <label class="field">
+                                    <span>Owner email</span>
+                                    <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
+                                </label>
 
-                            <label class="field">
-                                <span>Postcode</span>
-                                <InputText @bind-Value="_shopForm.Postcode" class="input" />
-                            </label>
+                                <label class="field">
+                                    <span>Town or city</span>
+                                    <InputText @bind-Value="_shopForm.TownOrCity" class="input" />
+                                </label>
 
-                            <label class="field">
-                                <span>Site primary colour</span>
-                                <InputText @bind-Value="_shopForm.PrimaryColor" class="input" />
-                            </label>
-
-                            <label class="field">
-                                <span>Site accent colour</span>
-                                <InputText @bind-Value="_shopForm.AccentColor" class="input" />
-                            </label>
-
-                            <div class="field field--full">
-                                <span>Replace logo</span>
-                                <label class="upload-control">
-                                    <InputFile OnChange="HandleBrandLogoSelectedAsync" accept=".png" />
-                                    <span>Upload a PNG logo. We will suggest colours from it, but you can still override them manually.</span>
+                                <label class="field">
+                                    <span>Postcode</span>
+                                    <InputText @bind-Value="_shopForm.Postcode" class="input" />
                                 </label>
                             </div>
-                        </div>
+                        </section>
+
+                        <section class="shop-settings-group">
+                            <div class="shop-settings-group__header">
+                                <h4>Branding</h4>
+                                <span class="chip">Optional</span>
+                            </div>
+
+                            <div class="form-grid">
+                                <label class="field">
+                                    <span>Site primary colour</span>
+                                    <InputText @bind-Value="_shopForm.PrimaryColor" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Site accent colour</span>
+                                    <InputText @bind-Value="_shopForm.AccentColor" class="input" />
+                                </label>
+
+                                <div class="field field--full">
+                                    <span>Replace logo</span>
+                                    <label class="upload-control">
+                                        <InputFile OnChange="HandleBrandLogoSelectedAsync" accept=".png" />
+                                        <span>Upload a PNG logo. We will suggest colours from it, but you can still override them manually.</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </section>
 
                         @if (!string.IsNullOrWhiteSpace(_shopMessage))
                         {
@@ -880,9 +919,9 @@ else
                             </div>
                         </section>
 
-                        <div class="form-actions">
-                            <button class="button button--primary" type="submit" disabled="@_isSavingShop">Save Shop</button>
-                            <button class="button button--ghost" type="button" @onclick="ResetShopForm">Reset</button>
+                        <div class="form-actions form-actions--onboarding form-actions--drawer">
+                            <button class="button button--primary button--wide" type="submit" disabled="@_isSavingShop">Save Shop</button>
+                            <button class="button button--secondary button--wide" type="button" @onclick="ResetShopForm">Reset</button>
                         </div>
                     </EditForm>
                 </aside>
@@ -1089,6 +1128,7 @@ else
 
         var requestedProgrammeSection = NormalizeProgrammeSection(Tab, Section, ProgrammeSection);
         var settings = NormalizeRequestedSettings();
+        var guardedSettings = !_workspace.SetupChecklist.ShopDetailsComplete ? "shop" : settings;
         var guardedProgrammeSection = _workspace.SetupChecklist.HasAnyProgramme
             ? NormalizeFirstTimeProgrammeSection(requestedProgrammeSection)
             : "create";
@@ -1096,7 +1136,7 @@ else
             "programmes",
             guardedProgrammeSection,
             _workspace.SelectedProgramme?.ProgrammeId,
-            settings,
+            guardedSettings,
             launch: null);
 
         if (!string.Equals(guardedUrl, Navigation.Uri, StringComparison.Ordinal))
@@ -1276,6 +1316,13 @@ else
 
     private Task HandleCreateProgrammeAsync(string templateKey)
     {
+        if (_workspace?.SetupChecklist.ShopDetailsComplete != true)
+        {
+            _programmeMessage = "Complete shop details before creating the first programme.";
+            Navigation.NavigateTo(GetShopSettingsUrl());
+            return Task.CompletedTask;
+        }
+
         var isFirstProgrammeSetup = _workspace?.Programmes.Count == 0;
         var updated = PlatformState.CreateProgramme(MerchantId, templateKey, Navigation.BaseUri);
         if (updated?.SelectedProgramme is not null)

@@ -18,7 +18,8 @@ public enum MerchantCredentialConfigurationStatus
 {
     Updated,
     NotFound,
-    InvalidPassword
+    InvalidPassword,
+    AlreadyConfigured
 }
 
 public sealed record MerchantCredentialConfigurationResult(

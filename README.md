@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Tighten the first-time merchant workflow so new users stay in a simple programmes-first lane until the first customer join and first stamp are complete.
+Harden onboarding guardrails so signup and billing feel production-ready, expose demo seeding only by feature flag, and keep first-programme setup as one simple guided lane.

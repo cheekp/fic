@@ -300,6 +300,36 @@ public sealed class DemoPlatformStateTests
     }
 
     [Fact]
+    public async Task ConfigureMerchantAccess_ReturnsAlreadyConfigured_WhenCredentialsExist()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantAsync(state);
+
+        var first = state.ConfigureMerchantAccess(workspace.Merchant.MerchantId, "very-secure-password");
+        var second = state.ConfigureMerchantAccess(workspace.Merchant.MerchantId, "another-secure-password");
+
+        Assert.Equal(MerchantCredentialConfigurationStatus.Updated, first.Status);
+        Assert.Equal(MerchantCredentialConfigurationStatus.AlreadyConfigured, second.Status);
+    }
+
+    [Fact]
+    public async Task SetupChecklist_ShowsOwnerAccessConfigured_AfterCredentialSetup()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantAsync(state);
+        Assert.False(workspace.SetupChecklist.OwnerAccessConfigured);
+
+        Assert.Equal(
+            MerchantCredentialConfigurationStatus.Updated,
+            state.ConfigureMerchantAccess(workspace.Merchant.MerchantId, "very-secure-password").Status);
+
+        var refreshed = state.GetMerchantWorkspace(workspace.Merchant.MerchantId, BaseUri);
+
+        Assert.NotNull(refreshed);
+        Assert.True(refreshed!.SetupChecklist.OwnerAccessConfigured);
+    }
+
+    [Fact]
     public async Task AuthenticateMerchant_ReturnsCredentialsNotConfigured_WhenPasswordHasNotBeenSet()
     {
         var state = CreateState();

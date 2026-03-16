@@ -1,0 +1,161 @@
+@page "/portal/signup/plan/{MerchantId:guid}"
+@inject DemoPlatformState PlatformState
+@inject NavigationManager Navigation
+
+<PageTitle>Plan Selection</PageTitle>
+
+@if (_workspace is null)
+{
+    <section class="empty-state">
+        <h2>Shop setup not found.</h2>
+        <p>The shop may not exist in the current demo instance.</p>
+        <a class="button button--primary" href="/portal/signup">Back to shop signup</a>
+    </section>
+}
+else
+{
+    <section class="signup-journey-strip signup-journey-strip--plan">
+        <OnboardingJourney CurrentStep="plan"
+                           AccountComplete="true"
+                           PlanComplete="false"
+                           BillingComplete="false"
+                           ShopComplete="false"
+                           ProgrammeComplete="false"
+                           IsStrip="true"
+                           AccountUrl="/portal/signup"
+                           PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")" />
+    </section>
+
+    <section class="panel signup-panel signup-panel--plan onboarding-step">
+        <div class="panel__header onboarding-step__header">
+            <div class="onboarding-step__copy">
+                <p class="eyebrow">Step 2 of 5</p>
+                <h2>Choose your launch plan</h2>
+                <p class="lede">Pick the tier that fits today. Starter stays self-serve; Growth and Enterprise route to North Star support.</p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <p class="field-error field-error--inline">@_message</p>
+        }
+
+        <section class="tier-grid" aria-label="Product tiers">
+            @foreach (var tier in BillingTiers)
+            {
+                <article class="tier-card @(tier.IsSelfServeEnabled ? "tier-card--enabled" : "tier-card--sales")">
+                    <div class="tier-card__header">
+                        <div>
+                            <p class="eyebrow">@tier.Tagline</p>
+                            <h3>
+                                @tier.Name
+                                @if (tier.IsSelfServeEnabled)
+                                {
+                                    <span class="tier-card__flag">Recommended</span>
+                                }
+                            </h3>
+                            <p class="field-hint">@tier.Description</p>
+                        </div>
+                        <span class="chip @(tier.IsSelfServeEnabled ? "chip--accent" : string.Empty)">@tier.PriceLabel</span>
+                    </div>
+
+                    <ul class="tier-card__features">
+                        @foreach (var feature in tier.Features)
+                        {
+                            <li>@feature</li>
+                        }
+                    </ul>
+
+                    <div class="form-actions tier-card__actions">
+                        @if (tier.IsSelfServeEnabled)
+                        {
+                            <a class="button button--primary button--wide" href="@($"/portal/signup/billing/{MerchantId:D}?plan=starter")">Continue with Starter</a>
+                        }
+                        else
+                        {
+                            <a class="button button--secondary button--wide" href="/consultancy">Contact us</a>
+                        }
+                    </div>
+                </article>
+            }
+        </section>
+
+        <p class="field-hint onboarding-required-note">Next step is billing and owner access. Shop details and branding continue after that in your workspace.</p>
+
+        <div class="form-actions form-actions--onboarding">
+            <a class="button button--secondary button--wide" href="/portal/signup">Back to create shop</a>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public Guid MerchantId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? Error { get; set; }
+
+    private MerchantWorkspaceSnapshot? _workspace;
+    private string? _message;
+
+    private static IReadOnlyList<BillingTierView> BillingTiers =>
+    [
+        new BillingTierView(
+            "starter",
+            "Starter",
+            "Self-serve",
+            "£19.99/mo",
+            "For independent shops launching quickly with one team owner and one primary programme lane.",
+            true,
+            [
+                "Programme templates and QR join flow",
+                "Apple Wallet pass delivery path",
+                "Owner access and daily operate tooling"
+            ]),
+        new BillingTierView(
+            "growth",
+            "Growth",
+            "Sales assisted",
+            "£79/mo",
+            "For multi-site operators that need support onboarding and deeper operational controls.",
+            false,
+            [
+                "Multi-location rollout planning",
+                "Priority support windows",
+                "Operational health reviews"
+            ]),
+        new BillingTierView(
+            "enterprise",
+            "Enterprise",
+            "Contact us",
+            "Custom",
+            "For chains and franchise groups needing governed integrations and white-glove consultancy.",
+            false,
+            [
+                "SSO and access governance",
+                "CRM integrations and data handoff",
+                "Consultancy-led rollout"
+            ])
+    ];
+
+    protected override void OnParametersSet()
+    {
+        _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri);
+
+        _message = Error switch
+        {
+            "unsupported-plan" => "Only Starter is enabled for self-serve right now. Contact us for Growth or Enterprise onboarding.",
+            _ => null
+        };
+    }
+
+    private sealed record BillingTierView(
+        string Key,
+        string Name,
+        string Tagline,
+        string PriceLabel,
+        string Description,
+        bool IsSelfServeEnabled,
+        IReadOnlyList<string> Features);
+}

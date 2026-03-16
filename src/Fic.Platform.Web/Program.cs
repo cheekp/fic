@@ -354,6 +354,7 @@ app.MapPost("/account/session/complete-signup", async (
 {
     var form = await context.Request.ReadFormAsync(context.RequestAborted);
     var merchantIdValue = form["merchantId"].ToString();
+    var selectedPlan = form["plan"].ToString().Trim();
     var password = form["password"].ToString();
     var confirmPassword = form["confirmPassword"].ToString();
     var billingReturnUrl = NormalizeLocalReturnUrl(form["returnUrl"].ToString());
@@ -363,9 +364,14 @@ app.MapPost("/account/session/complete-signup", async (
         return Results.LocalRedirect("/portal/signup");
     }
 
+    if (!string.Equals(selectedPlan, "starter", StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.LocalRedirect($"/portal/signup/plan/{merchantId:D}?error=unsupported-plan");
+    }
+
     if (!string.Equals(password, confirmPassword, StringComparison.Ordinal))
     {
-        return Results.LocalRedirect($"/portal/signup/billing/{merchantId:D}?error=password-mismatch");
+        return Results.LocalRedirect($"/portal/signup/billing/{merchantId:D}?error=password-mismatch&plan=starter");
     }
 
     var result = platformState.ConfigureMerchantAccess(merchantId, password);
@@ -374,10 +380,11 @@ app.MapPost("/account/session/complete-signup", async (
         var error = result.Status switch
         {
             MerchantCredentialConfigurationStatus.NotFound => "merchant-not-found",
+            MerchantCredentialConfigurationStatus.AlreadyConfigured => "credentials-already-configured",
             _ => "invalid-password"
         };
 
-        return Results.LocalRedirect($"/portal/signup/billing/{merchantId:D}?error={error}");
+        return Results.LocalRedirect($"/portal/signup/billing/{merchantId:D}?error={error}&plan=starter");
     }
 
     await SignInMerchantAsync(context, result.Merchant);

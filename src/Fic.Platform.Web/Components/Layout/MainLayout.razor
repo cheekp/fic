@@ -427,18 +427,12 @@
             [],
             null,
             null,
-            new AgentContext(
-                "Setup",
-                "Get onboarding help",
-                "Use this discreet launcher if you need help creating the shop account before moving into billing and workspace setup.",
-                "Open setup help",
-                "Ask about setup",
-                "Talk to North Star"));
+            null);
 
         public static ShellContext Billing { get; } = new(
             "Commercial onboarding",
             "Confirm billing",
-            "This step simulates commercial onboarding before the merchant lands in the live workspace.",
+            "Confirm launch tier and owner access before opening first-programme setup.",
             "billing",
             false,
             false,
@@ -452,13 +446,7 @@
             [],
             null,
             null,
-            new AgentContext(
-                "Billing",
-                "Get billing help",
-                "Use this discreet launcher for plan, pricing, or mock billing questions during onboarding.",
-                "Open billing help",
-                "Ask about billing",
-                "Talk to North Star"));
+            null);
 
         public static ShellContext Login { get; } = new(
             "Account access",

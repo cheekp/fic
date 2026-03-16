@@ -1,0 +1,181 @@
+<section class="onboarding-journey @(IsStrip ? "onboarding-journey--strip" : string.Empty)" aria-label="Onboarding journey">
+    @{
+        var steps = BuildSteps();
+    }
+
+    <div class="onboarding-journey__meta">
+        <strong>@BuildJourneyHeadline(steps)</strong>
+        <span>@BuildJourneyProgressLabel(steps)</span>
+    </div>
+
+    <div class="onboarding-journey__progress" aria-hidden="true">
+        <span style="width:@BuildJourneyProgressPercent(steps)%"></span>
+    </div>
+
+    @if (steps.Any(step => !string.IsNullOrWhiteSpace(step.Url)))
+    {
+        <nav class="onboarding-journey__crumbs" aria-label="Onboarding roadmap links">
+            @foreach (var step in steps)
+            {
+                var canNavigate = !string.IsNullOrWhiteSpace(step.Url) && (step.IsComplete || step.IsCurrent);
+                var crumbClass = step.IsCurrent
+                    ? "onboarding-journey__crumb onboarding-journey__crumb--current"
+                    : step.IsComplete
+                        ? "onboarding-journey__crumb onboarding-journey__crumb--complete"
+                        : "onboarding-journey__crumb onboarding-journey__crumb--upcoming";
+
+                @if (canNavigate)
+                {
+                    <a class="@crumbClass" href="@step.Url">
+                        <span class="onboarding-journey__crumb-index" aria-hidden="true">@step.Order</span>
+                        <span>@step.Label</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="@crumbClass">
+                        <span class="onboarding-journey__crumb-index" aria-hidden="true">@step.Order</span>
+                        <span>@step.Label</span>
+                    </span>
+                }
+            }
+        </nav>
+    }
+
+    <ol class="onboarding-journey__steps">
+        @foreach (var step in steps)
+        {
+            <li class="onboarding-journey__step @step.CssClass">
+                <span class="onboarding-journey__index">@step.Order</span>
+                <span class="onboarding-journey__copy">
+                    <strong>@step.Label</strong>
+                    <span>@step.StatusLabel</span>
+                </span>
+            </li>
+        }
+    </ol>
+
+    @if (!string.IsNullOrWhiteSpace(Hint))
+    {
+        <p class="onboarding-journey__hint">@Hint</p>
+    }
+
+    @if (Actions is not null)
+    {
+        <div class="onboarding-journey__actions">
+            @Actions
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter]
+    public string CurrentStep { get; set; } = "account";
+
+    [Parameter]
+    public bool AccountComplete { get; set; }
+
+    [Parameter]
+    public bool PlanComplete { get; set; }
+
+    [Parameter]
+    public bool BillingComplete { get; set; }
+
+    [Parameter]
+    public bool ShopComplete { get; set; }
+
+    [Parameter]
+    public bool ProgrammeComplete { get; set; }
+
+    [Parameter]
+    public string? Hint { get; set; }
+
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
+
+    [Parameter]
+    public bool IsStrip { get; set; }
+
+    [Parameter]
+    public string? AccountUrl { get; set; }
+
+    [Parameter]
+    public string? PlanUrl { get; set; }
+
+    [Parameter]
+    public string? BillingUrl { get; set; }
+
+    [Parameter]
+    public string? ShopUrl { get; set; }
+
+    [Parameter]
+    public string? ProgrammeUrl { get; set; }
+
+    private IReadOnlyList<OnboardingJourneyStepView> BuildSteps()
+    {
+        var steps = new[]
+        {
+            new OnboardingJourneyStepView(1, "account", "Create account", AccountComplete, AccountUrl),
+            new OnboardingJourneyStepView(2, "plan", "Choose plan", PlanComplete, PlanUrl),
+            new OnboardingJourneyStepView(3, "billing", "Billing and access", BillingComplete, BillingUrl),
+            new OnboardingJourneyStepView(4, "shop", "Shop details", ShopComplete, ShopUrl),
+            new OnboardingJourneyStepView(5, "programme", "Programme template", ProgrammeComplete, ProgrammeUrl)
+        };
+
+        return steps.Select(step =>
+        {
+            var isCurrent = string.Equals(step.Key, CurrentStep, StringComparison.OrdinalIgnoreCase);
+            var cssClass = isCurrent
+                ? "onboarding-journey__step--active"
+                : step.IsComplete
+                    ? "onboarding-journey__step--complete"
+                    : string.Empty;
+            var statusLabel = isCurrent
+                ? "Current"
+                : step.IsComplete
+                    ? "Complete"
+                    : "Next";
+
+            return step with
+            {
+                IsCurrent = isCurrent,
+                CssClass = cssClass,
+                StatusLabel = statusLabel
+            };
+        }).ToArray();
+    }
+
+    private static string BuildJourneyHeadline(IReadOnlyList<OnboardingJourneyStepView> steps) =>
+        steps.FirstOrDefault(step => step.IsCurrent) is { } current
+            ? $"Current step: {current.Label}"
+            : "Onboarding journey";
+
+    private static string BuildJourneyProgressLabel(IReadOnlyList<OnboardingJourneyStepView> steps)
+    {
+        var completeCount = steps.Count(step => step.IsComplete);
+        return $"{completeCount} of {steps.Count} complete";
+    }
+
+    private static int BuildJourneyProgressPercent(IReadOnlyList<OnboardingJourneyStepView> steps)
+    {
+        if (steps.Count == 0)
+        {
+            return 0;
+        }
+
+        var completeCount = steps.Count(step => step.IsComplete);
+        return (int)Math.Round((double)completeCount / steps.Count * 100, MidpointRounding.AwayFromZero);
+    }
+
+    private sealed record OnboardingJourneyStepView(
+        int Order,
+        string Key,
+        string Label,
+        bool IsComplete,
+        string? Url)
+    {
+        public bool IsCurrent { get; init; }
+        public string CssClass { get; init; } = string.Empty;
+        public string StatusLabel { get; init; } = string.Empty;
+    }
+}

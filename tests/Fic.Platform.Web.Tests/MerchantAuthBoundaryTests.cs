@@ -60,8 +60,18 @@ public sealed class MerchantAuthBoundaryTests
 
         var workspaceResponse = await client.GetAsync($"/portal/merchant/{workspace.Merchant.MerchantId}");
 
-        Assert.Equal(HttpStatusCode.OK, workspaceResponse.StatusCode);
-        Assert.NotEqual("/account/login", workspaceResponse.RequestMessage?.RequestUri?.AbsolutePath);
+        if (workspaceResponse.StatusCode == HttpStatusCode.Redirect)
+        {
+            var location = workspaceResponse.Headers.Location?.OriginalString;
+            Assert.NotNull(location);
+            Assert.Contains($"/portal/merchant/{workspace.Merchant.MerchantId}", location, StringComparison.Ordinal);
+            Assert.DoesNotContain("/account/login", location, StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.Equal(HttpStatusCode.OK, workspaceResponse.StatusCode);
+            Assert.NotEqual("/account/login", workspaceResponse.RequestMessage?.RequestUri?.AbsolutePath);
+        }
     }
 
     [Fact]
@@ -133,6 +143,92 @@ public sealed class MerchantAuthBoundaryTests
         Assert.Equal("/", logout.Headers.Location?.OriginalString);
         Assert.Equal(HttpStatusCode.Redirect, afterLogout.StatusCode);
         Assert.StartsWith("/account/login?returnUrl=", afterLogout.Headers.Location?.OriginalString, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task CompleteSignupEndpoint_RejectsUnsupportedPlan()
+    {
+        await using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        using var scope = factory.Services.CreateScope();
+        var state = scope.ServiceProvider.GetRequiredService<DemoPlatformState>();
+        var workspace = await CreateMerchantAsync(state);
+
+        var response = await client.PostAsync(
+            "/account/session/complete-signup",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["merchantId"] = workspace.Merchant.MerchantId.ToString("D"),
+                ["plan"] = "enterprise",
+                ["password"] = "very-secure-password",
+                ["confirmPassword"] = "very-secure-password"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal($"/portal/signup/plan/{workspace.Merchant.MerchantId:D}?error=unsupported-plan", response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
+    public async Task CompleteSignupEndpoint_AllowsStarterPlanWithoutBillingCheckbox()
+    {
+        await using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        using var scope = factory.Services.CreateScope();
+        var state = scope.ServiceProvider.GetRequiredService<DemoPlatformState>();
+        var workspace = await CreateMerchantAsync(state);
+
+        var response = await client.PostAsync(
+            "/account/session/complete-signup",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["merchantId"] = workspace.Merchant.MerchantId.ToString("D"),
+                ["plan"] = "starter",
+                ["password"] = "very-secure-password",
+                ["confirmPassword"] = "very-secure-password"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(
+            $"/portal/merchant/{workspace.Merchant.MerchantId:D}?tab=programmes&section=programmes&programmeSection=create",
+            response.Headers.Location?.OriginalString);
+    }
+
+    [Fact]
+    public async Task CompleteSignupEndpoint_DoesNotOverwriteExistingCredentials()
+    {
+        await using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        using var scope = factory.Services.CreateScope();
+        var state = scope.ServiceProvider.GetRequiredService<DemoPlatformState>();
+        var workspace = await CreateMerchantAsync(state);
+        Assert.Equal(
+            MerchantCredentialConfigurationStatus.Updated,
+            state.ConfigureMerchantAccess(workspace.Merchant.MerchantId, "very-secure-password").Status);
+
+        var response = await client.PostAsync(
+            "/account/session/complete-signup",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["merchantId"] = workspace.Merchant.MerchantId.ToString("D"),
+                ["plan"] = "starter",
+                ["password"] = "another-secure-password",
+                ["confirmPassword"] = "another-secure-password"
+            }));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal($"/portal/signup/billing/{workspace.Merchant.MerchantId:D}?error=credentials-already-configured&plan=starter", response.Headers.Location?.OriginalString);
     }
 
     private static Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(DemoPlatformState state) =>

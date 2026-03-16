@@ -14,66 +14,87 @@
 }
 else
 {
-    <section class="panel signup-panel">
-        <div class="panel__header">
-            <div>
-                <p class="eyebrow">Step 2 of 3</p>
-                <h2>Confirm billing</h2>
-                <p class="lede">Final account step before @_workspace.Merchant.DisplayName goes live. Set the owner password here, then we take the owner straight into first-programme setup.</p>
+    <section class="signup-journey-strip signup-journey-strip--billing">
+        <OnboardingJourney CurrentStep="billing"
+                           AccountComplete="true"
+                           PlanComplete="true"
+                           BillingComplete="false"
+                           ShopComplete="false"
+                           ProgrammeComplete="false"
+                           IsStrip="true"
+                           AccountUrl="/portal/signup"
+                           PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")"
+                           BillingUrl="@BuildBillingUrl(MerchantId, _plan)" />
+    </section>
+
+    <section class="panel signup-panel signup-panel--billing onboarding-step">
+        <div class="panel__header onboarding-step__header">
+            <div class="onboarding-step__copy">
+                <p class="eyebrow">Step 3 of 5</p>
+                <h2>Set payment and owner access</h2>
+                <p class="lede">Starter is selected for this shop. Choose payment preference, then create owner access before entering first-programme setup.</p>
             </div>
         </div>
 
-        <form method="post" action="/account/session/complete-signup" class="form-stack">
+        <form method="post" action="/account/session/complete-signup" class="form-stack onboarding-form" aria-describedby="billing-required-note">
             <input type="hidden" name="merchantId" value="@MerchantId" />
             <input type="hidden" name="returnUrl" value="@($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=create&launch=create")" />
-            <input type="hidden" name="plan" value="founding" />
+            <input type="hidden" name="plan" value="@_plan" />
 
-            <section class="delivery-option">
-                <div class="delivery-option__copy">
-                    <strong>Founding coffee shop</strong>
-                    <span>One simple tier for now: everything in the demo flow for £19.99 per month.</span>
+            <section class="billing-plan-summary" aria-label="Selected plan summary">
+                <div>
+                    <p class="eyebrow">Selected plan</p>
+                    <h3>Starter</h3>
+                    <p class="field-hint">£19.99/mo self-serve onboarding path.</p>
                 </div>
-                <span class="chip chip--accent">£19.99/mo</span>
+                <a class="button button--secondary button--compact" href="@($"/portal/signup/plan/{MerchantId:D}")">Change plan</a>
             </section>
 
-            <div class="form-grid">
-                <label class="field">
-                    <span>Billing email</span>
-                    <input class="input" type="email" name="billingEmail" value="@_billingEmail" />
-                </label>
+            <label class="field field--full billing-payment-inline">
+                <span>Payment method</span>
+                <select class="input" name="paymentMethod">
+                    <option value="apple-pay" selected>Apple Pay</option>
+                    <option value="card">Card</option>
+                </select>
+                <span class="field-hint">Starter billing uses this method after onboarding.</span>
+            </label>
 
-                <label class="field">
-                    <span>Cardholder name</span>
-                    <input class="input" type="text" name="cardholderName" value="@_cardholderName" />
-                </label>
+            <section class="form-section">
+                <div class="form-section__header">
+                    <h4>Owner access</h4>
+                    <p id="billing-required-note" class="field-hint">Set an owner password now so Step 4 can continue with required shop details and optional branding.</p>
+                </div>
 
-                <label class="field">
-                    <span>Card number</span>
-                    <input class="input" type="text" name="cardNumber" value="4242 4242 4242 4242" />
-                </label>
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Owner email</span>
+                        <input class="input" type="email" value="@_workspace.Merchant.ContactEmail" readonly />
+                    </label>
 
-                <label class="field">
-                    <span>Owner password</span>
-                    <input class="input" type="password" name="password" autocomplete="new-password" required minlength="8" />
-                </label>
+                    <label class="field">
+                        <span>Owner password</span>
+                        <input class="input" type="password" name="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters" />
+                    </label>
 
-                <label class="field">
-                    <span>Confirm password</span>
-                    <input class="input" type="password" name="confirmPassword" autocomplete="new-password" required minlength="8" />
-                </label>
-            </div>
+                    <label class="field">
+                        <span>Confirm password</span>
+                        <input class="input" type="password" name="confirmPassword" autocomplete="new-password" required minlength="8" placeholder="Re-enter password" />
+                    </label>
+                </div>
+            </section>
 
             @if (!string.IsNullOrWhiteSpace(_message))
             {
-                <p class="field-hint">@_message</p>
+                <p class="field-error field-error--inline">@_message</p>
             }
 
-            <p class="field-hint">Shop: @_workspace.Merchant.DisplayName, @_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
+            <p class="field-hint billing-shop-summary">@BuildShopSummary(_workspace.Merchant.DisplayName, _workspace.Merchant.TownOrCity, _workspace.Merchant.Postcode)</p>
 
-            <div class="form-actions">
-                <button class="button button--primary" type="submit">Continue to first programme</button>
-                <a class="button button--ghost" href="/portal/signup">Back to shop signup</a>
+            <div class="form-actions form-actions--onboarding">
+                <button class="button button--primary button--wide" type="submit">Continue to shop details</button>
             </div>
+
+            <p class="onboarding-back-link"><a class="inline-link" href="@($"/portal/signup/plan/{MerchantId:D}")">Back to plan selection</a></p>
         </form>
     </section>
 }
@@ -82,29 +103,66 @@ else
     [Parameter]
     public Guid MerchantId { get; set; }
 
+    [Parameter]
     [SupplyParameterFromQuery]
     public string? Error { get; set; }
 
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "plan")]
+    public string? SelectedPlan { get; set; }
+
     private MerchantWorkspaceSnapshot? _workspace;
-    private string _billingEmail = string.Empty;
-    private string _cardholderName = string.Empty;
     private string? _message;
+    private string _plan = "starter";
 
     protected override void OnParametersSet()
     {
         _workspace = PlatformState.GetMerchantWorkspace(MerchantId, Navigation.BaseUri);
-        if (_workspace is not null)
+        if (_workspace?.SetupChecklist.OwnerAccessConfigured == true)
         {
-            _billingEmail = _workspace.Merchant.ContactEmail;
-            _cardholderName = _workspace.Merchant.DisplayName;
+            Navigation.NavigateTo($"/portal/merchant/{MerchantId}?tab=programmes&section=programmes&programmeSection=create", replace: true);
+            return;
         }
 
-        _message = Error switch
+        _plan = string.IsNullOrWhiteSpace(SelectedPlan)
+            ? "starter"
+            : SelectedPlan.Trim().ToLowerInvariant();
+
+        var message = Error switch
         {
             "password-mismatch" => "The password fields must match before the workspace can open.",
             "invalid-password" => "Choose a password with at least 8 characters.",
             "merchant-not-found" => "The shop setup could not be found. Start again from signup.",
+            "unsupported-plan" => "Only the Starter tier is enabled for self-serve onboarding right now.",
+            "credentials-already-configured" => "Owner access is already configured. Sign in to continue.",
             _ => null
+        };
+
+        if (!string.Equals(_plan, "starter", StringComparison.OrdinalIgnoreCase))
+        {
+            _plan = "starter";
+            message = string.IsNullOrWhiteSpace(message)
+                ? "Starter is the current self-serve path. Contact us for Growth or Enterprise onboarding."
+                : message;
+        }
+
+        _message = message;
+    }
+
+    private static string BuildBillingUrl(Guid merchantId, string plan) =>
+        $"/portal/signup/billing/{merchantId:D}?plan={plan}";
+
+    private static string BuildShopSummary(string displayName, string townOrCity, string postcode)
+    {
+        var segments = new[] { displayName, townOrCity, postcode }
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToArray();
+
+        return segments.Length switch
+        {
+            0 => "Shop details are pending.",
+            1 => $"Shop: {segments[0]}",
+            _ => $"Shop: {string.Join(", ", segments)}"
         };
     }
 }

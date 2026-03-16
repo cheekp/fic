@@ -53,6 +53,7 @@ public sealed record MerchantSetupChecklistSnapshot(
     bool ShopDetailsComplete,
     bool BrandComplete,
     bool HasAnyProgramme,
+    bool OwnerAccessConfigured,
     bool JoinReady);
 
 public sealed record MerchantInsightsSnapshot(
