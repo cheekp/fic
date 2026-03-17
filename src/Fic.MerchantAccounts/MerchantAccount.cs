@@ -9,6 +9,7 @@ public sealed record MerchantAccount(
     string Postcode,
     string ContactEmail,
     DateTimeOffset CreatedAtUtc,
+    string ShopTypeKey = "coffee",
     string? PasswordHash = null,
     string? PasswordSalt = null);
 
@@ -18,6 +19,7 @@ public sealed record MerchantAccountCreated(
     string TownOrCity,
     string Postcode,
     string ContactEmail,
+    string ShopTypeKey,
     DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(MerchantAccountCreated), OccurredAtUtc);
 
 public sealed record MerchantBrandUpdated(

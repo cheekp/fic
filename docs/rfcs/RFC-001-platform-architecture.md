@@ -66,6 +66,7 @@ Adopt the following baseline architecture.
 - retailer branding and programme configuration drive both the vendor PWA and wallet pass rendering
 - wallet progress state such as `2/5 coffees` is projection-backed domain state, not display-only text
 - `MerchantAccounts` is a distinct bounded context for vendor onboarding and tenant setup
+- setup catalogue options (shop types, card types, templates) are contract-backed configuration with active/inactive visibility flags, not hardcoded UI constants
 
 ### Delivery discipline
 

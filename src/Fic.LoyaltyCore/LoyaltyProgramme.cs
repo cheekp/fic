@@ -19,6 +19,8 @@ public sealed record LoyaltyProgramme(
     string ProgrammeTypeLabel,
     string DeliveryTypeKey,
     string DeliveryTypeLabel,
+    string CardTypeKey,
+    string CardTypeLabel,
     string OutputLabel,
     string RewardItemLabel,
     int RewardThreshold,

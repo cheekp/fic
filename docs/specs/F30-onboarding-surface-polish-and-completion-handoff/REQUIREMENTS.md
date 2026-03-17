@@ -19,6 +19,13 @@
   - grouped counts for Active/Scheduled/Expired
   - collapse/expand at section level
   - sort control for programme ordering inside groups
+- Programme catalogue options must be loaded from a document contract (JSON-backed in this slice), not hardcoded in the application service.
+- Catalogue contract must define shop types, card types, and programme templates with explicit `isActive` flags for visibility management.
+- Template visibility must be derived from active status at all three levels:
+  - template `isActive`
+  - referenced shop type `isActive`
+  - referenced card type `isActive`
+- Programme runtime state must persist card type identity (`cardTypeKey`, `cardTypeLabel`) from the selected template so workspace views do not infer card type from output copy.
 - Demo seed actions must be available at all onboarding steps when `Features:SignupDemoSeedEnabled` is on.
 - Merchant utility chrome must remove non-essential decorative support labels while preserving access to support destinations.
 
@@ -31,8 +38,14 @@
 ## Operational Requirements
 - Existing F29 onboarding validators and tests must remain green after this polish slice.
 - New slice behavior must be covered by targeted component tests and a slice validator.
+- Visibility filtering must be covered by tests to prevent inactive shop/card/template options surfacing in onboarding or workspace template selection.
 - UX quality gates must be scriptable and repeatable:
   - contract tests for navigation hierarchy and CTA prominence
   - style guards for shared control tokens and reduced-motion fallback
   - optional browser-smoke overflow checks at core breakpoints
 - UX quality gates must be runnable through `scripts/validate-ux-surface.sh`.
+
+## Architecture Alignment
+- DDD: catalogue remains a configuration boundary; runtime state (`DemoPlatformState`) consumes an immutable snapshot, not inline constants.
+- Contract-first: `Fic.Contracts` defines the catalogue option contracts used by consumers.
+- Event-driven runway: admin-managed catalogue publishing can emit change events in future slices without changing workspace/template consumers.

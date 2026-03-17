@@ -70,6 +70,7 @@ else
                         <p class="eyebrow">Your shop</p>
                         <h2>@_workspace.Merchant.DisplayName</h2>
                         <p class="field-hint">@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
+                        <p class="field-hint">Shop type: @CurrentShopTypeLabel</p>
                         @if (!isFirstTimeMode && !IsShopSettingsOpen())
                         {
                             <a class="workspace-inline-link" href="@GetShopSettingsUrl()">Shop settings</a>
@@ -373,7 +374,7 @@ else
                                                                 </div>
                                                             </div>
                                                             <div class="programme-list__meta">
-                                                                <span>@programme.OutputLabel</span>
+                                                                <span>Card type: @programme.CardTypeLabel</span>
                                                                 <span>@BuildProgrammeWindowSummary(programme.StartsOn, programme.EndsOn)</span>
                                                             </div>
                                                         </div>
@@ -391,6 +392,9 @@ else
                         @if (!hasProgrammes || IsProgrammeSection("create"))
                         {
                             <section class="panel programme-setup-flow @(hasProgrammes ? string.Empty : "onboarding-step onboarding-step--workspace")">
+                                @{
+                                    var filteredProgrammeTemplates = FilteredProgrammeTemplates;
+                                }
                                 <div class="panel__header onboarding-step__header">
                                     <div class="onboarding-step__copy">
                                         <p class="eyebrow">@(hasProgrammes ? "New programme" : "Step 5 of 5")</p>
@@ -410,27 +414,56 @@ else
                                     <p class="field-hint onboarding-required-note">Complete shop details first. Branding can be adjusted now or skipped for later.</p>
                                 }
 
-                                <div class="template-grid">
-                                    @foreach (var template in ProgrammeTemplates)
-                                    {
-                                        <article class="template-card">
-                                            <div class="template-card__header">
-                                                <div>
-                                                    <p class="eyebrow">@template.ProgrammeTypeLabel</p>
-                                                    <h4>@template.TemplateLabel</h4>
+                                <section class="template-filter-bar" aria-label="Template filters">
+                                    <label class="template-filter-bar__field" for="template-card-type-filter">
+                                        <span>Card type</span>
+                                        <select id="template-card-type-filter" class="template-filter-bar__select" value="@_selectedTemplateCardTypeKey" @onchange="HandleTemplateCardTypeChanged">
+                                            <option value="all">All card types</option>
+                                            @foreach (var cardType in CardTypes)
+                                            {
+                                                <option value="@cardType.CardTypeKey">@cardType.CardTypeLabel</option>
+                                            }
+                                        </select>
+                                    </label>
+                                    <p class="template-filter-bar__shop-type">
+                                        <span class="chip">Shop type: @CurrentShopTypeLabel</span>
+                                        <a class="inline-link" href="@GetShopSettingsUrl()">Change in shop settings</a>
+                                    </p>
+                                    <p class="field-hint template-filter-bar__summary">@BuildTemplateFilterSummary(filteredProgrammeTemplates.Count)</p>
+                                </section>
+
+                                @if (filteredProgrammeTemplates.Count == 0)
+                                {
+                                    <p class="field-hint onboarding-required-note">No templates match this filter. Try a different shop type or card type.</p>
+                                }
+                                else
+                                {
+                                    <div class="template-grid">
+                                        @foreach (var template in filteredProgrammeTemplates)
+                                        {
+                                            <article class="template-card">
+                                                <div class="template-card__header">
+                                                    <div>
+                                                        <p class="eyebrow">@template.ProgrammeTypeLabel</p>
+                                                        <h4>@template.TemplateLabel</h4>
+                                                    </div>
+                                                    <span class="chip chip--accent">@template.DeliveryTypeLabel</span>
                                                 </div>
-                                                <span class="chip chip--accent">@template.DeliveryTypeLabel</span>
-                                            </div>
-                                            <p class="template-card__headline">@template.Headline</p>
-                                            <p class="field-hint">@template.Description</p>
-                                            <p class="field-hint">Reward rule: @template.RewardCopy</p>
-                                            <p class="field-hint">Output: @template.OutputLabel</p>
-                                            <div class="form-actions form-actions--onboarding">
-                                                <button class="button button--primary button--wide button--block" type="button" disabled="@(!shopDetailsReady)" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">@(hasProgrammes ? "Use this template" : "Start with this template")</button>
-                                            </div>
-                                        </article>
-                                    }
-                                </div>
+                                                <p class="template-card__headline">@template.Headline</p>
+                                                <p class="field-hint">@template.Description</p>
+                                                <p class="field-hint">Reward rule: @template.RewardCopy</p>
+                                                <p class="field-hint">Card type: @template.CardTypeLabel</p>
+                                                <div class="template-card__meta">
+                                                    <span class="chip">@GetShopTypeLabel(template.ShopTypeKey)</span>
+                                                    <span class="chip">@template.CardTypeLabel</span>
+                                                </div>
+                                                <div class="form-actions form-actions--onboarding">
+                                                    <button class="button button--primary button--wide button--block" type="button" disabled="@(!shopDetailsReady)" @onclick="@(() => HandleCreateProgrammeAsync(template.TemplateKey))">@(hasProgrammes ? "Use this template" : "Start with this template")</button>
+                                                </div>
+                                            </article>
+                                        }
+                                    </div>
+                                }
                             </section>
                         }
                         else
@@ -450,7 +483,7 @@ else
                                     <div class="programme-context-bar__meta">
                                         <span class="chip">@selectedProgrammeBadge</span>
                                         <span class="programme-context-bar__window">@selectedProgrammeSummary.StartsOn.ToString("dd MMM yyyy") - @selectedProgrammeSummary.EndsOn.ToString("dd MMM yyyy")</span>
-                                        <span class="programme-context-bar__descriptor">@selectedProgrammeSummary.ProgrammeTypeLabel · @selectedProgrammeSummary.DeliveryTypeLabel</span>
+                                        <span class="programme-context-bar__descriptor">@selectedProgrammeSummary.ProgrammeTypeLabel · @selectedProgrammeSummary.CardTypeLabel · @selectedProgrammeSummary.DeliveryTypeLabel</span>
                                     </div>
                                 </section>
 
@@ -725,6 +758,10 @@ else
                                                     <dd>@selectedProgrammeSummary.DeliveryTypeLabel</dd>
                                                 </div>
                                                 <div>
+                                                    <dt>Card type</dt>
+                                                    <dd>@selectedProgrammeSummary.CardTypeLabel</dd>
+                                                </div>
+                                                <div>
                                                     <dt>Current output</dt>
                                                     <dd>@selectedProgrammeSummary.OutputLabel</dd>
                                                 </div>
@@ -767,7 +804,8 @@ else
                                             <div class="delivery-options">
                                                 <article class="delivery-option delivery-option--selected">
                                                     <div class="delivery-option__copy">
-                                                        <strong>@selectedProgrammeSummary.OutputLabel</strong>
+                                                        <strong>@selectedProgrammeSummary.CardTypeLabel</strong>
+                                                        <span>Output: @selectedProgrammeSummary.OutputLabel</span>
                                                         <span>Current live output for this programme.</span>
                                                     </div>
                                                     <span class="chip chip--accent">Current</span>
@@ -832,7 +870,15 @@ else
                                             <strong>@selectedProgrammeSummary.TemplateLabel</strong>
                                         </div>
                                         <div>
-                                            <span>Delivery</span>
+                                            <span>Card type</span>
+                                            <strong>@selectedProgrammeSummary.CardTypeLabel</strong>
+                                        </div>
+                                        <div>
+                                            <span>Delivery type</span>
+                                            <strong>@selectedProgrammeSummary.DeliveryTypeLabel</strong>
+                                        </div>
+                                        <div>
+                                            <span>Current output</span>
                                             <strong>@selectedProgrammeSummary.OutputLabel</strong>
                                         </div>
                                         <div>
@@ -942,13 +988,23 @@ else
 
                             <div class="form-grid">
                                 <label class="field">
-                                    <span>Coffee shop name</span>
+                                    <span>Shop name</span>
                                     <InputText @bind-Value="_shopForm.DisplayName" class="input" />
                                 </label>
 
                                 <label class="field">
                                     <span>Owner email</span>
                                     <InputText @bind-Value="_shopForm.ContactEmail" class="input" />
+                                </label>
+
+                                <label class="field">
+                                    <span>Shop type</span>
+                                    <InputSelect @bind-Value="_shopForm.ShopTypeKey" class="input">
+                                        @foreach (var shopType in ShopTypes)
+                                        {
+                                            <option value="@shopType.ShopTypeKey">@shopType.ShopTypeLabel</option>
+                                        }
+                                    </InputSelect>
                                 </label>
 
                                 <label class="field">
@@ -1061,6 +1117,7 @@ else
     private bool _didInitializeRoadmapState;
     private bool _animateProgrammeSelection;
     private string _programmeGroupSort = "end-date";
+    private string _selectedTemplateCardTypeKey = "all";
     private Guid? _lastObservedMerchantId;
     private Guid? _lastSelectedProgrammeId;
     private readonly ShopForm _shopForm = new();
@@ -1076,7 +1133,15 @@ else
 
     private WalletPassCapability WalletCapability => WalletPasses.GetCapability();
     private WalletPassPushCapability WalletPushCapability => WalletPushes.GetCapability();
-    private IReadOnlyList<ProgrammeTemplateOption> ProgrammeTemplates => PlatformState.GetProgrammeTemplates();
+    private IReadOnlyList<ShopTypeOption> ShopTypes => PlatformState.GetShopTypes();
+    private IReadOnlyList<CardTypeOption> CardTypes => PlatformState.GetCardTypes();
+    private IReadOnlyList<ProgrammeTemplateOption> ProgrammeTemplates => PlatformState.GetProgrammeTemplates(
+        _workspace?.Merchant.ShopTypeKey,
+        _selectedTemplateCardTypeKey == "all" ? null : _selectedTemplateCardTypeKey);
+    private IReadOnlyList<ProgrammeTemplateOption> FilteredProgrammeTemplates => ProgrammeTemplates;
+    private string CurrentShopTypeLabel => _workspace is null
+        ? "Shop"
+        : GetShopTypeLabel(_workspace.Merchant.ShopTypeKey);
     private ProgrammeSummarySnapshot? SelectedProgrammeSummary
     {
         get
@@ -1115,6 +1180,7 @@ else
             _lastObservedMerchantId = MerchantId;
             _lastSelectedProgrammeId = null;
             _animateProgrammeSelection = false;
+            _selectedTemplateCardTypeKey = "all";
         }
 
         LoadWorkspace(refreshForms: true);
@@ -1132,6 +1198,12 @@ else
         if (_workspace is null)
         {
             return;
+        }
+
+        if (_selectedTemplateCardTypeKey != "all"
+            && CardTypes.All(type => !string.Equals(type.CardTypeKey, _selectedTemplateCardTypeKey, StringComparison.OrdinalIgnoreCase)))
+        {
+            _selectedTemplateCardTypeKey = "all";
         }
 
         if (_workspace.Programmes.Count != 1)
@@ -1154,6 +1226,7 @@ else
         _shopForm.TownOrCity = _workspace.Merchant.TownOrCity;
         _shopForm.Postcode = _workspace.Merchant.Postcode;
         _shopForm.ContactEmail = _workspace.Merchant.ContactEmail;
+        _shopForm.ShopTypeKey = _workspace.Merchant.ShopTypeKey;
         _shopForm.PrimaryColor = _workspace.BrandProfile.PrimaryColor;
         _shopForm.AccentColor = _workspace.BrandProfile.AccentColor;
 
@@ -1400,6 +1473,7 @@ else
                 _shopForm.TownOrCity,
                 _shopForm.Postcode,
                 _shopForm.ContactEmail,
+                _shopForm.ShopTypeKey,
                 _shopForm.PrimaryColor,
                 _shopForm.AccentColor,
                 _pendingLogoUploadBytes is null ? null : new MerchantLogoUpload(_pendingLogoUploadBytes, "image/png", _pendingLogoFileName),
@@ -1432,6 +1506,7 @@ else
     {
         _shopForm.DisplayName = "Jo's Coffee";
         _shopForm.ContactEmail = "owner@joscoffee.test";
+        _shopForm.ShopTypeKey = "coffee";
         _shopForm.TownOrCity = "Ipswich";
         _shopForm.Postcode = "IP4 2XP";
         _shopForm.PrimaryColor = "#1f3731";
@@ -1441,6 +1516,11 @@ else
 
     private Task ApplyProgrammeDemoSeedAsync() =>
         HandleCreateProgrammeAsync("coffee-visits");
+
+    private void HandleTemplateCardTypeChanged(ChangeEventArgs args)
+    {
+        _selectedTemplateCardTypeKey = NormalizeTemplateFilterKey(args.Value);
+    }
 
     private Task HandleCreateProgrammeAsync(string templateKey)
     {
@@ -1647,6 +1727,31 @@ else
         value.StartsWith('#') ? value : $"#{value}";
 
     private static string FormatDate(DateOnly date) => date.ToString("dd MMM yyyy");
+
+    private static string NormalizeTemplateFilterKey(object? value)
+    {
+        var normalized = value?.ToString()?.Trim();
+        return string.IsNullOrWhiteSpace(normalized)
+            ? "all"
+            : normalized.ToLowerInvariant();
+    }
+
+    private string GetShopTypeLabel(string shopTypeKey) =>
+        ShopTypes.FirstOrDefault(type => string.Equals(type.ShopTypeKey, shopTypeKey, StringComparison.OrdinalIgnoreCase))?.ShopTypeLabel
+        ?? shopTypeKey;
+
+    private string GetCardTypeLabel(string cardTypeKey) =>
+        CardTypes.FirstOrDefault(type => string.Equals(type.CardTypeKey, cardTypeKey, StringComparison.OrdinalIgnoreCase))?.CardTypeLabel
+        ?? cardTypeKey;
+
+    private string BuildTemplateFilterSummary(int visibleTemplateCount)
+    {
+        var shopTypeSummary = CurrentShopTypeLabel;
+        var cardTypeSummary = _selectedTemplateCardTypeKey == "all"
+            ? "all card types"
+            : GetCardTypeLabel(_selectedTemplateCardTypeKey);
+        return $"{visibleTemplateCount} template{(visibleTemplateCount == 1 ? string.Empty : "s")} shown · {shopTypeSummary} · {cardTypeSummary}";
+    }
 
     private IReadOnlyList<SetupStepView> BuildSetupSteps()
     {
@@ -1890,6 +1995,9 @@ else
 
         [Required, EmailAddress]
         public string ContactEmail { get; set; } = string.Empty;
+
+        [Required]
+        public string ShopTypeKey { get; set; } = "coffee";
 
         [Required, RegularExpression("^#?[0-9a-fA-F]{6}$", ErrorMessage = "Use a 6 digit hex colour.")]
         public string PrimaryColor { get; set; } = "#1f3731";

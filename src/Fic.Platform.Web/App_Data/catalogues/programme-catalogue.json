@@ -1,0 +1,95 @@
+{
+  "shopTypes": [
+    {
+      "shopTypeKey": "coffee",
+      "shopTypeLabel": "Coffee shop",
+      "description": "Independent and chain coffee operations.",
+      "isActive": true
+    },
+    {
+      "shopTypeKey": "barber",
+      "shopTypeLabel": "Barbershop",
+      "description": "Service-led grooming and repeat booking businesses.",
+      "isActive": true
+    },
+    {
+      "shopTypeKey": "pilot-hidden",
+      "shopTypeLabel": "Pilot hidden",
+      "description": "Internal-only type for preview and migration work.",
+      "isActive": false
+    }
+  ],
+  "cardTypes": [
+    {
+      "cardTypeKey": "wallet-loyalty-card",
+      "cardTypeLabel": "Wallet loyalty card",
+      "description": "Repeat-visit stamp or points style loyalty card.",
+      "isActive": true
+    },
+    {
+      "cardTypeKey": "wallet-offer-card",
+      "cardTypeLabel": "Wallet offer card",
+      "description": "Conditional unlock and discount-style card.",
+      "isActive": true
+    },
+    {
+      "cardTypeKey": "wallet-membership-card",
+      "cardTypeLabel": "Wallet membership card",
+      "description": "Recurring membership and VIP access card.",
+      "isActive": false
+    }
+  ],
+  "programmeTemplates": [
+    {
+      "templateKey": "coffee-visits",
+      "templateLabel": "Coffee stamp card",
+      "programmeTypeKey": "visit-reward",
+      "programmeTypeLabel": "Visit reward",
+      "headline": "Buy 5 coffees, get one free",
+      "description": "Classic repeat-visit reward for coffee purchases.",
+      "rewardItemLabel": "coffees",
+      "rewardThreshold": 5,
+      "rewardCopy": "Buy 5 coffees, get one free.",
+      "deliveryTypeKey": "apple-wallet-pass",
+      "deliveryTypeLabel": "Apple Wallet pass",
+      "outputLabel": "Wallet loyalty card",
+      "shopTypeKey": "coffee",
+      "cardTypeKey": "wallet-loyalty-card",
+      "isActive": true
+    },
+    {
+      "templateKey": "coffee-food-offer",
+      "templateLabel": "Coffee plus food offer",
+      "programmeTypeKey": "conditional-offer",
+      "programmeTypeLabel": "Conditional offer",
+      "headline": "20% off food with a coffee",
+      "description": "Offer card that unlocks a food discount after a qualifying coffee purchase.",
+      "rewardItemLabel": "qualifying coffees",
+      "rewardThreshold": 1,
+      "rewardCopy": "Buy a coffee and unlock 20% off food today.",
+      "deliveryTypeKey": "apple-wallet-pass",
+      "deliveryTypeLabel": "Apple Wallet pass",
+      "outputLabel": "Wallet offer card",
+      "shopTypeKey": "coffee",
+      "cardTypeKey": "wallet-offer-card",
+      "isActive": true
+    },
+    {
+      "templateKey": "barber-visit-loyalty",
+      "templateLabel": "Haircut loyalty card",
+      "programmeTypeKey": "visit-reward",
+      "programmeTypeLabel": "Visit reward",
+      "headline": "After 8 cuts, next one is free",
+      "description": "Service-visit cadence reward for returning barber customers.",
+      "rewardItemLabel": "cuts",
+      "rewardThreshold": 8,
+      "rewardCopy": "After 8 cuts, unlock one free cut.",
+      "deliveryTypeKey": "apple-wallet-pass",
+      "deliveryTypeLabel": "Apple Wallet pass",
+      "outputLabel": "Wallet loyalty card",
+      "shopTypeKey": "barber",
+      "cardTypeKey": "wallet-loyalty-card",
+      "isActive": true
+    }
+  ]
+}

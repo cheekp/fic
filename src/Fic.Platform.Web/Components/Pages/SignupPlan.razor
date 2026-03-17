@@ -1,4 +1,5 @@
 @page "/portal/signup/plan/{MerchantId:guid}"
+@using Fic.Contracts
 @using Microsoft.Extensions.Configuration
 @using Microsoft.Extensions.DependencyInjection
 @inject DemoPlatformState PlatformState
@@ -35,7 +36,7 @@ else
                 <div class="onboarding-step__copy">
                     <p class="eyebrow">Step 2 of 5</p>
                     <h2>Choose your launch plan</h2>
-                    <p class="lede">Pick the tier that fits today. Starter stays self-serve; Growth and Enterprise route to North Star support.</p>
+                    <p class="lede">Pick the tier that fits today for @GetShopTypeLabel(_workspace.Merchant.ShopTypeKey). Starter stays self-serve; Growth and Enterprise route to North Star support.</p>
                 </div>
             </div>
 
@@ -107,6 +108,7 @@ else
 
     private MerchantWorkspaceSnapshot? _workspace;
     private string? _message;
+    private IReadOnlyList<ShopTypeOption> ShopTypes => PlatformState.GetShopTypes();
     private bool IsSignupDemoSeedEnabled =>
         Services.GetService<IConfiguration>()?.GetValue<bool>("Features:SignupDemoSeedEnabled") ?? false;
 
@@ -163,6 +165,10 @@ else
 
     private static string BuildBillingUrl(Guid merchantId) =>
         $"/portal/signup/billing/{merchantId:D}?plan=starter";
+
+    private string GetShopTypeLabel(string shopTypeKey) =>
+        ShopTypes.FirstOrDefault(type => string.Equals(type.ShopTypeKey, shopTypeKey, StringComparison.OrdinalIgnoreCase))?.ShopTypeLabel
+        ?? shopTypeKey;
 
     private sealed record BillingTierView(
         string Key,

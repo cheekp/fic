@@ -19,6 +19,8 @@
 - Add demo-seed actions to every onboarding step (account, plan, billing, shop details, programme template) behind the existing feature flag.
 - Reduce utility-header clutter by removing non-essential lozenges and keeping mobile menu behavior consistent.
 - Add a shared social-channel rail (Facebook, Instagram, TikTok, X) across public company surfaces, anchored from landing.
+- Move programme catalogue inputs to a contract-backed JSON document (shop types, card types, templates) instead of hardcoded in-app arrays.
+- Add `isActive` visibility flags to shop types, card types, and templates so launch visibility can be managed without code edits.
 
 ## Out Of Scope
 - Real payment processor integration and subscription provisioning.

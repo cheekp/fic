@@ -1,4 +1,5 @@
 @page "/portal/signup"
+@using Fic.Contracts
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using Microsoft.Extensions.Configuration
@@ -36,7 +37,7 @@
 
             <div class="form-grid">
                 <label class="field">
-                    <span>Coffee shop name</span>
+                    <span>Shop name</span>
                     <InputText @bind-Value="_form.DisplayName" class="input" autocomplete="organization" placeholder="Jo's Coffee" />
                     <ValidationMessage For="() => _form.DisplayName" class="field-error" />
                 </label>
@@ -47,6 +48,16 @@
                     <ValidationMessage For="() => _form.ContactEmail" class="field-error" />
                 </label>
 
+                <label class="field">
+                    <span>Shop type</span>
+                    <InputSelect id="signup-shop-type" @bind-Value="_form.ShopTypeKey" class="input">
+                        @foreach (var shopType in ShopTypes)
+                        {
+                            <option value="@shopType.ShopTypeKey">@shopType.ShopTypeLabel</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => _form.ShopTypeKey" class="field-error" />
+                </label>
             </div>
 
             <p id="signup-required-note" class="field-hint onboarding-required-note">Both fields are required to create your workspace and continue to plan selection.</p>
@@ -67,8 +78,18 @@
 @code {
     private readonly SignupFormModel _form = new();
     private bool _isSubmitting;
+    private IReadOnlyList<ShopTypeOption> ShopTypes => PlatformState.GetShopTypes();
     private bool IsSignupDemoSeedEnabled =>
         Services.GetService<IConfiguration>()?.GetValue<bool>("Features:SignupDemoSeedEnabled") ?? false;
+
+    protected override void OnInitialized()
+    {
+        var firstShopType = ShopTypes.FirstOrDefault();
+        if (firstShopType is not null && string.IsNullOrWhiteSpace(_form.ShopTypeKey))
+        {
+            _form.ShopTypeKey = firstShopType.ShopTypeKey;
+        }
+    }
 
     private async Task HandleSubmitAsync()
     {
@@ -85,7 +106,8 @@
                 BuildFallbackLogo(_form.DisplayName, DefaultPrimaryColor, DefaultAccentColor),
                 DefaultPrimaryColor,
                 DefaultAccentColor,
-                Navigation.BaseUri);
+                Navigation.BaseUri,
+                shopTypeKey: _form.ShopTypeKey);
 
             Navigation.NavigateTo($"/portal/signup/plan/{workspace.Merchant.MerchantId}");
         }
@@ -99,6 +121,7 @@
     {
         _form.DisplayName = "Jo's Coffee";
         _form.ContactEmail = "owner@joscoffee.test";
+        _form.ShopTypeKey = "coffee";
     }
 
     private static string GetInitials(string name)
@@ -145,6 +168,9 @@
 
         [Required, EmailAddress]
         public string ContactEmail { get; set; } = string.Empty;
+
+        [Required]
+        public string ShopTypeKey { get; set; } = string.Empty;
 
     }
 }

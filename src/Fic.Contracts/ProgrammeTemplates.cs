@@ -1,5 +1,17 @@
 namespace Fic.Contracts;
 
+public sealed record ShopTypeOption(
+    string ShopTypeKey,
+    string ShopTypeLabel,
+    string Description,
+    bool IsActive);
+
+public sealed record CardTypeOption(
+    string CardTypeKey,
+    string CardTypeLabel,
+    string Description,
+    bool IsActive);
+
 public sealed record ProgrammeTemplateOption(
     string TemplateKey,
     string TemplateLabel,
@@ -12,4 +24,8 @@ public sealed record ProgrammeTemplateOption(
     string RewardCopy,
     string DeliveryTypeKey,
     string DeliveryTypeLabel,
-    string OutputLabel);
+    string OutputLabel,
+    string ShopTypeKey,
+    string CardTypeKey,
+    string CardTypeLabel,
+    bool IsActive);

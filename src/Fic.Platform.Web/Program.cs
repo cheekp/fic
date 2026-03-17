@@ -47,6 +47,7 @@ else
     builder.Services.AddSingleton<IMerchantBrandAssetStore, LocalMerchantBrandAssetStore>();
 }
 
+builder.Services.AddSingleton<IProgrammeCatalogueRepository, JsonProgrammeCatalogueRepository>();
 builder.Services.AddSingleton<DemoPlatformState>();
 builder.Services.AddSingleton<JoinQrCodeService>();
 builder.Services.AddSingleton<MerchantBrandPresentationService>();

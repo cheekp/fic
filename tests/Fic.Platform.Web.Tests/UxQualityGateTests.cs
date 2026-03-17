@@ -42,6 +42,48 @@ public sealed class UxQualityGateTests
     }
 
     [Fact]
+    public async Task OnboardingPrimaryActions_UseConsistentActionRowAndWideControls()
+    {
+        var state = UxTestFixture.CreateState();
+        using var context = UxTestFixture.CreateContext();
+        UxTestFixture.RegisterServices(context, state);
+        var workspace = await UxTestFixture.CreateMerchantAsync(state);
+
+        var signup = context.Render<PortalSignup>();
+        var plan = context.Render<SignupPlan>(parameters => parameters
+            .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
+        var billing = context.Render<SignupBilling>(parameters => parameters
+            .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
+
+        var signupButtons = signup.Find(".form-actions--onboarding").QuerySelectorAll(".button");
+        var planButtons = plan.Find(".form-actions--onboarding").QuerySelectorAll(".button");
+        var billingButtons = billing.Find(".form-actions--onboarding").QuerySelectorAll(".button");
+
+        Assert.NotEmpty(signupButtons);
+        Assert.NotEmpty(planButtons);
+        Assert.NotEmpty(billingButtons);
+
+        Assert.All(signupButtons, button => Assert.Contains("button--wide", button.GetAttribute("class") ?? string.Empty, StringComparison.Ordinal));
+        Assert.All(planButtons, button => Assert.Contains("button--wide", button.GetAttribute("class") ?? string.Empty, StringComparison.Ordinal));
+        Assert.All(billingButtons, button => Assert.Contains("button--wide", button.GetAttribute("class") ?? string.Empty, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void SignupAccountStep_ExposesShopTypeSelectionControl()
+    {
+        var state = UxTestFixture.CreateState();
+        using var context = UxTestFixture.CreateContext();
+        UxTestFixture.RegisterServices(context, state);
+
+        var cut = context.Render<PortalSignup>();
+        var shopTypeSelect = cut.Find("#signup-shop-type");
+        var options = shopTypeSelect.QuerySelectorAll("option");
+
+        Assert.NotNull(shopTypeSelect);
+        Assert.NotEmpty(options);
+    }
+
+    [Fact]
     public async Task WorkspaceTabs_UseSharedSegmentedControlContract()
     {
         var state = UxTestFixture.CreateState();
@@ -95,6 +137,28 @@ public sealed class UxQualityGateTests
     }
 
     [Fact]
+    public async Task FirstTimeTemplateChooser_ShowsCurrentShopTypeAndCardTypeFilter()
+    {
+        var state = UxTestFixture.CreateState();
+        using var context = UxTestFixture.CreateContext();
+        UxTestFixture.RegisterServices(context, state);
+        var workspace = await UxTestFixture.CreateMerchantAsync(state);
+
+        UxTestFixture.NavigateToWorkspace(
+            context,
+            workspace.Merchant.MerchantId,
+            section: "programmes",
+            programmeSection: "create");
+
+        var cut = context.Render<VendorWorkspace>(parameters => parameters
+            .Add(page => page.MerchantId, workspace.Merchant.MerchantId));
+
+        Assert.NotNull(cut.Find("#template-card-type-filter"));
+        var shopTypeChip = cut.Find(".template-filter-bar__shop-type .chip");
+        Assert.Contains("Shop type:", shopTypeChip.TextContent, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ProgrammeContextMeta_RemainsLowNoiseWithSingleStatusChip()
     {
         var state = UxTestFixture.CreateState();
@@ -126,7 +190,11 @@ public sealed class UxQualityGateTests
 
         Assert.Contains("--radius-control", css, StringComparison.Ordinal);
         Assert.Contains("--control-height", css, StringComparison.Ordinal);
+        Assert.Contains("--onboarding-action-min-width", css, StringComparison.Ordinal);
         Assert.Contains("--signup-shell-width", css, StringComparison.Ordinal);
+        Assert.Contains(".onboarding-step .input,", css, StringComparison.Ordinal);
+        Assert.Contains(".onboarding-step .button {", css, StringComparison.Ordinal);
+        Assert.Contains("min-height: var(--control-height);", css, StringComparison.Ordinal);
         Assert.Contains(".onboarding-flow", css, StringComparison.Ordinal);
         Assert.Contains(".onboarding-flow__journey", css, StringComparison.Ordinal);
         Assert.Contains(".programme-workpane--refresh", css, StringComparison.Ordinal);
