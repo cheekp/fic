@@ -28,7 +28,7 @@ require_text() {
   fi
 }
 
-require_file "docs/plans/active/F30-onboarding-surface-polish-and-completion-handoff.md"
+require_file "docs/plans/completed/F30-onboarding-surface-polish-and-completion-handoff.md"
 require_file "docs/plans/completed/F29-onboarding-guardrails-and-tiered-billing.md"
 require_file "docs/specs/F30-onboarding-surface-polish-and-completion-handoff/REQUIREMENTS.md"
 require_file "docs/specs/F30-onboarding-surface-polish-and-completion-handoff/ACCEPTANCE.md"
@@ -44,8 +44,6 @@ require_file "tests/Fic.Platform.Web.Tests/CompanyBrandSurfaceTests.cs"
 require_file "tests/Fic.Platform.Web.Tests/VendorWorkspaceComponentTests.cs"
 require_file "tests/Fic.Platform.Web.Tests/UxQualityGateTests.cs"
 
-require_text "F30-onboarding-surface-polish-and-completion-handoff.md" "docs/plans/active/README.md"
-require_text "Polish onboarding surfaces" "README.md"
 require_text 'validator: `scripts/validate-f30-onboarding-surface-polish.sh`' "docs/ENGINEERING_HARNESS.md"
 require_text "Sign up now" "src/Fic.Platform.Web/Components/Pages/Home.razor"
 require_text "apple-pay-mark.svg" "src/Fic.Platform.Web/Components/Pages/SignupBilling.razor"
