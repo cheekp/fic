@@ -13,12 +13,12 @@ Run:
 What it checks:
 - UX contract tests for shared navigation patterns and CTA hierarchy.
 - CSS budgeting and token-discipline safeguards via `scripts/validate-css-budget.sh`.
-- Style-token and reduced-motion safeguards in `app.css`.
+- Style-token and reduced-motion safeguards in the global CSS bundle (`app.css` + imported partials).
 - Selected-programme metadata density constraints for workspace focus.
 
 Budget defaults in the fast gate:
-- `app.css` max lines: `3700`
-- `app.css` max bytes: `90000`
+- global CSS bundle max lines: `3700`
+- global CSS bundle max bytes: `90000`
 - max raw color literals outside `:root`: `145`
 - min token definitions: `45`
 - min token references: `400`

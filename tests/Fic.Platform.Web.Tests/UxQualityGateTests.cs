@@ -122,7 +122,7 @@ public sealed class UxQualityGateTests
     [Fact]
     public void AppCss_DeclaresControlTokensAndReducedMotionFallback()
     {
-        var css = File.ReadAllText(UxTestFixture.ResolveRepoPath("src/Fic.Platform.Web/wwwroot/app.css"));
+        var css = UxTestFixture.LoadGlobalStylesheetBundle();
 
         Assert.Contains("--radius-control", css, StringComparison.Ordinal);
         Assert.Contains("--control-height", css, StringComparison.Ordinal);
@@ -143,7 +143,7 @@ public sealed class UxQualityGateTests
         const int minTokenDefinitions = 45;
         const int minTokenReferences = 400;
 
-        var css = File.ReadAllText(UxTestFixture.ResolveRepoPath("src/Fic.Platform.Web/wwwroot/app.css"));
+        var css = UxTestFixture.LoadGlobalStylesheetBundle();
         var lines = css.Split('\n').Length;
         var bytes = System.Text.Encoding.UTF8.GetByteCount(css);
 
@@ -182,7 +182,7 @@ public sealed class UxBrowserSmokeTests
             return;
         }
 
-        var css = File.ReadAllText(UxTestFixture.ResolveRepoPath("src/Fic.Platform.Web/wwwroot/app.css"));
+        var css = UxTestFixture.LoadGlobalStylesheetBundle();
         var homeMarkup = UxTestFixture.RenderHomeMarkup();
         var workspaceMarkup = await UxTestFixture.RenderWorkspaceMarkupAsync();
 
@@ -296,6 +296,12 @@ internal static class UxTestFixture
     public static string ResolveRepoPath(string relativePath) =>
         Path.Combine(FindRepoRoot(), relativePath.Replace('/', Path.DirectorySeparatorChar));
 
+    public static string LoadGlobalStylesheetBundle()
+    {
+        var entry = ResolveRepoPath("src/Fic.Platform.Web/wwwroot/app.css");
+        return InlineCssImports(entry, new Stack<string>());
+    }
+
     public static async Task<MerchantWorkspaceSnapshot> CreateMerchantWithProgrammeAsync(DemoPlatformState state)
     {
         var workspace = await CreateMerchantAsync(state);
@@ -354,6 +360,50 @@ internal static class UxTestFixture
         return context.Render<VendorWorkspace>(parameters => parameters
             .Add(page => page.MerchantId, workspace.Merchant.MerchantId))
             .Markup;
+    }
+
+    private static string InlineCssImports(string cssPath, Stack<string> stack)
+    {
+        var fullPath = Path.GetFullPath(cssPath);
+        if (stack.Contains(fullPath, StringComparer.Ordinal))
+        {
+            throw new InvalidOperationException($"CSS import cycle detected at {fullPath}.");
+        }
+
+        stack.Push(fullPath);
+        var directory = Path.GetDirectoryName(fullPath)!;
+        var lines = File.ReadAllLines(fullPath);
+        var output = new List<string>(capacity: lines.Length);
+
+        foreach (var line in lines)
+        {
+            var match = Regex.Match(
+                line,
+                "^\\s*@import\\s+(?:url\\()?\\s*[\"']([^\"')]+)[\"']\\s*\\)?\\s*;\\s*$",
+                RegexOptions.IgnoreCase);
+            if (!match.Success)
+            {
+                output.Add(line);
+                continue;
+            }
+
+            var target = match.Groups[1].Value.Trim();
+            if (target.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                target.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                target.StartsWith("//", StringComparison.Ordinal))
+            {
+                output.Add(line);
+                continue;
+            }
+
+            var importPath = Path.GetFullPath(Path.Combine(directory, target.Replace('/', Path.DirectorySeparatorChar)));
+            output.Add($"/* begin import: {target} */");
+            output.Add(InlineCssImports(importPath, stack));
+            output.Add($"/* end import: {target} */");
+        }
+
+        stack.Pop();
+        return string.Join(Environment.NewLine, output);
     }
 
     private static string FindRepoRoot()
