@@ -185,14 +185,17 @@ Completed slice chain to date:
 - `F30`
   - onboarding surface polish so entry is CTA-first, billing expectations are explicit, and the first-time completion handoff is clear
   - validator: `scripts/validate-f30-onboarding-surface-polish.sh`
+- `F31`
+  - CSS budgeting and tokenization discipline so UX polish stays fast without uncontrolled stylesheet growth
+  - validator: `scripts/validate-f31-css-budget-and-tokenization.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F31`
-  - CSS budgeting and tokenization discipline so UX polish stays fast without uncontrolled stylesheet growth
-  - validator: `scripts/validate-f31-css-budget-and-tokenization.sh`
+- `F32`
+  - app.css partial split and bundled guardrails so stylesheet decomposition does not bypass UX quality budgets
+  - validator: `scripts/validate-f32-app-css-partial-split.sh`
 
 ## Current Product Reality
 
@@ -294,6 +297,6 @@ Review the harness when:
 
 The next likely product slices are:
 
-- keep reducing onboarding/workspace visual churn by enforcing CSS budget and tokenization gates in every UX-heavy PR
+- continue splitting high-churn global stylesheet areas into bounded partials while preserving bundled budget checks
 - stronger merchant account and tenant ownership boundaries beyond the current in-memory session baseline
 - production auth/session flow that removes the remaining in-memory and single-owner assumptions

@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Adopt CSS budgeting and tokenization discipline so UI polish remains fast without repeated stylesheet churn.
+Split global stylesheet hotspots into partials while enforcing budget checks on the full CSS bundle.
