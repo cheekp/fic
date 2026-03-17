@@ -17,7 +17,7 @@ public sealed class VendorWorkspaceComponentTests
     private const string FallbackLogoUrl = "data:image/svg+xml;base64,ZmFrZQ==";
 
     [Fact]
-    public async Task ShopOverview_ShowsCollapsedRoadmapByDefault_WhenSetupIsComplete()
+    public async Task ShopOverview_HidesRoadmap_WhenSetupIsComplete()
     {
         var state = CreateState();
         using var context = CreateContext();
@@ -30,9 +30,8 @@ public sealed class VendorWorkspaceComponentTests
         var cut = context.Render<VendorWorkspace>(parameters => parameters
             .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
 
-        Assert.Contains("Onboarding roadmap", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Show setup", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Next best step:", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Onboarding roadmap", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Show setup", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -169,28 +168,6 @@ public sealed class VendorWorkspaceComponentTests
 
         Assert.Contains("Use demo details", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Use demo template", cut.Markup, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task ShopOverview_DismissesRoadmapWhenRequested()
-    {
-        var state = CreateState();
-        using var context = CreateContext();
-        RegisterServices(context, state);
-        var workspace = await CreateMerchantWithProgrammeAsync(state);
-        var selectedProgramme = Assert.IsType<LoyaltyProgrammeSnapshot>(workspace.SelectedProgramme);
-        Assert.NotNull(state.JoinCustomer(selectedProgramme.JoinCode));
-        NavigateToWorkspace(context, workspace.Merchant.MerchantId, section: "overview");
-
-        var cut = context.Render<VendorWorkspace>(parameters => parameters
-            .Add(p => p.MerchantId, workspace.Merchant.MerchantId));
-
-        cut.Find(".setup-roadmap")
-            .QuerySelectorAll("button")
-            .Single(button => button.TextContent.Contains("Dismiss", StringComparison.Ordinal))
-            .Click();
-
-        Assert.DoesNotContain("Onboarding roadmap", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

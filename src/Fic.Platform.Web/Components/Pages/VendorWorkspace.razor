@@ -123,7 +123,7 @@ else
 
         @if (IsWorkspaceSection("overview"))
         {
-            @if (!_isSetupRoadmapDismissed)
+            @if (!_isSetupRoadmapDismissed && completedSetupSteps < setupSteps.Count)
             {
                 <section class="panel setup-roadmap @(_isSetupRoadmapCollapsed ? "setup-roadmap--collapsed" : string.Empty)">
                     <div class="panel__header">
