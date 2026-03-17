@@ -99,10 +99,11 @@ public sealed class VendorWorkspaceComponentTests
         Assert.Contains("Onboarding journey", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Choose plan", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Billing and access", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Branding settings (optional)", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Shop settings", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("workspace-stage--first-time", cut.Markup, StringComparison.Ordinal);
         Assert.Empty(cut.FindAll("nav[aria-label='Shop sections']"));
         Assert.DoesNotContain("Setup complete", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Branding settings (optional)", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

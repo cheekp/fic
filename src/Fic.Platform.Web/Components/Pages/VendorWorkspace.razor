@@ -55,9 +55,6 @@ else
     var firstTimeProgrammeStepComplete = _workspace.SetupChecklist.HasAnyProgramme && !IsFinishingFirstProgrammeSetup;
     var showSetupCompletionNotice = ShowSetupCompletionNotice;
     var isSignupDemoSeedEnabled = IsSignupDemoSeedEnabled;
-    var onboardingHint = shopDetailsReady
-        ? "Choose your first template to unlock the full workspace."
-        : "Complete shop details first, then choose your first template.";
 
     <div class="workspace-stage @workspaceTheme.ThemeClass @(isFirstTimeMode ? "workspace-stage--first-time" : string.Empty)" style="@workspaceTheme.CssVariables">
         <div class="workspace-chrome-shell">
@@ -71,7 +68,7 @@ else
                         <h2>@_workspace.Merchant.DisplayName</h2>
                         <p class="field-hint">@_workspace.Merchant.TownOrCity, @_workspace.Merchant.Postcode</p>
                         <p class="field-hint">Shop type: @CurrentShopTypeLabel</p>
-                        @if (!isFirstTimeMode && !IsShopSettingsOpen())
+                        @if (!IsShopSettingsOpen())
                         {
                             <a class="workspace-inline-link" href="@GetShopSettingsUrl()">Shop settings</a>
                         }
@@ -116,23 +113,12 @@ else
                                BillingComplete="_workspace.SetupChecklist.OwnerAccessConfigured"
                                ShopComplete="shopDetailsReady"
                                ProgrammeComplete="firstTimeProgrammeStepComplete"
+                               IsStrip="true"
                                AccountUrl="/portal/signup"
                                PlanUrl="@($"/portal/signup/plan/{MerchantId:D}")"
                                BillingUrl="@($"/portal/signup/billing/{MerchantId:D}?plan=starter")"
                                ShopUrl="@GetShopSettingsUrl()"
-                               ProgrammeUrl="@GetProgrammeSectionUrl(_workspace.SetupChecklist.HasAnyProgramme ? "configure" : "create")"
-                               Hint="@onboardingHint">
-                <Actions>
-                    @if (!IsShopSettingsOpen())
-                    {
-                        <a class="button button--ghost button--compact" href="@GetShopSettingsUrl()">@(shopDetailsReady ? "Branding settings (optional)" : "Complete shop details")</a>
-                    }
-                    else
-                    {
-                        <a class="button button--ghost button--compact" href="@GetCloseShopSettingsUrl()">Close shop settings</a>
-                    }
-                </Actions>
-            </OnboardingJourney>
+                               ProgrammeUrl="@GetProgrammeSectionUrl(_workspace.SetupChecklist.HasAnyProgramme ? "configure" : "create")" />
         }
 
         @if (IsWorkspaceSection("overview"))
