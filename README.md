@@ -25,4 +25,4 @@ Founding repository for the FIC startup.
 - `tests/` automated verification as the codebase emerges
 
 ## Next Step
-Polish onboarding surfaces so acquisition is CTA-first, payment setup expectations are explicit, and first-time completion handoff into full workspace sections is unmistakable.
+Adopt CSS budgeting and tokenization discipline so UI polish remains fast without repeated stylesheet churn.

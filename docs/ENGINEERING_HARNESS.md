@@ -182,14 +182,17 @@ Completed slice chain to date:
 - `F29`
   - onboarding guardrails and tiered billing presentation so first-run setup is production-ready, route-safe, and still demo-friendly via feature flag
   - validator: `scripts/validate-f29-onboarding-guardrails.sh`
+- `F30`
+  - onboarding surface polish so entry is CTA-first, billing expectations are explicit, and the first-time completion handoff is clear
+  - validator: `scripts/validate-f30-onboarding-surface-polish.sh`
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
 ## Current Active Slice
 
-- `F30`
-  - onboarding surface polish so entry is CTA-first, billing expectations are explicit, and the first-time completion handoff is clear
-  - validator: `scripts/validate-f30-onboarding-surface-polish.sh`
+- `F31`
+  - CSS budgeting and tokenization discipline so UX polish stays fast without uncontrolled stylesheet growth
+  - validator: `scripts/validate-f31-css-budget-and-tokenization.sh`
 
 ## Current Product Reality
 
@@ -255,6 +258,7 @@ Current high-value local loops:
   - use bUnit for merchant-workspace interaction rules where UI behavior is meaningful but a full browser test is still too heavy
 - UX quality gate loop:
   - run `scripts/validate-ux-surface.sh` for contract-level UX checks
+  - run `scripts/validate-css-budget.sh` when stylesheet work is significant, even before full test runs
   - optionally set `FIC_UX_BROWSER_SMOKE=1` to run Playwright overflow smoke checks with screenshot artifacts
 - direct web preview:
   - run the Blazor app with the local profile for browser and LAN demos
@@ -290,6 +294,6 @@ Review the harness when:
 
 The next likely product slices are:
 
-- continue simplifying the first-time merchant workspace after route gating so each screen has one obvious next action
+- keep reducing onboarding/workspace visual churn by enforcing CSS budget and tokenization gates in every UX-heavy PR
 - stronger merchant account and tenant ownership boundaries beyond the current in-memory session baseline
 - production auth/session flow that removes the remaining in-memory and single-owner assumptions

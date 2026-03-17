@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace Fic.Platform.Web.Tests;
@@ -131,6 +132,43 @@ public sealed class UxQualityGateTests
         Assert.Contains(".programme-workpane--refresh", css, StringComparison.Ordinal);
         Assert.Contains(".programme-selection-strip--refresh", css, StringComparison.Ordinal);
         Assert.Contains("@media (prefers-reduced-motion: reduce)", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AppCss_StaysWithinBudgetAndTokenUsageFloors()
+    {
+        const int maxLines = 3700;
+        const int maxBytes = 90000;
+        const int maxRawLiteralsOutsideRoot = 145;
+        const int minTokenDefinitions = 45;
+        const int minTokenReferences = 400;
+
+        var css = File.ReadAllText(UxTestFixture.ResolveRepoPath("src/Fic.Platform.Web/wwwroot/app.css"));
+        var lines = css.Split('\n').Length;
+        var bytes = System.Text.Encoding.UTF8.GetByteCount(css);
+
+        Assert.True(lines <= maxLines, $"app.css line budget exceeded: {lines} > {maxLines}");
+        Assert.True(bytes <= maxBytes, $"app.css byte budget exceeded: {bytes} > {maxBytes}");
+
+        var tokenDefinitions = Regex.Matches(css, @"^\s*--[a-z0-9\-]+\s*:", RegexOptions.Multiline).Count;
+        var tokenReferences = Regex.Matches(css, @"var\(--[a-z0-9\-]+\)", RegexOptions.Multiline).Count;
+
+        Assert.True(
+            tokenDefinitions >= minTokenDefinitions,
+            $"app.css token definition floor missed: {tokenDefinitions} < {minTokenDefinitions}");
+        Assert.True(
+            tokenReferences >= minTokenReferences,
+            $"app.css token reference floor missed: {tokenReferences} < {minTokenReferences}");
+
+        var cssOutsideRoot = Regex.Replace(css, @"^:root\s*\{[\s\S]*?^\}", string.Empty, RegexOptions.Multiline);
+        var rawLiteralsOutsideRoot = Regex.Matches(
+            cssOutsideRoot,
+            @"#[0-9a-fA-F]{3,8}\b|rgba?\([^)]+\)|hsla?\([^)]+\)",
+            RegexOptions.Multiline).Count;
+
+        Assert.True(
+            rawLiteralsOutsideRoot <= maxRawLiteralsOutsideRoot,
+            $"app.css raw literal budget outside :root exceeded: {rawLiteralsOutsideRoot} > {maxRawLiteralsOutsideRoot}");
     }
 }
 
