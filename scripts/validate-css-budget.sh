@@ -3,9 +3,15 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CSS_PATH="${ROOT_DIR}/src/Fic.Platform.Web/wwwroot/app.css"
+BUNDLE_RENDERER="${ROOT_DIR}/scripts/render-css-bundle.py"
 
 if [[ ! -f "${CSS_PATH}" ]]; then
   echo "missing file: src/Fic.Platform.Web/wwwroot/app.css" >&2
+  exit 1
+fi
+
+if [[ ! -x "${BUNDLE_RENDERER}" ]]; then
+  echo "missing executable: scripts/render-css-bundle.py" >&2
   exit 1
 fi
 
@@ -15,13 +21,17 @@ MAX_LITERAL_OUTSIDE_ROOT="${FIC_CSS_MAX_LITERAL_OUTSIDE_ROOT:-145}"
 MIN_TOKEN_DEFS="${FIC_CSS_MIN_TOKEN_DEFS:-45}"
 MIN_TOKEN_REFS="${FIC_CSS_MIN_TOKEN_REFS:-400}"
 
-line_count="$(wc -l < "${CSS_PATH}" | tr -d ' ')"
-byte_count="$(wc -c < "${CSS_PATH}" | tr -d ' ')"
+TMP_BUNDLE="$(mktemp)"
+trap 'rm -f "${TMP_BUNDLE}"' EXIT
+"${BUNDLE_RENDERER}" "${CSS_PATH}" > "${TMP_BUNDLE}"
+
+line_count="$(wc -l < "${TMP_BUNDLE}" | tr -d ' ')"
+byte_count="$(wc -c < "${TMP_BUNDLE}" | tr -d ' ')"
 
 # Count token declarations in the root block.
-token_defs="$(rg -No '^\s*--[a-z0-9\-]+\s*:' "${CSS_PATH}" | wc -l | tr -d ' ')"
+token_defs="$(rg -No '^\s*--[a-z0-9\-]+\s*:' "${TMP_BUNDLE}" | wc -l | tr -d ' ')"
 # Count token references across stylesheet rules.
-token_refs="$(rg -No 'var\(--[a-z0-9\-]+\)' "${CSS_PATH}" | wc -l | tr -d ' ')"
+token_refs="$(rg -No 'var\(--[a-z0-9\-]+\)' "${TMP_BUNDLE}" | wc -l | tr -d ' ')"
 
 # Count raw color literals outside of the :root token declaration block.
 outside_root_literal_count="$({
@@ -30,7 +40,7 @@ outside_root_literal_count="$({
     /^:root[[:space:]]*\{/ { in_root = 1; next }
     in_root && /^}/ { in_root = 0; next }
     !in_root { print }
-  ' "${CSS_PATH}" | rg -No '#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)' | wc -l
+  ' "${TMP_BUNDLE}" | rg -No '#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)' | wc -l
 } | tr -d ' ')"
 
 echo "CSS budget metrics:"
@@ -41,12 +51,12 @@ echo "  token_defs=${token_defs} (min ${MIN_TOKEN_DEFS})"
 echo "  token_refs=${token_refs} (min ${MIN_TOKEN_REFS})"
 
 if (( line_count > MAX_LINES )); then
-  echo "CSS budget exceeded: app.css line count (${line_count}) is above ${MAX_LINES}." >&2
+  echo "CSS budget exceeded: global bundle line count (${line_count}) is above ${MAX_LINES}." >&2
   exit 1
 fi
 
 if (( byte_count > MAX_BYTES )); then
-  echo "CSS budget exceeded: app.css byte size (${byte_count}) is above ${MAX_BYTES}." >&2
+  echo "CSS budget exceeded: global bundle byte size (${byte_count}) is above ${MAX_BYTES}." >&2
   exit 1
 fi
 

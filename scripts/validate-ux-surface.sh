@@ -33,10 +33,12 @@ require_file "src/Fic.Platform.Web/Components/Pages/VendorWorkspace.razor"
 require_file "src/Fic.Platform.Web/wwwroot/app.css"
 require_file "docs/runbooks/UX_QA_PLAYBOOK.md"
 require_file "scripts/validate-css-budget.sh"
+require_file "scripts/render-css-bundle.py"
 
 require_text "FIC_UX_BROWSER_SMOKE" "tests/Fic.Platform.Web.Tests/UxQualityGateTests.cs"
 require_text "programme-context-bar__descriptor" "src/Fic.Platform.Web/Components/Pages/VendorWorkspace.razor"
 require_text "@media \\(prefers-reduced-motion: reduce\\)" "src/Fic.Platform.Web/wwwroot/app.css"
+require_text "@import url\\(\"styles/app-auxiliary-surfaces.css\"\\)" "src/Fic.Platform.Web/wwwroot/app.css"
 require_text "scripts/validate-ux-surface.sh" "docs/runbooks/UX_QA_PLAYBOOK.md"
 require_text "scripts/validate-css-budget.sh" "docs/runbooks/UX_QA_PLAYBOOK.md"
 
