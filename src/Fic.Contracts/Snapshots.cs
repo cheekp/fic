@@ -6,7 +6,8 @@ public sealed record MerchantAccountSnapshot(
     string TownOrCity,
     string Postcode,
     string ContactEmail,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    string ShopTypeKey);
 
 public sealed record BrandProfileSnapshot(
     string LogoUrl,
@@ -23,6 +24,8 @@ public sealed record LoyaltyProgrammeSnapshot(
     string ProgrammeTypeLabel,
     string DeliveryTypeKey,
     string DeliveryTypeLabel,
+    string CardTypeKey,
+    string CardTypeLabel,
     string OutputLabel,
     string RewardItemLabel,
     int RewardThreshold,
@@ -39,6 +42,8 @@ public sealed record ProgrammeSummarySnapshot(
     string ProgrammeTypeLabel,
     string DeliveryTypeKey,
     string DeliveryTypeLabel,
+    string CardTypeKey,
+    string CardTypeLabel,
     string OutputLabel,
     string RewardHeadline,
     string RewardItemLabel,

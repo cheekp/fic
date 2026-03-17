@@ -27,6 +27,22 @@ Adopt a three-layer UX quality gate for the Blazor UI:
 - Validator: `scripts/validate-ux-surface.sh`
 - Runbook: `docs/runbooks/UX_QA_PLAYBOOK.md`
 
+## Catalogue Visibility Contract
+
+To reduce UX drift from ad-hoc hardcoded template changes, F30 also formalizes the programme catalogue surface as contract-backed configuration:
+
+- Source of truth for available setup options is `App_Data/catalogues/programme-catalogue.json`.
+- Contracts are defined in `Fic.Contracts` (`ShopTypeOption`, `CardTypeOption`, `ProgrammeTemplateOption`).
+- Visibility is managed with explicit `isActive` flags at shop type, card type, and template levels.
+- Runtime filtering composes those flags so inactive types cannot leak into template selection.
+- Programme state persists selected template card type identity (`cardTypeKey`, `cardTypeLabel`) to keep UI/runtime behavior aligned with catalogue contracts as templates evolve.
+
+This aligns with the platform direction:
+
+- DDD boundary: catalogue policy/configuration is separate from runtime programme state.
+- Contract-first: options are represented as stable shared contracts.
+- Event-driven runway: an admin portal can publish updated catalogue documents and emit change events in later slices without reworking consumers.
+
 ## Consequences
 
 - UI changes now have a predictable gate beyond manual review.

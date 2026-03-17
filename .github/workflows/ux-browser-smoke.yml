@@ -1,0 +1,46 @@
+name: UX Browser Smoke
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ux-browser-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ux-browser-smoke:
+    name: ux-browser-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets', 'Fic.sln') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Run UX browser smoke
+        env:
+          FIC_UX_BROWSER_SMOKE: "1"
+        run: ./scripts/validate-ux-surface.sh
+
+      - name: Upload UX smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-smoke-artifacts
+          path: artifacts/ux-smoke/
+          if-no-files-found: ignore

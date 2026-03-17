@@ -13,6 +13,10 @@
 - Demo seed actions are present on all onboarding steps when `Features:SignupDemoSeedEnabled` is enabled.
 - Merchant utility bar no longer renders the `Support by North Star` lozenge.
 - Mobile utility menu remains usable and layered above page content.
+- Programme catalogue data comes from the JSON catalogue document under `App_Data/catalogues/` rather than hardcoded service arrays.
+- Shop types, card types, and templates each expose `isActive` and inactive entries are hidden from runtime visibility.
+- Templates referencing inactive shop or card types are hidden even when template-level `isActive` is true.
+- Selected programme and programme list metadata show explicit card type from persisted programme state rather than inferring from output label copy.
 - Targeted tests and F30 validator pass.
 - `scripts/validate-ux-surface.sh` passes with UX contract checks.
 - When `FIC_UX_BROWSER_SMOKE=1` is set, Playwright smoke checks run and produce screenshots under `artifacts/ux-smoke/`.

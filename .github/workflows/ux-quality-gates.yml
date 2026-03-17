@@ -1,0 +1,40 @@
+name: UX Quality Gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ux-quality-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ux-quality-gates:
+    name: ux-quality-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets', 'Fic.sln') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: F30 onboarding surface validator
+        run: ./scripts/validate-f30-onboarding-surface-polish.sh
+
+      - name: UX surface validator
+        run: ./scripts/validate-ux-surface.sh

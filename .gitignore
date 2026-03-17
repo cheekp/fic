@@ -20,3 +20,8 @@ obj/
 *.p7b
 *.pem
 App_Data/
+!src/Fic.Platform.Web/App_Data/
+src/Fic.Platform.Web/App_Data/*
+!src/Fic.Platform.Web/App_Data/catalogues/
+src/Fic.Platform.Web/App_Data/catalogues/*
+!src/Fic.Platform.Web/App_Data/catalogues/programme-catalogue.json

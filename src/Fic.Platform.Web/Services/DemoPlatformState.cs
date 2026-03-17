@@ -3,43 +3,20 @@ using Fic.Contracts;
 using Fic.LoyaltyCore;
 using Fic.MerchantAccounts;
 using Fic.WalletPasses;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Fic.Platform.Web.Services;
 
 public sealed class DemoPlatformState(
     ILogger<DemoPlatformState> logger,
-    IMerchantBrandAssetStore brandAssetStore)
+    IMerchantBrandAssetStore brandAssetStore,
+    IProgrammeCatalogueRepository? programmeCatalogueRepository = null)
 {
     private const int DefaultProgrammeDurationDays = 365;
-    private static readonly ProgrammeTemplateOption[] ProgrammeTemplates =
-    [
-        new(
-            "coffee-visits",
-            "Coffee stamp card",
-            "visit-reward",
-            "Visit reward",
-            "Buy 5 coffees, get one free",
-            "Classic repeat-visit reward for coffee purchases.",
-            "coffees",
-            5,
-            "Buy 5 coffees, get one free.",
-            "apple-wallet-pass",
-            "Apple Wallet pass",
-            "Wallet loyalty card"),
-        new(
-            "coffee-food-offer",
-            "Coffee plus food offer",
-            "conditional-offer",
-            "Conditional offer",
-            "20% off food with a coffee",
-            "Offer card that unlocks a food discount after a qualifying coffee purchase.",
-            "qualifying coffees",
-            1,
-            "Buy a coffee and unlock 20% off food today.",
-            "apple-wallet-pass",
-            "Apple Wallet pass",
-            "Wallet offer card")
-    ];
+    private readonly ProgrammeCatalogueSnapshot _programmeCatalogue =
+        (programmeCatalogueRepository
+         ?? new JsonProgrammeCatalogueRepository(NullLogger<JsonProgrammeCatalogueRepository>.Instance))
+        .Load();
 
     private readonly Lock _gate = new();
     private readonly ConcurrentDictionary<Guid, MerchantAccount> _merchants = new();
@@ -55,7 +32,38 @@ public sealed class DemoPlatformState(
 
     public event Action? Changed;
 
-    public IReadOnlyList<ProgrammeTemplateOption> GetProgrammeTemplates() => ProgrammeTemplates;
+    public IReadOnlyList<ShopTypeOption> GetShopTypes() =>
+        _programmeCatalogue.ShopTypes
+            .Where(type => type.IsActive)
+            .ToArray();
+
+    public IReadOnlyList<CardTypeOption> GetCardTypes() =>
+        _programmeCatalogue.CardTypes
+            .Where(type => type.IsActive)
+            .ToArray();
+
+    public IReadOnlyList<ProgrammeTemplateOption> GetProgrammeTemplates(string? shopTypeKey = null, string? cardTypeKey = null)
+    {
+        var normalizedShopTypeKey = NormalizeCatalogueFilterKey(shopTypeKey);
+        var normalizedCardTypeKey = NormalizeCatalogueFilterKey(cardTypeKey);
+        var activeShopTypes = GetShopTypes()
+            .Select(type => type.ShopTypeKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var activeCardTypes = GetCardTypes()
+            .Select(type => type.CardTypeKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return _programmeCatalogue.ProgrammeTemplates
+            .Where(template =>
+                template.IsActive
+                && activeShopTypes.Contains(template.ShopTypeKey)
+                && activeCardTypes.Contains(template.CardTypeKey)
+                && (normalizedShopTypeKey is null
+                    || string.Equals(template.ShopTypeKey, normalizedShopTypeKey, StringComparison.OrdinalIgnoreCase))
+                && (normalizedCardTypeKey is null
+                    || string.Equals(template.CardTypeKey, normalizedCardTypeKey, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+    }
 
     public IReadOnlyList<MerchantSummarySnapshot> GetMerchantSummaries()
     {
@@ -102,16 +110,19 @@ public sealed class DemoPlatformState(
         string accentColor,
         string baseUri,
         bool createStarterProgramme = false,
+        string? shopTypeKey = null,
         CancellationToken cancellationToken = default)
     {
         var now = DateTimeOffset.UtcNow;
+        var resolvedShopTypeKey = ResolveShopTypeForCreate(shopTypeKey);
         var merchant = new MerchantAccount(
             Guid.NewGuid(),
             displayName.Trim(),
             townOrCity.Trim(),
             postcode.Trim(),
             contactEmail.Trim(),
-            now);
+            now,
+            resolvedShopTypeKey);
         var logoMetadata = logoUpload is null
             ? new MerchantLogoMetadata(160, 160)
             : MerchantBrandAssetInspector.ReadLogoMetadata(logoUpload.Bytes);
@@ -139,6 +150,7 @@ public sealed class DemoPlatformState(
                 merchant.TownOrCity,
                 merchant.Postcode,
                 merchant.ContactEmail,
+                merchant.ShopTypeKey,
                 now),
                 $"{merchant.DisplayName} onboarded for the internal demo in {merchant.TownOrCity}.");
 
@@ -157,10 +169,11 @@ public sealed class DemoPlatformState(
             }
 
             logger.LogInformation(
-                "merchant_created merchant_id={MerchantId} programme_id={ProgrammeId} logo_source={LogoSource}",
+                "merchant_created merchant_id={MerchantId} programme_id={ProgrammeId} logo_source={LogoSource} shop_type={ShopTypeKey}",
                 merchant.MerchantId,
                 starterProgramme?.ProgrammeId,
-                logoUpload is null ? "fallback" : "stored");
+                logoUpload is null ? "fallback" : "stored",
+                merchant.ShopTypeKey);
 
             return BuildWorkspaceSnapshot(merchant.MerchantId, baseUri, starterProgramme?.ProgrammeId);
         }
@@ -506,6 +519,7 @@ public sealed class DemoPlatformState(
         string townOrCity,
         string postcode,
         string contactEmail,
+        string shopTypeKey,
         string primaryColor,
         string accentColor,
         MerchantLogoUpload? logoUpload,
@@ -541,7 +555,8 @@ public sealed class DemoPlatformState(
             DisplayName = displayName.Trim(),
             TownOrCity = townOrCity.Trim(),
             Postcode = postcode.Trim(),
-            ContactEmail = contactEmail.Trim()
+            ContactEmail = contactEmail.Trim(),
+            ShopTypeKey = ResolveShopTypeForUpdate(shopTypeKey, merchant.ShopTypeKey)
         };
         var updatedBrand = brand with
         {
@@ -582,9 +597,21 @@ public sealed class DemoPlatformState(
                 return null;
             }
 
+            var merchant = _merchants[merchantId];
             var template = GetProgrammeTemplate(templateKey);
             if (template is null)
             {
+                return null;
+            }
+
+            if (!string.Equals(template.ShopTypeKey, merchant.ShopTypeKey, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning(
+                    "programme_create_rejected merchant_id={MerchantId} template_key={TemplateKey} merchant_shop_type={MerchantShopType} template_shop_type={TemplateShopType}",
+                    merchantId,
+                    template.TemplateKey,
+                    merchant.ShopTypeKey,
+                    template.ShopTypeKey);
                 return null;
             }
 
@@ -838,6 +865,8 @@ public sealed class DemoPlatformState(
                     programme.ProgrammeTypeLabel,
                     programme.DeliveryTypeKey,
                     programme.DeliveryTypeLabel,
+                    programme.CardTypeKey,
+                    programme.CardTypeLabel,
                     programme.OutputLabel,
                     BuildRewardHeadline(programme.TemplateKey, programme.RewardThreshold, programme.RewardItemLabel),
                     programme.RewardItemLabel,
@@ -950,7 +979,14 @@ public sealed class DemoPlatformState(
     };
 
     private MerchantAccountSnapshot ToMerchantSnapshot(MerchantAccount merchant) =>
-        new(merchant.MerchantId, merchant.DisplayName, merchant.TownOrCity, merchant.Postcode, merchant.ContactEmail, merchant.CreatedAtUtc);
+        new(
+            merchant.MerchantId,
+            merchant.DisplayName,
+            merchant.TownOrCity,
+            merchant.Postcode,
+            merchant.ContactEmail,
+            merchant.CreatedAtUtc,
+            merchant.ShopTypeKey);
 
     private BrandProfileSnapshot ToBrandSnapshot(BrandProfile brand) =>
         new(brand.LogoUrl, brand.PrimaryColor, brand.AccentColor, brand.LogoWidth, brand.LogoHeight);
@@ -964,6 +1000,8 @@ public sealed class DemoPlatformState(
             programme.ProgrammeTypeLabel,
             programme.DeliveryTypeKey,
             programme.DeliveryTypeLabel,
+            programme.CardTypeKey,
+            programme.CardTypeLabel,
             programme.OutputLabel,
             programme.RewardItemLabel,
             programme.RewardThreshold,
@@ -980,7 +1018,8 @@ public sealed class DemoPlatformState(
             !string.IsNullOrWhiteSpace(merchant.DisplayName)
             && !string.IsNullOrWhiteSpace(merchant.TownOrCity)
             && !string.IsNullOrWhiteSpace(merchant.Postcode)
-            && !string.IsNullOrWhiteSpace(merchant.ContactEmail),
+            && !string.IsNullOrWhiteSpace(merchant.ContactEmail)
+            && !string.IsNullOrWhiteSpace(merchant.ShopTypeKey),
             !string.IsNullOrWhiteSpace(brand.LogoUrl)
             && !string.IsNullOrWhiteSpace(brand.PrimaryColor)
             && !string.IsNullOrWhiteSpace(brand.AccentColor),
@@ -1008,6 +1047,8 @@ public sealed class DemoPlatformState(
             template.ProgrammeTypeLabel,
             template.DeliveryTypeKey,
             template.DeliveryTypeLabel,
+            template.CardTypeKey,
+            template.CardTypeLabel,
             template.OutputLabel,
             template.RewardItemLabel,
             template.RewardThreshold,
@@ -1018,9 +1059,58 @@ public sealed class DemoPlatformState(
             configuredAtUtc);
     }
 
-    private static ProgrammeTemplateOption? GetProgrammeTemplate(string templateKey) =>
-        ProgrammeTemplates.FirstOrDefault(template =>
+    private ProgrammeTemplateOption? GetProgrammeTemplate(string templateKey) =>
+        GetProgrammeTemplates().FirstOrDefault(template =>
             string.Equals(template.TemplateKey, templateKey.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    private string ResolveShopTypeForCreate(string? requestedShopTypeKey)
+    {
+        var activeShopTypes = GetShopTypes();
+        if (activeShopTypes.Count == 0)
+        {
+            throw new InvalidOperationException("No active shop types are configured.");
+        }
+
+        var normalizedRequested = NormalizeCatalogueFilterKey(requestedShopTypeKey);
+        if (normalizedRequested is null)
+        {
+            return activeShopTypes[0].ShopTypeKey;
+        }
+
+        if (activeShopTypes.Any(type => string.Equals(type.ShopTypeKey, normalizedRequested, StringComparison.OrdinalIgnoreCase)))
+        {
+            return normalizedRequested;
+        }
+
+        throw new InvalidOperationException($"Unknown or inactive shop type: {requestedShopTypeKey}");
+    }
+
+    private string ResolveShopTypeForUpdate(string requestedShopTypeKey, string existingShopTypeKey)
+    {
+        var normalizedRequested = NormalizeCatalogueFilterKey(requestedShopTypeKey);
+        if (normalizedRequested is null)
+        {
+            return existingShopTypeKey;
+        }
+
+        var activeShopTypes = GetShopTypes();
+        if (activeShopTypes.Any(type => string.Equals(type.ShopTypeKey, normalizedRequested, StringComparison.OrdinalIgnoreCase)))
+        {
+            return normalizedRequested;
+        }
+
+        throw new InvalidOperationException($"Unknown or inactive shop type: {requestedShopTypeKey}");
+    }
+
+    private static string? NormalizeCatalogueFilterKey(string? key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return null;
+        }
+
+        return key.Trim().ToLowerInvariant();
+    }
 
     private static DateOnly GetTodayUtc() => DateOnly.FromDateTime(DateTime.UtcNow);
 

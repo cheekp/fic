@@ -43,6 +43,8 @@ public sealed class DemoPlatformStateTests
         Assert.Equal("Visit reward", selectedProgramme.ProgrammeTypeLabel);
         Assert.Equal("apple-wallet-pass", selectedProgramme.DeliveryTypeKey);
         Assert.Equal("Apple Wallet pass", selectedProgramme.DeliveryTypeLabel);
+        Assert.Equal("wallet-loyalty-card", selectedProgramme.CardTypeKey);
+        Assert.Equal("Wallet loyalty card", selectedProgramme.CardTypeLabel);
         Assert.Equal("Wallet loyalty card", selectedProgramme.OutputLabel);
         Assert.Equal(selectedProgramme.StartsOn.AddDays(365), selectedProgramme.EndsOn);
         Assert.Contains(selectedProgramme.JoinCode, updated.SelectedJoinUrl, StringComparison.Ordinal);
@@ -60,6 +62,65 @@ public sealed class DemoPlatformStateTests
         Assert.Contains(templates, template => template.ProgrammeTypeLabel == "Visit reward");
         Assert.Contains(templates, template => template.ProgrammeTypeLabel == "Conditional offer");
         Assert.All(templates, template => Assert.Equal("Apple Wallet pass", template.DeliveryTypeLabel));
+    }
+
+    [Fact]
+    public void GetShopTypes_ReturnsOnlyActiveShopTypes()
+    {
+        var state = CreateState(CreateVisibilityManagedCatalogue());
+
+        var shopTypes = state.GetShopTypes();
+
+        var shopType = Assert.Single(shopTypes);
+        Assert.Equal("coffee", shopType.ShopTypeKey);
+    }
+
+    [Fact]
+    public void GetCardTypes_ReturnsOnlyActiveCardTypes()
+    {
+        var state = CreateState(CreateVisibilityManagedCatalogue());
+
+        var cardTypes = state.GetCardTypes();
+
+        var cardType = Assert.Single(cardTypes);
+        Assert.Equal("wallet-loyalty-card", cardType.CardTypeKey);
+    }
+
+    [Fact]
+    public void GetProgrammeTemplates_HidesTemplates_WhenTemplateOrReferencedTypeIsInactive()
+    {
+        var state = CreateState(CreateVisibilityManagedCatalogue());
+
+        var templates = state.GetProgrammeTemplates();
+
+        var template = Assert.Single(templates);
+        Assert.Equal("visible-template", template.TemplateKey);
+        Assert.True(template.IsActive);
+        Assert.Equal("coffee", template.ShopTypeKey);
+        Assert.Equal("wallet-loyalty-card", template.CardTypeKey);
+    }
+
+    [Fact]
+    public async Task CreateMerchantAsync_StoresSelectedShopType()
+    {
+        var state = CreateState();
+
+        var workspace = await CreateMerchantAsync(state, shopTypeKey: "barber");
+
+        Assert.Equal("barber", workspace.Merchant.ShopTypeKey);
+    }
+
+    [Fact]
+    public async Task CreateProgramme_RejectsTemplate_WhenTemplateShopTypeDoesNotMatchMerchantShopType()
+    {
+        var state = CreateState();
+        var workspace = await CreateMerchantAsync(state, shopTypeKey: "barber");
+
+        var rejected = state.CreateProgramme(workspace.Merchant.MerchantId, "coffee-visits", BaseUri);
+        var accepted = state.CreateProgramme(workspace.Merchant.MerchantId, "barber-visit-loyalty", BaseUri);
+
+        Assert.Null(rejected);
+        Assert.NotNull(accepted);
     }
 
     [Fact]
@@ -341,10 +402,71 @@ public sealed class DemoPlatformStateTests
         Assert.Null(authenticated.Merchant);
     }
 
-    private static DemoPlatformState CreateState() =>
-        new(NullLogger<DemoPlatformState>.Instance, new InMemoryMerchantBrandAssetStore());
+    private static DemoPlatformState CreateState(ProgrammeCatalogueSnapshot? programmeCatalogue = null) =>
+        new(
+            NullLogger<DemoPlatformState>.Instance,
+            new InMemoryMerchantBrandAssetStore(),
+            programmeCatalogue is null ? null : new InMemoryProgrammeCatalogueRepository(programmeCatalogue));
 
-    private static Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(DemoPlatformState state) =>
+    private static ProgrammeCatalogueSnapshot CreateVisibilityManagedCatalogue() =>
+        new(
+            [
+                new ShopTypeOption(
+                    "coffee",
+                    "Coffee shop",
+                    "Coffee-first operators.",
+                    true),
+                new ShopTypeOption(
+                    "barber",
+                    "Barbershop",
+                    "Service-led grooming operators.",
+                    false)
+            ],
+            [
+                new CardTypeOption(
+                    "wallet-loyalty-card",
+                    "Wallet loyalty card",
+                    "Repeat-visit digital loyalty card.",
+                    true),
+                new CardTypeOption(
+                    "wallet-membership-card",
+                    "Wallet membership card",
+                    "Subscription and VIP card.",
+                    false)
+            ],
+            [
+                CreateTemplate("visible-template", "coffee", "wallet-loyalty-card", true),
+                CreateTemplate("inactive-template", "coffee", "wallet-loyalty-card", false),
+                CreateTemplate("inactive-shop-template", "barber", "wallet-loyalty-card", true),
+                CreateTemplate("inactive-card-template", "coffee", "wallet-membership-card", true)
+            ]);
+
+    private static ProgrammeTemplateOption CreateTemplate(
+        string templateKey,
+        string shopTypeKey,
+        string cardTypeKey,
+        bool isActive) =>
+        new(
+            templateKey,
+            "Template label",
+            "visit-reward",
+            "Visit reward",
+            "Template headline",
+            "Template description",
+            "visits",
+            5,
+            "Reward copy",
+            "apple-wallet-pass",
+            "Apple Wallet pass",
+            "Wallet loyalty card",
+            shopTypeKey,
+            cardTypeKey,
+            cardTypeKey == "wallet-membership-card" ? "Wallet membership card" : "Wallet loyalty card",
+            isActive);
+
+    private static Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(
+        DemoPlatformState state,
+        string shopTypeKey = "coffee") =>
         state.CreateMerchantAsync(
             "Jo's Coffee",
             "Bristol",
@@ -354,7 +476,8 @@ public sealed class DemoPlatformStateTests
             fallbackLogoUrl: FallbackLogoUrl,
             primaryColor: DefaultPrimaryColor,
             accentColor: DefaultAccentColor,
-            baseUri: BaseUri);
+            baseUri: BaseUri,
+            shopTypeKey: shopTypeKey);
 
     private static async Task<MerchantWorkspaceSnapshot> CreateMerchantWithProgrammeAsync(DemoPlatformState state, string templateKey = "coffee-visits")
     {
@@ -382,5 +505,11 @@ public sealed class DemoPlatformStateTests
             _assets.TryGetValue(publicPath, out var asset);
             return Task.FromResult(asset);
         }
+    }
+
+    private sealed class InMemoryProgrammeCatalogueRepository(ProgrammeCatalogueSnapshot snapshot)
+        : IProgrammeCatalogueRepository
+    {
+        public ProgrammeCatalogueSnapshot Load() => snapshot;
     }
 }

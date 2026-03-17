@@ -43,3 +43,22 @@ What it adds:
 2. Run browser smoke before opening a UX-focused PR or before merge.
 3. Attach screenshots for the key desktop and mobile states when visual changes are material.
 4. Keep fixes in small slices so regressions are easy to isolate.
+
+## CI Enforcement (GitHub)
+
+Workflow:
+- `.github/workflows/ux-quality-gates.yml`
+- `.github/workflows/ux-browser-smoke.yml` (nightly + manual)
+
+Required status check to enable in branch protection:
+- `ux-quality-gates`
+
+Suggested branch protection baseline:
+1. Require pull request before merging.
+2. Require status checks to pass before merging.
+3. Add `ux-quality-gates` as a required check.
+
+Nightly visual drift watch:
+1. `UX Browser Smoke` runs nightly (02:30 UTC) and via manual dispatch.
+2. Review the `ux-smoke-artifacts` workflow artifact for screenshots under `artifacts/ux-smoke/`.
+3. Use this for early warning; keep `ux-quality-gates` as the required merge gate.
