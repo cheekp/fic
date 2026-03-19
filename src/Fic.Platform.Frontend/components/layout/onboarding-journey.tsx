@@ -1,0 +1,217 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Check, CheckCircle2, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+export type OnboardingJourneyKey = "account" | "plan" | "billing" | "shop" | "programme";
+
+type OnboardingJourneyProps = {
+  currentStep: OnboardingJourneyKey;
+  accountComplete: boolean;
+  planComplete: boolean;
+  billingComplete: boolean;
+  shopComplete: boolean;
+  programmeComplete: boolean;
+  accountUrl?: string;
+  planUrl?: string;
+  billingUrl?: string;
+  shopUrl?: string;
+  programmeUrl?: string;
+  hint?: string;
+  variant?: "default" | "compact";
+};
+
+type JourneyStep = {
+  order: number;
+  key: OnboardingJourneyKey;
+  label: string;
+  compactLabel?: string;
+  isComplete: boolean;
+  isCurrent: boolean;
+  href?: string;
+};
+
+export function OnboardingJourney({
+  currentStep,
+  accountComplete,
+  planComplete,
+  billingComplete,
+  shopComplete,
+  programmeComplete,
+  accountUrl,
+  planUrl,
+  billingUrl,
+  shopUrl,
+  programmeUrl,
+  hint,
+  variant = "default",
+}: OnboardingJourneyProps) {
+  const steps: JourneyStep[] = [
+    { order: 1, key: "account", label: "Create account", isComplete: accountComplete, isCurrent: currentStep === "account", href: accountUrl },
+    { order: 2, key: "plan", label: "Choose plan", isComplete: planComplete, isCurrent: currentStep === "plan", href: planUrl },
+    { order: 3, key: "billing", label: "Billing and access", compactLabel: "Billing", isComplete: billingComplete, isCurrent: currentStep === "billing", href: billingUrl },
+    { order: 4, key: "shop", label: "Shop details", isComplete: shopComplete, isCurrent: currentStep === "shop", href: shopUrl },
+    { order: 5, key: "programme", label: "Programme template", isComplete: programmeComplete, isCurrent: currentStep === "programme", href: programmeUrl },
+  ];
+
+  const completeCount = steps.filter((step) => step.isComplete).length;
+  const currentIndex = Math.max(0, steps.findIndex((step) => step.isCurrent));
+  const mobileWindowSteps = steps.filter((_, index) => Math.abs(index - currentIndex) <= 1);
+
+  const renderStandardRow = (step: JourneyStep) => {
+    const isNavigable = Boolean(step.href && (step.isComplete || step.isCurrent));
+
+    const body = (
+      <div
+        className={`flex items-center gap-3 rounded-xl border p-3 transition ${
+          step.isCurrent
+            ? "border-secondary/70 bg-secondary/10"
+            : step.isComplete
+              ? "border-primary/40 bg-primary/5"
+              : "border-border bg-background"
+        }`}
+      >
+        <span
+          className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold ${
+            step.isCurrent
+              ? "border-primary/70 bg-primary text-primary-foreground"
+              : step.isComplete
+                ? "border-primary/60 bg-primary/15 text-primary"
+                : "border-border bg-background text-muted-foreground"
+          }`}
+        >
+          {step.isComplete ? <CheckCircle2 className="h-4 w-4" /> : step.order}
+        </span>
+        <span className="flex-1 text-sm font-medium">
+          {step.compactLabel ? <span className="sm:hidden">{step.compactLabel}</span> : null}
+          {step.compactLabel ? <span className="hidden sm:inline">{step.label}</span> : step.label}
+        </span>
+      </div>
+    );
+
+    if (isNavigable) {
+      return (
+        <Link href={step.href as string} className="block">
+          {body}
+        </Link>
+      );
+    }
+
+    return body;
+  };
+
+  const renderMapNode = (step: JourneyStep, index: number, total: number) => {
+    const isNavigable = Boolean(step.href && (step.isComplete || step.isCurrent));
+    const isSegmentComplete = step.isComplete;
+
+    const node = (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: index * 0.04 }}
+        className="relative flex flex-col items-center gap-1 text-center"
+      >
+        {step.isCurrent ? (
+          <motion.span
+            className="absolute -top-2 h-12 w-12 rounded-full bg-primary/25 blur-xl"
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+            aria-hidden
+          />
+        ) : null}
+        <span
+          className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold sm:h-9 sm:w-9 sm:text-xs ${
+            step.isCurrent
+              ? "border-primary/70 bg-primary text-primary-foreground shadow-[0_0_24px_rgba(22,94,70,0.45)]"
+              : step.isComplete
+                ? "border-primary/60 bg-[rgb(255,250,240)] text-primary"
+                : "border-border bg-background text-muted-foreground"
+          }`}
+        >
+          {step.isComplete ? <Check className="h-4 w-4" /> : step.order}
+        </span>
+        <div className="mt-0.5">
+          <p className={`text-xs font-medium leading-4 sm:text-sm sm:leading-5 ${step.isCurrent ? "text-foreground" : "text-foreground/70"} ${step.isCurrent ? "" : "hidden sm:block"}`}>
+            {step.compactLabel ? <span className="sm:hidden">{step.compactLabel}</span> : null}
+            {step.compactLabel ? <span className="hidden sm:inline">{step.label}</span> : step.label}
+          </p>
+        </div>
+      </motion.div>
+    );
+
+    return (
+      <li key={step.key} className="relative flex-1">
+        {index < total - 1 ? (
+          <span
+            aria-hidden
+            className="absolute left-1/2 right-[-50%] top-4 h-px bg-muted-foreground/35 sm:top-[1.25rem]"
+          />
+        ) : null}
+        {index < total - 1 && isSegmentComplete ? (
+          <motion.span
+            aria-hidden
+            className="absolute left-1/2 right-[-50%] top-4 h-px bg-[linear-gradient(90deg,#1f3731,#2d5b50,#f4c15d)] sm:top-[1.25rem]"
+            initial={{ opacity: 0.78 }}
+            animate={{ opacity: [0.74, 1, 0.74] }}
+            transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
+          />
+        ) : null}
+        {isNavigable ? (
+          <Link
+            href={step.href as string}
+            aria-current={step.isCurrent ? "step" : undefined}
+            className="block rounded-lg transition hover:scale-[1.01] hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          >
+            {node}
+          </Link>
+        ) : (
+          node
+        )}
+      </li>
+    );
+  };
+
+  return (
+    <section className="glass-panel brand-glow relative max-h-[12rem] space-y-1.5 overflow-hidden p-3 sm:max-h-none sm:space-y-2 sm:p-4" aria-label="Onboarding journey">
+      <div aria-hidden className="pointer-events-none absolute -left-16 -top-14 h-52 w-52 rounded-full bg-primary/10 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-10 top-6 h-44 w-44 rounded-full bg-secondary/20 blur-3xl" />
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="inline-flex items-center gap-1.5">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Signup roadmap</p>
+          {variant === "compact" ? <Sparkles className="h-3.5 w-3.5 text-primary" /> : null}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Badge>
+            <span className="sm:hidden">{completeCount}/{steps.length}</span>
+            <span className="hidden sm:inline">{completeCount} of {steps.length} complete</span>
+          </Badge>
+        </div>
+      </div>
+
+      {variant === "compact" ? (
+        <>
+          <div className="relative md:hidden">
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-4 bg-gradient-to-r from-[rgb(255,250,240)] to-transparent" />
+            <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-4 bg-gradient-to-l from-[rgb(255,250,240)] to-transparent" />
+            <ol className="flex items-start gap-2.5">
+              {mobileWindowSteps.map((step, index) => renderMapNode(step, index, mobileWindowSteps.length))}
+            </ol>
+          </div>
+          <ol className="hidden items-start gap-2.5 md:flex">
+            {steps.map((step, index) => renderMapNode(step, index, steps.length))}
+          </ol>
+        </>
+      ) : (
+        <ol className="grid gap-2">
+          {steps.map((step) => (
+            <li key={step.key}>{renderStandardRow(step)}</li>
+          ))}
+        </ol>
+      )}
+
+    </section>
+  );
+}
