@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import { Menu } from "lucide-react";
 import { ReactNode, useMemo } from "react";
+import { Drawer } from "vaul";
 import type {
   PortalNavItemContract,
   PortalNavKey,
@@ -114,6 +116,7 @@ export function PortalShell({
   showRail = false,
   showActiveBadge = true,
 }: PortalShellProps) {
+  const prefersReducedMotion = useReducedMotion();
   const activeItem = useMemo(
     () => railItems.find((item) => item.key === activeKey),
     [activeKey, railItems],
@@ -161,6 +164,34 @@ export function PortalShell({
         </div>
 
         <div className="flex items-center gap-2">
+          <Drawer.Root shouldScaleBackground={false}>
+            <Drawer.Trigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-foreground/70 lg:hidden">
+                More
+              </Button>
+            </Drawer.Trigger>
+            <Drawer.Portal>
+              <Drawer.Overlay className="fixed inset-0 z-40 bg-black/35" />
+              <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[78vh] rounded-t-2xl border border-border/80 bg-[var(--portal-surface)] p-4">
+                <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border/80" />
+                <p className="mb-3 text-sm font-semibold">Portal links</p>
+                <div className="grid gap-2 pb-2">
+                  {resolvedUtilityLinks.map((item) => (
+                    item.isExternal ? (
+                      <a key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/82 transition hover:bg-muted/50">
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/82 transition hover:bg-muted/50">
+                        {item.label}
+                      </Link>
+                    )
+                  ))}
+                </div>
+              </Drawer.Content>
+            </Drawer.Portal>
+          </Drawer.Root>
+
           <nav className="hidden items-center gap-2.5 lg:flex" aria-label="Portal utilities">
             {utilityPrimaryLinks.map((item) => (
               item.isExternal ? (
@@ -203,16 +234,21 @@ export function PortalShell({
         </div>
       </header>
 
-      <div className={cn(
-        "grid grid-cols-1 gap-4",
-        showRail
-          ? secondary
-            ? "md:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)_minmax(16rem,20rem)]"
-            : "md:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)]"
-          : secondary
-            ? "xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]"
-            : "",
-      )}>
+      <motion.div
+        className={cn(
+          "grid grid-cols-1 gap-4",
+          showRail
+            ? secondary
+              ? "md:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)_minmax(16rem,20rem)]"
+              : "md:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)]"
+            : secondary
+              ? "xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]"
+              : "",
+        )}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={prefersReducedMotion ? undefined : { duration: 0.24, ease: [0.22, 0.9, 0.2, 1] }}
+      >
         {showRail ? (
           <aside className="hidden md:block">
             <div className="glass-panel p-3">
@@ -224,7 +260,7 @@ export function PortalShell({
         <div className="min-w-0">{children}</div>
 
         {secondary ? <aside className="hidden xl:block">{secondary}</aside> : null}
-      </div>
+      </motion.div>
     </section>
   );
 }

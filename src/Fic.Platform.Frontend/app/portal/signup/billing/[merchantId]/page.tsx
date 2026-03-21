@@ -5,8 +5,10 @@ import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CreditCard, LockKeyhole } from "lucide-react";
-import { completeSignup, getSignupPortalNavigation } from "@/lib/api";
+import { toast } from "sonner";
+import { completeSignup } from "@/lib/api";
 import { readSignupMerchantDraft } from "@/lib/onboarding-draft";
+import { useSignupPortalNavigationQuery } from "@/lib/queries";
 import { ficPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
 import { OnboardingJourney } from "@/components/layout/onboarding-journey";
 import { PortalShell } from "@/components/layout/portal-shell";
@@ -37,29 +39,11 @@ export default function SignupBillingPage() {
   const [cardCvc, setCardCvc] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [portalNav, setPortalNav] = useState<PortalNavigationContract | null>(null);
   const currentRoadmapStep = requestedStage;
+  const portalNavQuery = useSignupPortalNavigationQuery(currentRoadmapStep, merchantId);
+  const portalNav: PortalNavigationContract | null = portalNavQuery.data ?? null;
   const isOwnerStage = currentRoadmapStep === "owner";
   const isBillingStage = currentRoadmapStep === "billing";
-
-  useEffect(() => {
-    let cancelled = false;
-    getSignupPortalNavigation(currentRoadmapStep, merchantId)
-      .then((next) => {
-        if (!cancelled) {
-          setPortalNav(next);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPortalNav(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentRoadmapStep, merchantId]);
 
   useEffect(() => {
     const draft = readSignupMerchantDraft(merchantId);
@@ -173,10 +157,12 @@ export default function SignupBillingPage() {
         confirmPassword,
       });
 
+      toast.success("Signup complete. Opening your workspace.");
       router.push(`/portal/merchant/${merchantId}?programmeSection=operate&setup=shop`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to complete signup.";
       setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

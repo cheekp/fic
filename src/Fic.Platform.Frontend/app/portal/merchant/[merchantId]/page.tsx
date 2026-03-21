@@ -4,20 +4,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   awardVisit,
   createProgramme,
   getProgrammeTemplates,
-  getSession,
-  getShopTypes,
   getWorkspaceForProgramme,
-  getWorkspacePortalNavigation,
   joinProgramme,
   redeemReward,
   updateMerchantBrand,
   updateProgramme,
   uploadMerchantLogo,
 } from "@/lib/api";
+import {
+  queryKeys,
+  useSessionSummaryQuery,
+  useShopTypesQuery,
+  useWorkspacePortalNavigationQuery,
+  useWorkspaceSnapshotQuery,
+} from "@/lib/queries";
 import { OnboardingJourney } from "@/components/layout/onboarding-journey";
 import { PortalShell } from "@/components/layout/portal-shell";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { MerchantWorkspaceSnapshot, ProgrammeTemplateOption, ShopTypeOption } from "@/types/contracts";
-import { ficPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
+import { ficPortalTheme } from "@/types/portal-contracts";
 
 type WorkspaceSection = "operate" | "configure" | "customers";
 
@@ -100,62 +106,96 @@ export default function WorkspacePage() {
   const [logoCacheBuster, setLogoCacheBuster] = useState(0);
   const [isShopSetupOpen, setIsShopSetupOpen] = useState(false);
   const [isSetupIntentHandled, setIsSetupIntentHandled] = useState(false);
-  const [portalNav, setPortalNav] = useState<PortalNavigationContract | null>(null);
+  const queryClient = useQueryClient();
 
   const selectedProgramme = workspace?.selectedProgramme ?? null;
   const selectedProgrammeId = selectedProgramme?.programmeId;
+  const sessionQuery = useSessionSummaryQuery();
+  const workspaceQuery = useWorkspaceSnapshotQuery(merchantId, requestedProgrammeId);
+  const shopTypesQuery = useShopTypesQuery();
+  const portalNavQuery = useWorkspacePortalNavigationQuery(merchantId, section, selectedProgrammeId);
+  const portalNav = portalNavQuery.data ?? null;
   const brandLogoUrl = workspace?.brandProfile.logoUrl
     ? withCacheBust(workspace.brandProfile.logoUrl, logoCacheBuster)
     : null;
 
   useEffect(() => {
+    if (sessionQuery.isPending || workspaceQuery.isPending) {
+      setIsLoading(true);
+      return;
+    }
+
+    if (sessionQuery.data && !sessionQuery.data.isAuthenticated) {
+      setWorkspace(null);
+      setShopTypes(fallbackShopTypes);
+      setError("Merchant session is not authenticated. Complete signup first.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (workspaceQuery.error) {
+      setWorkspace(null);
+      setShopTypes(fallbackShopTypes);
+      setError(workspaceQuery.error instanceof Error ? workspaceQuery.error.message : "Failed to load workspace.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (workspaceQuery.data) {
+      setWorkspace(workspaceQuery.data);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, [
+    sessionQuery.data,
+    sessionQuery.isPending,
+    workspaceQuery.data,
+    workspaceQuery.error,
+    workspaceQuery.isPending,
+  ]);
+
+  useEffect(() => {
+    const activeShopTypes = (shopTypesQuery.data ?? []).filter((type) => type.isActive);
+    setShopTypes(activeShopTypes.length > 0 ? activeShopTypes : fallbackShopTypes);
+  }, [shopTypesQuery.data]);
+
+  useEffect(() => {
     let cancelled = false;
 
-    async function load() {
+    async function loadTemplates() {
+      if (!workspace?.merchant.shopTypeKey) {
+        setTemplates([]);
+        setSelectedTemplateKey("");
+        return;
+      }
+
       try {
-        const [session, nextWorkspace, nextShopTypes] = await Promise.all([
-          getSession(),
-          getWorkspaceForProgramme(merchantId, requestedProgrammeId),
-          getShopTypes().catch(() => []),
-        ]);
-
-        if (!session.isAuthenticated) {
-          throw new Error("Merchant session is not authenticated. Complete signup first.");
-        }
-
-        const nextTemplates = await getProgrammeTemplates(nextWorkspace.merchant.shopTypeKey);
-
+        const nextTemplates = await getProgrammeTemplates(workspace.merchant.shopTypeKey);
         if (cancelled) {
           return;
         }
 
         const activeTemplates = nextTemplates.filter((template) => template.isActive);
-        const activeShopTypes = nextShopTypes.filter((type) => type.isActive);
-
-        setWorkspace(nextWorkspace);
         setTemplates(activeTemplates);
-        setSelectedTemplateKey(activeTemplates[0]?.templateKey ?? "");
-        setShopTypes(activeShopTypes.length > 0 ? activeShopTypes : fallbackShopTypes);
-        setError(null);
-      } catch (err) {
+        setSelectedTemplateKey((current) => (
+          activeTemplates.some((template) => template.templateKey === current)
+            ? current
+            : (activeTemplates[0]?.templateKey ?? "")
+        ));
+      } catch {
         if (!cancelled) {
-          setWorkspace(null);
-          setShopTypes(fallbackShopTypes);
-          setError(err instanceof Error ? err.message : "Failed to load workspace.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
+          setTemplates([]);
+          setSelectedTemplateKey("");
         }
       }
     }
 
-    load();
+    loadTemplates();
 
     return () => {
       cancelled = true;
     };
-  }, [merchantId, requestedProgrammeId]);
+  }, [workspace?.merchant.shopTypeKey]);
 
   useEffect(() => {
     if (!selectedProgramme) {
@@ -191,32 +231,6 @@ export default function WorkspacePage() {
   }, [isShopDraftDirty, shopTypes, workspace]);
 
   useEffect(() => {
-    let cancelled = false;
-    getWorkspacePortalNavigation(merchantId, section, selectedProgrammeId)
-      .then((next) => {
-        if (!cancelled) {
-          setPortalNav(next);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPortalNav(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    merchantId,
-    section,
-    selectedProgrammeId,
-    workspace?.setupChecklist.ownerAccessConfigured,
-    workspace?.setupChecklist.shopDetailsComplete,
-    workspace?.setupChecklist.hasAnyProgramme,
-  ]);
-
-  useEffect(() => {
     if (!workspace || isSetupIntentHandled) {
       return;
     }
@@ -228,9 +242,17 @@ export default function WorkspacePage() {
     setIsSetupIntentHandled(true);
   }, [isSetupIntentHandled, setupIntent, workspace]);
 
+  useEffect(() => {
+    if (portalNavQuery.error) {
+      toast.error("Portal navigation unavailable.");
+    }
+  }, [portalNavQuery.error]);
+
   async function refreshWorkspace(programmeId?: string) {
     const nextWorkspace = await getWorkspaceForProgramme(merchantId, programmeId);
     setWorkspace(nextWorkspace);
+    queryClient.setQueryData(queryKeys.workspace(merchantId, programmeId), nextWorkspace);
+    queryClient.invalidateQueries({ queryKey: ["portal-nav", "workspace", merchantId] });
   }
 
   const canUpdateProgramme = useMemo(
@@ -238,14 +260,24 @@ export default function WorkspacePage() {
     [rewardItemLabel, rewardThreshold, selectedProgramme],
   );
 
+  function publishSuccess(text: string) {
+    setMessage(text);
+    toast.success(text);
+  }
+
+  function publishError(text: string) {
+    setError(text);
+    toast.error(text);
+  }
+
   async function handleCreateProgramme() {
     if (!workspace?.setupChecklist.shopDetailsComplete) {
-      setError("Complete shop details before creating the first programme.");
+      publishError("Complete shop details before creating the first programme.");
       return;
     }
 
     if (!selectedTemplateKey) {
-      setError("Select a programme template first.");
+      publishError("Select a programme template first.");
       return;
     }
 
@@ -256,9 +288,11 @@ export default function WorkspacePage() {
     try {
       const nextWorkspace = await createProgramme(merchantId, selectedTemplateKey);
       setWorkspace(nextWorkspace);
-      setMessage("Programme created.");
+      queryClient.setQueryData(queryKeys.workspace(merchantId, requestedProgrammeId), nextWorkspace);
+      queryClient.invalidateQueries({ queryKey: ["portal-nav", "workspace", merchantId] });
+      publishSuccess("Programme created.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to create programme.");
+      publishError(err instanceof Error ? err.message : "Unable to create programme.");
     } finally {
       setIsMutating(false);
     }
@@ -268,7 +302,7 @@ export default function WorkspacePage() {
     event.preventDefault();
 
     if (!selectedProgramme) {
-      setError("Select a programme before saving.");
+      publishError("Select a programme before saving.");
       return;
     }
 
@@ -285,9 +319,9 @@ export default function WorkspacePage() {
         endsOn,
       });
       await refreshWorkspace(selectedProgramme.programmeId);
-      setMessage("Programme updated.");
+      publishSuccess("Programme updated.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update programme.");
+      publishError(err instanceof Error ? err.message : "Unable to update programme.");
     } finally {
       setIsMutating(false);
     }
@@ -297,7 +331,7 @@ export default function WorkspacePage() {
     event.preventDefault();
 
     if (!selectedProgramme) {
-      setError("Select a programme before awarding visits.");
+      publishError("Select a programme before awarding visits.");
       return;
     }
 
@@ -309,9 +343,9 @@ export default function WorkspacePage() {
       await awardVisit(merchantId, selectedProgramme.programmeId, scanCode.trim());
       await refreshWorkspace(selectedProgramme.programmeId);
       setScanCode("");
-      setMessage("Visit awarded.");
+      publishSuccess("Visit awarded.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to award visit.");
+      publishError(err instanceof Error ? err.message : "Unable to award visit.");
     } finally {
       setIsMutating(false);
     }
@@ -319,7 +353,7 @@ export default function WorkspacePage() {
 
   async function handleDemoJoin() {
     if (!selectedProgramme?.joinCode) {
-      setError("Select a programme with a join code first.");
+      publishError("Select a programme with a join code first.");
       return;
     }
 
@@ -330,9 +364,9 @@ export default function WorkspacePage() {
     try {
       const card = await joinProgramme(selectedProgramme.joinCode);
       await refreshWorkspace(selectedProgramme.programmeId);
-      setMessage(`Customer joined with card ${card.cardCode}.`);
+      publishSuccess(`Customer joined with card ${card.cardCode}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to create demo join.");
+      publishError(err instanceof Error ? err.message : "Unable to create demo join.");
     } finally {
       setIsMutating(false);
     }
@@ -340,7 +374,7 @@ export default function WorkspacePage() {
 
   async function handleRedeem(cardId: string) {
     if (!selectedProgramme) {
-      setError("Select a programme before redeeming.");
+      publishError("Select a programme before redeeming.");
       return;
     }
 
@@ -351,9 +385,9 @@ export default function WorkspacePage() {
     try {
       await redeemReward(merchantId, selectedProgramme.programmeId, cardId);
       await refreshWorkspace(selectedProgramme.programmeId);
-      setMessage("Reward redeemed.");
+      publishSuccess("Reward redeemed.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to redeem reward.");
+      publishError(err instanceof Error ? err.message : "Unable to redeem reward.");
     } finally {
       setIsMutating(false);
     }
@@ -367,7 +401,7 @@ export default function WorkspacePage() {
     }
 
     if (!shopTypeKey.trim()) {
-      setError("Choose a shop type to continue.");
+      publishError("Choose a shop type to continue.");
       return;
     }
 
@@ -395,9 +429,11 @@ export default function WorkspacePage() {
       setSelectedTemplateKey(activeTemplates[0]?.templateKey ?? "");
       setIsShopDraftDirty(false);
       setIsShopSetupOpen(false);
-      setMessage("Shop details saved. Next: choose your programme template.");
+      queryClient.setQueryData(queryKeys.workspace(merchantId, requestedProgrammeId), nextWorkspace);
+      queryClient.invalidateQueries({ queryKey: ["portal-nav", "workspace", merchantId] });
+      publishSuccess("Shop details saved. Next: choose your programme template.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update shop details.");
+      publishError(err instanceof Error ? err.message : "Unable to update shop details.");
     } finally {
       setIsSavingShopDetails(false);
     }
@@ -406,7 +442,7 @@ export default function WorkspacePage() {
   async function handleUploadLogo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!brandLogoFile) {
-      setError("Select a PNG logo file before uploading.");
+      publishError("Select a PNG logo file before uploading.");
       return;
     }
 
@@ -419,9 +455,10 @@ export default function WorkspacePage() {
       setWorkspace(nextWorkspace);
       setBrandLogoFile(null);
       setLogoCacheBuster(Date.now());
-      setMessage("Brand logo updated.");
+      queryClient.setQueryData(queryKeys.workspace(merchantId, requestedProgrammeId), nextWorkspace);
+      publishSuccess("Brand logo updated.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to upload logo.");
+      publishError(err instanceof Error ? err.message : "Unable to upload logo.");
     } finally {
       setIsUploadingLogo(false);
     }

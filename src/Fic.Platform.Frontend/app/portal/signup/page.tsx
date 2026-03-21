@@ -1,10 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { createMerchant, getSignupPortalNavigation } from "@/lib/api";
+import { toast } from "sonner";
+import { createMerchant } from "@/lib/api";
 import { saveSignupMerchantDraft } from "@/lib/onboarding-draft";
+import { useSignupPortalNavigationQuery } from "@/lib/queries";
 import { ficPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
 import { Button } from "@/components/ui/button";
 import { OnboardingJourney } from "@/components/layout/onboarding-journey";
@@ -20,26 +22,8 @@ export default function SignupPage() {
   const [contactEmail, setContactEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [portalNav, setPortalNav] = useState<PortalNavigationContract | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getSignupPortalNavigation("signup")
-      .then((next) => {
-        if (!cancelled) {
-          setPortalNav(next);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPortalNav(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const portalNavQuery = useSignupPortalNavigationQuery("signup");
+  const portalNav: PortalNavigationContract | null = portalNavQuery.data ?? null;
 
   const canSubmit = useMemo(() => {
     return !isSubmitting
@@ -79,11 +63,13 @@ export default function SignupPage() {
     } catch (err) {
       const rawMessage = err instanceof Error ? err.message : "Unable to create merchant right now.";
       const isConnectivityError = /load failed|failed to fetch|network/i.test(rawMessage);
-      setError(
+      const message = (
         isConnectivityError
           ? "Unable to reach the API right now. Confirm the backend is running and try again."
-          : rawMessage,
+          : rawMessage
       );
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

@@ -11,3 +11,4 @@ Current active plan:
 - `F40-onboarding-flow-convergence.md`
 - `F41-workspace-next-action-contract.md`
 - `F42-api-owned-portal-utility-links.md`
+- `F43-premium-foundation-query-motion-feedback.md`

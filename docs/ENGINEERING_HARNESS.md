@@ -219,6 +219,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F42`
   - API-owned portal utility links so top-level utility IA is contract-driven and not hardcoded in frontend shell
   - validator: `scripts/validate-f42-api-owned-portal-utility-links.sh`
+- `F43`
+  - premium interaction foundation with TanStack Query, Sonner feedback, Vaul mobile utility drawer, and restrained motion hierarchy
+  - validator: `scripts/validate-f43-premium-foundation-query-motion-feedback.sh`
 
 ## Current Product Reality
 
