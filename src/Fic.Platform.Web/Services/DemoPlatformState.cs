@@ -24,6 +24,7 @@ public sealed class DemoPlatformState(
     private readonly ConcurrentDictionary<Guid, LoyaltyProgramme> _programmes = new();
     private readonly ConcurrentDictionary<string, Guid> _joinCodes = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<Guid, CustomerCard> _cards = new();
+    private readonly ConcurrentDictionary<Guid, CustomerCardLifecycleState> _cardLifecycle = new();
     private readonly ConcurrentDictionary<string, Guid> _cardCodes = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, Guid> _walletPassIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<Guid, CustomerProgress> _progress = new();
@@ -810,6 +811,85 @@ public sealed class DemoPlatformState(
         }
     }
 
+    public MerchantWorkspaceSnapshot? ApplyCardLifecycleAction(
+        Guid merchantId,
+        Guid programmeId,
+        Guid cardId,
+        string action,
+        string baseUri)
+    {
+        lock (_gate)
+        {
+            if (!_cards.TryGetValue(cardId, out var card) || card.MerchantId != merchantId || card.ProgrammeId != programmeId)
+            {
+                return null;
+            }
+
+            if (!TryParseCardLifecycleAction(action, out var lifecycleState))
+            {
+                return null;
+            }
+
+            _cardLifecycle[cardId] = lifecycleState;
+            var now = DateTimeOffset.UtcNow;
+            if (_progress.TryGetValue(cardId, out var progress))
+            {
+                _progress[cardId] = progress with { LastUpdatedUtc = now };
+            }
+
+            AppendEvent(
+                new CardLifecycleUpdated(merchantId, programmeId, cardId, lifecycleState.ToString(), now),
+                $"Card {card.CardCode} set to {BuildLifecycleLabel(lifecycleState)}.");
+
+            return BuildWorkspaceSnapshot(merchantId, baseUri, programmeId);
+        }
+    }
+
+    public MerchantWorkspaceSnapshot? ApplyBulkCardLifecycleAction(
+        Guid merchantId,
+        Guid programmeId,
+        IReadOnlyList<Guid> cardIds,
+        string action,
+        string baseUri)
+    {
+        lock (_gate)
+        {
+            if (!TryParseCardLifecycleAction(action, out var lifecycleState))
+            {
+                return null;
+            }
+
+            var validCards = cardIds
+                .Distinct()
+                .Where(cardId =>
+                    _cards.TryGetValue(cardId, out var card)
+                    && card.MerchantId == merchantId
+                    && card.ProgrammeId == programmeId)
+                .ToArray();
+
+            if (validCards.Length == 0)
+            {
+                return BuildWorkspaceSnapshot(merchantId, baseUri, programmeId);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            foreach (var cardId in validCards)
+            {
+                _cardLifecycle[cardId] = lifecycleState;
+                if (_progress.TryGetValue(cardId, out var progress))
+                {
+                    _progress[cardId] = progress with { LastUpdatedUtc = now };
+                }
+            }
+
+            AppendEvent(
+                new CardLifecycleBulkUpdated(merchantId, programmeId, validCards.Length, lifecycleState.ToString(), now),
+                $"Updated {validCards.Length} cards to {BuildLifecycleLabel(lifecycleState)}.");
+
+            return BuildWorkspaceSnapshot(merchantId, baseUri, programmeId);
+        }
+    }
+
     public WalletCardView? GetWalletCardView(Guid cardId)
     {
         lock (_gate)
@@ -911,7 +991,10 @@ public sealed class DemoPlatformState(
         var merchant = _merchants[card.MerchantId];
         var programme = _programmes[card.ProgrammeId];
         var brand = _brands[card.MerchantId];
-        var customerCardStatus = BuildCustomerCardStatus(programme, progress.RewardState);
+        var lifecycleState = _cardLifecycle.TryGetValue(card.CardId, out var state)
+            ? state
+            : CustomerCardLifecycleState.Active;
+        var customerCardStatus = BuildCustomerCardStatus(programme, progress.RewardState, lifecycleState);
 
         return new WalletCardSnapshot(
             card.CardId,
@@ -935,7 +1018,7 @@ public sealed class DemoPlatformState(
             progress.RewardState,
             customerCardStatus,
             BuildCustomerCardStatusLabel(customerCardStatus),
-            customerCardStatus == CustomerCardStatus.RewardReady,
+            customerCardStatus == CustomerCardStatus.RewardReady && lifecycleState == CustomerCardLifecycleState.Active,
             progress.LastUpdatedUtc);
     }
 
@@ -948,8 +1031,21 @@ public sealed class DemoPlatformState(
         return normalized.StartsWith('#') ? normalized : $"#{normalized}";
     }
 
-    private static CustomerCardStatus BuildCustomerCardStatus(LoyaltyProgramme programme, RewardState rewardState)
+    private static CustomerCardStatus BuildCustomerCardStatus(
+        LoyaltyProgramme programme,
+        RewardState rewardState,
+        CustomerCardLifecycleState lifecycleState)
     {
+        if (lifecycleState == CustomerCardLifecycleState.Suspended)
+        {
+            return CustomerCardStatus.Suspended;
+        }
+
+        if (lifecycleState == CustomerCardLifecycleState.Archived)
+        {
+            return CustomerCardStatus.Archived;
+        }
+
         var today = GetTodayUtc();
         if (today < programme.StartsOn)
         {
@@ -975,6 +1071,39 @@ public sealed class DemoPlatformState(
         CustomerCardStatus.Redeemed => "Redeemed",
         CustomerCardStatus.Scheduled => "Scheduled",
         CustomerCardStatus.Expired => "Expired",
+        CustomerCardStatus.Suspended => "Suspended",
+        CustomerCardStatus.Archived => "Archived",
+        _ => "Active"
+    };
+
+    private static bool TryParseCardLifecycleAction(string action, out CustomerCardLifecycleState lifecycleState)
+    {
+        if (string.Equals(action, "suspend", StringComparison.OrdinalIgnoreCase))
+        {
+            lifecycleState = CustomerCardLifecycleState.Suspended;
+            return true;
+        }
+
+        if (string.Equals(action, "archive", StringComparison.OrdinalIgnoreCase))
+        {
+            lifecycleState = CustomerCardLifecycleState.Archived;
+            return true;
+        }
+
+        if (string.Equals(action, "reactivate", StringComparison.OrdinalIgnoreCase))
+        {
+            lifecycleState = CustomerCardLifecycleState.Active;
+            return true;
+        }
+
+        lifecycleState = CustomerCardLifecycleState.Active;
+        return false;
+    }
+
+    private static string BuildLifecycleLabel(CustomerCardLifecycleState state) => state switch
+    {
+        CustomerCardLifecycleState.Suspended => "Suspended",
+        CustomerCardLifecycleState.Archived => "Archived",
         _ => "Active"
     };
 
@@ -1128,4 +1257,11 @@ public sealed class DemoPlatformState(
         _timeline.Add(new TimelineEventSnapshot(domainEvent.EventId, domainEvent.EventType, summary, domainEvent.OccurredAtUtc));
         Changed?.Invoke();
     }
+}
+
+public enum CustomerCardLifecycleState
+{
+    Active = 0,
+    Suspended = 1,
+    Archived = 2
 }

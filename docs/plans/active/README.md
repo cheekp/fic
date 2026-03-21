@@ -16,3 +16,4 @@ Current active plan:
 - `F45-portal-ia-and-card-management-lane.md`
 - `F46-onboarding-entry-focus.md`
 - `F47-card-operations-detail-lane.md`
+- `F48-card-lifecycle-bulk-operations.md`

@@ -305,6 +305,50 @@ export async function redeemReward(
   return normalizeWorkspaceSnapshot(snapshot);
 }
 
+export async function updateCardLifecycle(
+  merchantId: string,
+  programmeId: string,
+  cardId: string,
+  action: "suspend" | "reactivate" | "archive",
+): Promise<MerchantWorkspaceSnapshot> {
+  const response = await fetch(
+    `${apiBaseUrl}/api/v1/merchants/${merchantId}/programmes/${programmeId}/cards/${cardId}/lifecycle`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action }),
+      credentials: "include",
+    },
+  );
+
+  const snapshot = await readJson<MerchantWorkspaceSnapshot>(response);
+  return normalizeWorkspaceSnapshot(snapshot);
+}
+
+export async function updateCardsLifecycleBulk(
+  merchantId: string,
+  programmeId: string,
+  cardIds: string[],
+  action: "suspend" | "reactivate" | "archive",
+): Promise<MerchantWorkspaceSnapshot> {
+  const response = await fetch(
+    `${apiBaseUrl}/api/v1/merchants/${merchantId}/programmes/${programmeId}/cards/lifecycle`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action, cardIds }),
+      credentials: "include",
+    },
+  );
+
+  const snapshot = await readJson<MerchantWorkspaceSnapshot>(response);
+  return normalizeWorkspaceSnapshot(snapshot);
+}
+
 export async function joinProgramme(joinCode: string): Promise<WalletCardSnapshot> {
   const response = await fetch(`${apiBaseUrl}/api/v1/join/${joinCode}`, {
     method: "POST",

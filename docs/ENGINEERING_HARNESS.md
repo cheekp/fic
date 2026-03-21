@@ -234,6 +234,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F47`
   - card operations detail lane so customers route supports filterable at-scale management with card-level drill-in context
   - validator: `scripts/validate-f47-card-operations-detail-lane.sh`
+- `F48`
+  - card lifecycle and bulk operations so suspend/reactivate/archive states are contract-backed and manageable at scale
+  - validator: `scripts/validate-f48-card-lifecycle-bulk-ops.sh`
 
 ## Current Product Reality
 

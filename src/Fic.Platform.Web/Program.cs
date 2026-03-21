@@ -711,6 +711,55 @@ api.MapPost("/merchants/{merchantId:guid}/programmes/{programmeId:guid}/cards/{c
     return workspace is null ? Results.NotFound() : Results.Ok(workspace);
 });
 
+api.MapPost("/merchants/{merchantId:guid}/programmes/{programmeId:guid}/cards/{cardId:guid}/lifecycle", (
+    Guid merchantId,
+    Guid programmeId,
+    Guid cardId,
+    CardLifecycleApiRequest request,
+    HttpContext context,
+    HttpRequest httpRequest,
+    DemoPlatformState platformState) =>
+{
+    var accessResult = EnsureMerchantApiAccess(context, merchantId);
+    if (accessResult is not null)
+    {
+        return accessResult;
+    }
+
+    var workspace = platformState.ApplyCardLifecycleAction(
+        merchantId,
+        programmeId,
+        cardId,
+        request.Action,
+        BuildBaseUri(httpRequest));
+
+    return workspace is null ? Results.NotFound() : Results.Ok(workspace);
+});
+
+api.MapPost("/merchants/{merchantId:guid}/programmes/{programmeId:guid}/cards/lifecycle", (
+    Guid merchantId,
+    Guid programmeId,
+    BulkCardLifecycleApiRequest request,
+    HttpContext context,
+    HttpRequest httpRequest,
+    DemoPlatformState platformState) =>
+{
+    var accessResult = EnsureMerchantApiAccess(context, merchantId);
+    if (accessResult is not null)
+    {
+        return accessResult;
+    }
+
+    var workspace = platformState.ApplyBulkCardLifecycleAction(
+        merchantId,
+        programmeId,
+        request.CardIds,
+        request.Action,
+        BuildBaseUri(httpRequest));
+
+    return workspace is null ? Results.NotFound() : Results.Ok(workspace);
+});
+
 api.MapGet("/join/{joinCode}", (string joinCode, DemoPlatformState platformState) =>
 {
     var experience = platformState.GetJoinExperience(joinCode);
@@ -1076,6 +1125,13 @@ public sealed record UpdateProgrammeApiRequest(
 
 public sealed record AwardVisitApiRequest(
     string ScannedCode);
+
+public sealed record CardLifecycleApiRequest(
+    string Action);
+
+public sealed record BulkCardLifecycleApiRequest(
+    string Action,
+    IReadOnlyList<Guid> CardIds);
 
 public sealed record ApiLoginRequest(
     string Email,

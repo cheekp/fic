@@ -79,3 +79,17 @@ public sealed record RewardRedeemed(
     Guid MerchantId,
     Guid CardId,
     DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(RewardRedeemed), OccurredAtUtc);
+
+public sealed record CardLifecycleUpdated(
+    Guid MerchantId,
+    Guid ProgrammeId,
+    Guid CardId,
+    string LifecycleState,
+    DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(CardLifecycleUpdated), OccurredAtUtc);
+
+public sealed record CardLifecycleBulkUpdated(
+    Guid MerchantId,
+    Guid ProgrammeId,
+    int CardCount,
+    string LifecycleState,
+    DateTimeOffset OccurredAtUtc) : DomainEvent(nameof(CardLifecycleBulkUpdated), OccurredAtUtc);
