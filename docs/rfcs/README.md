@@ -25,3 +25,4 @@ Current RFCs:
 - `RFC-010-roadmap-unified-with-nav-contract.md`
 - `RFC-011-portal-utility-ia-and-workflow-polish.md`
 - `RFC-012-onboarding-flow-convergence.md`
+- `RFC-013-workspace-next-action-contract.md`

@@ -470,18 +470,47 @@ export default function WorkspacePage() {
   }
 
   const onboardingIncomplete = !workspace.setupChecklist.shopDetailsComplete || !workspace.setupChecklist.hasAnyProgramme;
+  const contractNextAction = portalNav?.nextAction ?? null;
+  const onboardingIncompleteFallback = !workspace.setupChecklist.shopDetailsComplete || !workspace.setupChecklist.hasAnyProgramme;
+  const onboardingIncompleteFromContract = Boolean(contractNextAction);
+  const shouldShowOnboarding = onboardingIncompleteFromContract || onboardingIncompleteFallback;
+  const taskboardTasks = contractNextAction?.tasks ?? [
+    {
+      key: "shop",
+      label: "Shop details",
+      isComplete: workspace.setupChecklist.shopDetailsComplete,
+      isBlocked: false,
+      blockedReason: null,
+    },
+    {
+      key: "programme",
+      label: "Programme template",
+      isComplete: workspace.setupChecklist.hasAnyProgramme,
+      isBlocked: !workspace.setupChecklist.shopDetailsComplete,
+      blockedReason: !workspace.setupChecklist.shopDetailsComplete ? "Requires shop details first." : null,
+    },
+  ];
+  const taskboardActionKey = contractNextAction?.key ?? (workspace.setupChecklist.shopDetailsComplete ? "programme" : "shop");
+  const taskboardSummary =
+    contractNextAction?.summary
+    ?? (!workspace.setupChecklist.shopDetailsComplete
+      ? "Add shop type, location, and logo to unlock programme creation."
+      : "Choose a template to unlock Configure and Customers.");
+  const taskboardCtaLabel =
+    contractNextAction?.ctaLabel
+    ?? (taskboardActionKey === "shop" ? "Open shop setup" : "Create programme");
   const onboardingCurrentStep =
     !workspace.setupChecklist.ownerAccessConfigured
       ? "owner"
       : !workspace.setupChecklist.shopDetailsComplete
         ? "shop"
         : "programme";
-  const shopUrl = "#shop-details";
+  const shopUrl = "#setup-taskboard";
   const programmeUrl = selectedProgramme
     ? `?programmeSection=operate&programme=${selectedProgramme.programmeId}`
     : "?programmeSection=operate";
 
-  if (onboardingIncomplete && section === "operate") {
+  if (shouldShowOnboarding && section === "operate") {
     return (
       <PortalShell
         title="Merchant portal"
@@ -513,26 +542,25 @@ export default function WorkspacePage() {
           <Card id="setup-taskboard">
             <CardHeader>
               <CardTitle>Setup tasks</CardTitle>
-              <CardDescription>Complete the final setup actions to unlock full daily operations.</CardDescription>
+              <CardDescription>{taskboardSummary}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                <article className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Shop details</p>
-                  <p className="mt-1 font-semibold">{workspace.setupChecklist.shopDetailsComplete ? "Complete" : "Required"}</p>
-                  <p className="mt-1 text-sm text-foreground/75">Set shop type, location, and logo.</p>
-                </article>
-                <article className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Programme template</p>
-                  <p className="mt-1 font-semibold">{workspace.setupChecklist.hasAnyProgramme ? "Complete" : "Required"}</p>
-                  <p className="mt-1 text-sm text-foreground/75">Create your first programme to unlock Configure and Customers.</p>
-                </article>
+                {taskboardTasks.map((task) => (
+                  <article key={task.key} className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{task.label}</p>
+                    <p className="mt-1 font-semibold">
+                      {task.isComplete ? "Complete" : task.isBlocked ? "Blocked" : "Required"}
+                    </p>
+                    {task.blockedReason ? <p className="mt-1 text-sm text-foreground/75">{task.blockedReason}</p> : null}
+                  </article>
+                ))}
               </div>
 
-              {!workspace.setupChecklist.shopDetailsComplete ? (
+              {taskboardActionKey === "shop" ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 p-4">
-                  <p className="text-sm text-foreground/80">Next action: open shop setup and save shop details.</p>
-                  <Button onClick={() => setIsShopSetupOpen(true)}>Open shop setup</Button>
+                  <p className="text-sm text-foreground/80">{taskboardSummary}</p>
+                  <Button onClick={() => setIsShopSetupOpen(true)}>{taskboardCtaLabel}</Button>
                 </div>
               ) : (
                 <div className="space-y-3 rounded-2xl border border-border/70 bg-background/80 p-4">
@@ -552,7 +580,7 @@ export default function WorkspacePage() {
                     </Select>
                   </div>
                   <Button className="w-full sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
-                    {isMutating ? "Creating..." : "Create programme"}
+                    {isMutating ? "Creating..." : taskboardCtaLabel}
                   </Button>
                 </div>
               )}

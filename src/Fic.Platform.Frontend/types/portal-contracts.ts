@@ -42,12 +42,31 @@ export type PortalRoadmapContract = {
   steps: PortalRoadmapStepContract[];
 };
 
+export type PortalNextActionTaskContract = {
+  key: "shop" | "programme";
+  label: string;
+  isComplete: boolean;
+  isBlocked: boolean;
+  blockedReason?: string | null;
+};
+
+export type PortalNextActionContract = {
+  key: "shop" | "programme";
+  title: string;
+  summary: string;
+  ctaLabel: string;
+  ctaHref?: string | null;
+  blockedReason?: string | null;
+  tasks: PortalNextActionTaskContract[];
+};
+
 export type PortalNavigationContract = {
   surface: "signup" | "workspace";
   activeKey: PortalNavKey;
   theme: PortalThemeContract;
   items: PortalNavItemContract[];
   roadmap?: PortalRoadmapContract | null;
+  nextAction?: PortalNextActionContract | null;
 };
 
 export const ficPortalTheme: PortalThemeContract = {
