@@ -188,6 +188,7 @@ export default function SignupBillingPage() {
       activeKey={portalNav?.activeKey ?? "billing"}
       railItems={portalNav?.items ?? []}
       theme={portalNav?.theme ?? ficPortalTheme}
+      utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
     >

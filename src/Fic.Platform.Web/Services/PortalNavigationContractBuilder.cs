@@ -15,6 +15,16 @@ public sealed class PortalNavigationContractBuilder
         "rounded",
         "soft");
 
+    private static readonly IReadOnlyList<PortalUtilityLinkContract> DefaultUtilityLinks =
+    [
+        new PortalUtilityLinkContract("blogs", "Blogs", "/blogs", false),
+        new PortalUtilityLinkContract("training", "Training", "/training", false),
+        new PortalUtilityLinkContract("consultancy", "Consultancy", "/consultancy", false),
+        new PortalUtilityLinkContract("account", "Account", "/account", false),
+        new PortalUtilityLinkContract("billing", "Billing", "/billing", false),
+        new PortalUtilityLinkContract("logout", "Log out", "/account/logout", true),
+    ];
+
     public PortalNavigationContract BuildSignupNavigation(string? step, Guid? merchantId, MerchantWorkspaceSnapshot? workspace)
     {
         var activeKey = step switch
@@ -72,7 +82,7 @@ public sealed class PortalNavigationContractBuilder
             shopComplete: workspace?.SetupChecklist.ShopDetailsComplete ?? false,
             programmeComplete: workspace?.SetupChecklist.HasAnyProgramme ?? false);
 
-        return new PortalNavigationContract("signup", activeKey, ResolveTheme(workspace), items, roadmap, null);
+        return new PortalNavigationContract("signup", activeKey, ResolveTheme(workspace), items, DefaultUtilityLinks, roadmap, null);
     }
 
     public PortalNavigationContract BuildWorkspaceNavigation(
@@ -139,6 +149,7 @@ public sealed class PortalNavigationContractBuilder
             activeKey,
             ResolveTheme(workspace),
             items,
+            DefaultUtilityLinks,
             roadmap,
             BuildWorkspaceNextAction(merchantId, workspace));
     }

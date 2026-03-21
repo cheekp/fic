@@ -95,6 +95,7 @@ export default function SignupPage() {
       activeKey={portalNav?.activeKey ?? "signup"}
       railItems={portalNav?.items ?? []}
       theme={portalNav?.theme ?? ficPortalTheme}
+      utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
     >

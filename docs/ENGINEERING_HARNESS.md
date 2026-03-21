@@ -216,6 +216,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F41`
   - workspace next-action contract so immediate onboarding intent is API-owned and consistent with roadmap progression state
   - validator: `scripts/validate-f41-workspace-next-action-contract.sh`
+- `F42`
+  - API-owned portal utility links so top-level utility IA is contract-driven and not hardcoded in frontend shell
+  - validator: `scripts/validate-f42-api-owned-portal-utility-links.sh`
 
 ## Current Product Reality
 

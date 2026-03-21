@@ -26,3 +26,4 @@ Current RFCs:
 - `RFC-011-portal-utility-ia-and-workflow-polish.md`
 - `RFC-012-onboarding-flow-convergence.md`
 - `RFC-013-workspace-next-action-contract.md`
+- `RFC-014-api-owned-portal-utility-links.md`

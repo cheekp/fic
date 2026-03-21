@@ -286,6 +286,9 @@ public sealed class MerchantApiTests
         Assert.Contains(contract.Items, item => item.Key == "signup");
         Assert.Contains(contract.Items, item => item.Key == "plan");
         Assert.Contains(contract.Items, item => item.Key == "billing");
+        Assert.NotEmpty(contract.UtilityLinks);
+        Assert.Contains(contract.UtilityLinks, link => link.Key == "blogs" && link.Href == "/blogs" && !link.IsExternal);
+        Assert.Contains(contract.UtilityLinks, link => link.Key == "logout" && link.Href == "/account/logout" && link.IsExternal);
         Assert.Null(contract.NextAction);
     }
 
@@ -345,6 +348,9 @@ public sealed class MerchantApiTests
         Assert.Contains(contract.Items, item => item.Key == "operate");
         Assert.Contains(contract.Items, item => item.Key == "configure");
         Assert.Contains(contract.Items, item => item.Key == "customers");
+        Assert.NotEmpty(contract.UtilityLinks);
+        Assert.Contains(contract.UtilityLinks, link => link.Key == "blogs" && link.Href == "/blogs" && !link.IsExternal);
+        Assert.Contains(contract.UtilityLinks, link => link.Key == "logout" && link.Href == "/account/logout" && link.IsExternal);
         Assert.NotNull(contract.NextAction);
         Assert.Equal("programme", contract.NextAction!.Key);
         Assert.Equal("Create programme", contract.NextAction.CtaLabel);

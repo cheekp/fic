@@ -10,3 +10,4 @@ Current active plan:
 - `F39-portal-utility-ia-and-workflow-polish.md`
 - `F40-onboarding-flow-convergence.md`
 - `F41-workspace-next-action-contract.md`
+- `F42-api-owned-portal-utility-links.md`
