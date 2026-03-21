@@ -6,5 +6,7 @@ public enum CustomerCardStatus
     RewardReady = 1,
     Redeemed = 2,
     Scheduled = 3,
-    Expired = 4
+    Expired = 4,
+    Suspended = 5,
+    Archived = 6
 }

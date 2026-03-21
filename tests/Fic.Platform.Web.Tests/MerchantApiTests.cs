@@ -358,6 +358,69 @@ public sealed class MerchantApiTests
         Assert.Contains(contract.NextAction.Tasks, task => task.Key == "programme" && !task.IsComplete);
     }
 
+    [Fact]
+    public async Task CardLifecycleApis_SupportSingleAndBulkActions()
+    {
+        await using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        using var scope = factory.Services.CreateScope();
+        var state = scope.ServiceProvider.GetRequiredService<DemoPlatformState>();
+        var workspace = await CreateMerchantAsync(state);
+
+        var completeSignup = await client.PostAsJsonAsync(
+            "/api/v1/session/complete-signup",
+            new
+            {
+                merchantId = workspace.Merchant.MerchantId,
+                plan = "starter",
+                password = "very-secure-password",
+                confirmPassword = "very-secure-password"
+            });
+        Assert.Equal(HttpStatusCode.OK, completeSignup.StatusCode);
+
+        var createProgramme = await client.PostAsJsonAsync(
+            $"/api/v1/merchants/{workspace.Merchant.MerchantId}/programmes",
+            new { templateKey = "coffee-visits" });
+        Assert.Equal(HttpStatusCode.OK, createProgramme.StatusCode);
+        var createdWorkspace = await createProgramme.Content.ReadFromJsonAsync<MerchantWorkspaceSnapshot>();
+        Assert.NotNull(createdWorkspace?.SelectedProgramme);
+        var programmeId = createdWorkspace!.SelectedProgramme!.ProgrammeId;
+        var joinCode = createdWorkspace.SelectedProgramme.JoinCode;
+
+        var joinOne = await client.PostAsync($"/api/v1/join/{joinCode}", content: null);
+        var joinTwo = await client.PostAsync($"/api/v1/join/{joinCode}", content: null);
+        Assert.Equal(HttpStatusCode.OK, joinOne.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, joinTwo.StatusCode);
+        var cardOne = await joinOne.Content.ReadFromJsonAsync<WalletCardSnapshot>();
+        var cardTwo = await joinTwo.Content.ReadFromJsonAsync<WalletCardSnapshot>();
+        Assert.NotNull(cardOne);
+        Assert.NotNull(cardTwo);
+
+        var suspend = await client.PostAsJsonAsync(
+            $"/api/v1/merchants/{workspace.Merchant.MerchantId}/programmes/{programmeId}/cards/{cardOne!.CardId}/lifecycle",
+            new { action = "suspend" });
+        Assert.Equal(HttpStatusCode.OK, suspend.StatusCode);
+        var suspendPayload = await suspend.Content.ReadFromJsonAsync<MerchantWorkspaceSnapshot>();
+        Assert.NotNull(suspendPayload);
+        Assert.Equal(
+            "Suspended",
+            suspendPayload!.SelectedProgrammeCards.Single(card => card.CardId == cardOne.CardId).CustomerCardStatusLabel);
+
+        var bulkArchive = await client.PostAsJsonAsync(
+            $"/api/v1/merchants/{workspace.Merchant.MerchantId}/programmes/{programmeId}/cards/lifecycle",
+            new { action = "archive", cardIds = new[] { cardOne.CardId, cardTwo!.CardId } });
+        Assert.Equal(HttpStatusCode.OK, bulkArchive.StatusCode);
+        var archivePayload = await bulkArchive.Content.ReadFromJsonAsync<MerchantWorkspaceSnapshot>();
+        Assert.NotNull(archivePayload);
+        Assert.Equal(
+            2,
+            archivePayload!.SelectedProgrammeCards.Count(card => card.CustomerCardStatusLabel == "Archived"));
+    }
+
     private static Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(DemoPlatformState state) =>
         state.CreateMerchantAsync(
             "Jo's Coffee",

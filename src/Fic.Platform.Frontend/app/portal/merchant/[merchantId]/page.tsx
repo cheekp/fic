@@ -14,6 +14,8 @@ import {
   getWorkspaceForProgramme,
   joinProgramme,
   redeemReward,
+  updateCardLifecycle,
+  updateCardsLifecycleBulk,
   updateMerchantBrand,
   updateProgramme,
   uploadMerchantLogo,
@@ -43,7 +45,7 @@ import type {
 import { ficPortalTheme } from "@/types/portal-contracts";
 
 type WorkspaceSection = "operate" | "configure" | "customers";
-type CardStatusFilter = "all" | "ready" | "active" | "redeemed" | "scheduled" | "expired";
+type CardStatusFilter = "all" | "ready" | "active" | "redeemed" | "scheduled" | "expired" | "suspended" | "archived";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_FIC_API_BASE_URL ?? "http://localhost:5276";
 
@@ -130,6 +132,14 @@ function getCardStatusFilter(card: WalletCardSnapshot): Exclude<CardStatusFilter
     return "expired";
   }
 
+  if (label.includes("suspended")) {
+    return "suspended";
+  }
+
+  if (label.includes("archived")) {
+    return "archived";
+  }
+
   return "active";
 }
 
@@ -156,6 +166,7 @@ export default function WorkspacePage() {
   const [cardStatusFilter, setCardStatusFilter] = useState<CardStatusFilter>("all");
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [isCardDetailOpen, setIsCardDetailOpen] = useState(false);
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
   const [rewardItemLabel, setRewardItemLabel] = useState("");
   const [rewardThreshold, setRewardThreshold] = useState("1");
   const [rewardCopy, setRewardCopy] = useState("");
@@ -311,6 +322,12 @@ export default function WorkspacePage() {
     }
   }, [portalNavQuery.error]);
 
+  useEffect(() => {
+    setSelectedCardIds((current) =>
+      current.filter((cardId) => workspace?.selectedProgrammeCards.some((card) => card.cardId === cardId)),
+    );
+  }, [workspace?.selectedProgrammeCards]);
+
   async function refreshWorkspace(programmeId?: string) {
     const nextWorkspace = await getWorkspaceForProgramme(merchantId, programmeId);
     setWorkspace(nextWorkspace);
@@ -465,6 +482,54 @@ export default function WorkspacePage() {
       publishSuccess("Reward redeemed.");
     } catch (err) {
       publishError(err instanceof Error ? err.message : "Unable to redeem reward.");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleLifecycleAction(cardId: string, action: "suspend" | "reactivate" | "archive") {
+    if (!selectedProgramme) {
+      publishError("Select a programme before updating cards.");
+      return;
+    }
+
+    setIsMutating(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await updateCardLifecycle(merchantId, selectedProgramme.programmeId, cardId, action);
+      await refreshWorkspace(selectedProgramme.programmeId);
+      publishSuccess(`Card ${action}d.`);
+    } catch (err) {
+      publishError(err instanceof Error ? err.message : "Unable to update card lifecycle.");
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleBulkLifecycleAction(action: "suspend" | "reactivate" | "archive") {
+    if (!selectedProgramme) {
+      publishError("Select a programme before updating cards.");
+      return;
+    }
+
+    if (selectedCardIds.length === 0) {
+      publishError("Select one or more cards first.");
+      return;
+    }
+
+    setIsMutating(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await updateCardsLifecycleBulk(merchantId, selectedProgramme.programmeId, selectedCardIds, action);
+      await refreshWorkspace(selectedProgramme.programmeId);
+      publishSuccess(`${selectedCardIds.length} cards ${action}d.`);
+      setSelectedCardIds([]);
+    } catch (err) {
+      publishError(err instanceof Error ? err.message : "Unable to update card lifecycle in bulk.");
     } finally {
       setIsMutating(false);
     }
@@ -653,6 +718,7 @@ export default function WorkspacePage() {
       return rightTime - leftTime;
     });
   const redeemableCardsCount = workspace.selectedProgrammeCards.filter((card) => card.canRedeem).length;
+  const selectedCardsCount = selectedCardIds.length;
   const selectedCard = selectedCardId
     ? workspace.selectedProgrammeCards.find((card) => card.cardId === selectedCardId) ?? null
     : null;
@@ -1081,8 +1147,45 @@ export default function WorkspacePage() {
                         <SelectItem value="redeemed">Redeemed</SelectItem>
                         <SelectItem value="scheduled">Scheduled</SelectItem>
                         <SelectItem value="expired">Expired</SelectItem>
+                        <SelectItem value="suspended">Suspended</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-card/70 p-2.5">
+                    <Badge variant="outline">{selectedCardsCount} selected</Badge>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={isMutating || selectedCardsCount === 0}
+                      onClick={() => handleBulkLifecycleAction("suspend")}
+                    >
+                      Suspend selected
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={isMutating || selectedCardsCount === 0}
+                      onClick={() => handleBulkLifecycleAction("reactivate")}
+                    >
+                      Reactivate selected
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={isMutating || selectedCardsCount === 0}
+                      onClick={() => handleBulkLifecycleAction("archive")}
+                    >
+                      Archive selected
+                    </Button>
+                    {selectedCardsCount > 0 ? (
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setSelectedCardIds([])}>
+                        Clear
+                      </Button>
+                    ) : null}
                   </div>
                   {workspace.selectedProgrammeCards.length > 0 ? (
                     <p className="mt-2 text-xs text-muted-foreground">
@@ -1098,6 +1201,7 @@ export default function WorkspacePage() {
                     <table className="min-w-[62rem] w-full text-sm">
                       <thead>
                         <tr className="border-b border-border/70 text-left text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                          <th className="px-3 py-2 font-medium">Select</th>
                           <th className="px-3 py-2 font-medium">Card</th>
                           <th className="px-3 py-2 font-medium">Status</th>
                           <th className="px-3 py-2 font-medium">Progress</th>
@@ -1109,6 +1213,20 @@ export default function WorkspacePage() {
                       <tbody>
                         {filteredCards.map((card) => (
                           <tr key={card.cardId} className="border-b border-border/55 align-top last:border-b-0">
+                            <td className="px-3 py-3">
+                              <input
+                                type="checkbox"
+                                aria-label={`Select card ${card.cardCode}`}
+                                checked={selectedCardIds.includes(card.cardId)}
+                                onChange={(event) => {
+                                  setSelectedCardIds((current) =>
+                                    event.target.checked
+                                      ? (current.includes(card.cardId) ? current : [...current, card.cardId])
+                                      : current.filter((item) => item !== card.cardId),
+                                  );
+                                }}
+                              />
+                            </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-3">
                                 <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-border/60 shadow-sm">
@@ -1168,6 +1286,24 @@ export default function WorkspacePage() {
                                   onClick={() => handleRedeem(card.cardId)}
                                 >
                                   Redeem
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isMutating}
+                                  onClick={() => handleLifecycleAction(card.cardId, "suspend")}
+                                >
+                                  Suspend
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isMutating}
+                                  onClick={() => handleLifecycleAction(card.cardId, "reactivate")}
+                                >
+                                  Reactivate
                                 </Button>
                               </div>
                             </td>
@@ -1253,6 +1389,33 @@ export default function WorkspacePage() {
                               onClick={() => handleRedeem(selectedCard.cardId)}
                             >
                               Redeem
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={isMutating}
+                              onClick={() => handleLifecycleAction(selectedCard.cardId, "suspend")}
+                            >
+                              Suspend
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={isMutating}
+                              onClick={() => handleLifecycleAction(selectedCard.cardId, "reactivate")}
+                            >
+                              Reactivate
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={isMutating}
+                              onClick={() => handleLifecycleAction(selectedCard.cardId, "archive")}
+                            >
+                              Archive
                             </Button>
                             <Button asChild type="button" size="sm" variant="outline">
                               <a href={`${apiBaseUrl}/api/v1/wallet/cards/${selectedCard.cardId}`} target="_blank" rel="noreferrer">
