@@ -100,13 +100,14 @@ export default function SignupPlanPage() {
 
   return (
     <PortalShell
-      title="Merchant portal"
+      title="Merchant setup"
       activeKey={portalNav?.activeKey ?? "plan"}
       railItems={portalNav?.items ?? []}
       theme={portalNav?.theme ?? ficPortalTheme}
       utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
+      headerMode="onboarding"
     >
       <div className="space-y-5">
       <OnboardingJourney

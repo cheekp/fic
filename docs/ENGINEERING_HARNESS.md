@@ -228,6 +228,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F45`
   - portal IA cleanup and card-management-at-scale lane for clearer hierarchy and faster operator actions
   - validator: `scripts/validate-f45-portal-ia-and-card-management-lane.sh`
+- `F46`
+  - onboarding entry focus so signup, plan, and billing run in a guided shell without utility-nav distraction
+  - validator: `scripts/validate-f46-onboarding-entry-focus.sh`
 
 ## Current Product Reality
 
