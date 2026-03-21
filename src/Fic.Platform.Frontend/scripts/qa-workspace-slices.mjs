@@ -17,7 +17,7 @@ async function ensureDir(dir) {
 }
 
 async function bootstrapMerchant(page) {
-  const email = `owner+${Date.now()}@shop.test`;
+  const email = `owner${Date.now()}@shop.test`;
   const logoPath = path.resolve(process.cwd(), "../Fic.Platform.Web/wwwroot/wallet-assets/icon.png");
 
   await page.goto(`${frontendBaseUrl}/portal/signup`, { waitUntil: "networkidle" });
@@ -52,7 +52,7 @@ async function bootstrapMerchant(page) {
   }
 
   await page.waitForLoadState("networkidle");
-  await page.getByText(/Step 5: shop setup|Step 6: programme template/i).first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+  await page.getByText(/Setup tasks|Merchant workspace/i).first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
 
   const openShopSetup = page.getByRole("button", { name: /Open shop setup/i });
   const createProgrammeButton = page.getByRole("button", { name: /Create programme/i });
@@ -124,9 +124,9 @@ async function bootstrapMerchant(page) {
     }
   }
 
-  const stillOnShopSetupStep = await page.getByText(/Step 5: shop setup/i).count();
-  if (!shopDetailsSaved || stillOnShopSetupStep > 0) {
-    throw new Error("Shop details were not saved in bootstrap; workspace remains blocked at Step 5.");
+  const stillBlockedByShopSetup = await openShopSetup.count();
+  if (!shopDetailsSaved || stillBlockedByShopSetup > 0) {
+    throw new Error("Shop details were not saved in bootstrap; workspace remains blocked in setup tasks.");
   }
 
   return merchantId;

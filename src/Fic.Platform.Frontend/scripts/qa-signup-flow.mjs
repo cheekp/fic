@@ -28,7 +28,7 @@ async function runScenario(browser, viewport) {
   const scenarioDir = path.join(runDir, viewport.name);
   await ensureDir(scenarioDir);
 
-  const email = `owner+${Date.now()}@shop.test`;
+  const email = `owner${Date.now()}@shop.test`;
   const result = {
     viewport: viewport.name,
     status: "ok",
@@ -95,7 +95,7 @@ async function runScenario(browser, viewport) {
     await continueWorkspace.click();
 
     await page.waitForURL(/\/portal\/merchant\//, { timeout: 30000 });
-    await page.getByText(/Signup roadmap|Step 5: shop setup|Step 6: programme template|Merchant workspace/i).first().waitFor({ state: "visible", timeout: 15000 });
+    await page.getByText(/Signup roadmap|Setup tasks|Merchant workspace/i).first().waitFor({ state: "visible", timeout: 15000 });
     const workspaceShot = path.join(scenarioDir, "04-workspace.png");
     await page.screenshot({ path: workspaceShot, fullPage: true });
     result.screenshots.push(workspaceShot);

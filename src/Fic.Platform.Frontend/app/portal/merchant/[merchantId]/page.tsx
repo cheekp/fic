@@ -23,7 +23,7 @@ import { PortalShell } from "@/components/layout/portal-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -74,6 +74,7 @@ export default function WorkspacePage() {
   const merchantId = Array.isArray(params.merchantId) ? params.merchantId[0] : params.merchantId;
   const section = resolveSection(searchParams.get("programmeSection"));
   const requestedProgrammeId = searchParams.get("programme") ?? undefined;
+  const setupIntent = searchParams.get("setup");
 
   const [workspace, setWorkspace] = useState<MerchantWorkspaceSnapshot | null>(null);
   const [templates, setTemplates] = useState<ProgrammeTemplateOption[]>([]);
@@ -98,6 +99,7 @@ export default function WorkspacePage() {
   const [brandLogoFile, setBrandLogoFile] = useState<File | null>(null);
   const [logoCacheBuster, setLogoCacheBuster] = useState(0);
   const [isShopSetupOpen, setIsShopSetupOpen] = useState(false);
+  const [isSetupIntentHandled, setIsSetupIntentHandled] = useState(false);
   const [portalNav, setPortalNav] = useState<PortalNavigationContract | null>(null);
 
   const selectedProgramme = workspace?.selectedProgramme ?? null;
@@ -213,6 +215,18 @@ export default function WorkspacePage() {
     workspace?.setupChecklist.shopDetailsComplete,
     workspace?.setupChecklist.hasAnyProgramme,
   ]);
+
+  useEffect(() => {
+    if (!workspace || isSetupIntentHandled) {
+      return;
+    }
+
+    if (setupIntent === "shop" && !workspace.setupChecklist.shopDetailsComplete) {
+      setIsShopSetupOpen(true);
+    }
+
+    setIsSetupIntentHandled(true);
+  }, [isSetupIntentHandled, setupIntent, workspace]);
 
   async function refreshWorkspace(programmeId?: string) {
     const nextWorkspace = await getWorkspaceForProgramme(merchantId, programmeId);
@@ -496,139 +510,148 @@ export default function WorkspacePage() {
             variant="compact"
           />
 
-          {!workspace.setupChecklist.shopDetailsComplete ? (
-            <Card id="shop-details">
-              <CardHeader>
-                <CardTitle>Step 5: shop setup</CardTitle>
-                <CardDescription>Add shop type, location, and logo. This unlocks your programme template step.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex items-center justify-end gap-3">
-                <Dialog open={isShopSetupOpen} onOpenChange={setIsShopSetupOpen}>
-                  <DialogTrigger asChild>
-                    <Button>Open shop setup</Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-h-[88vh] overflow-y-auto p-5 sm:max-w-2xl sm:p-6">
-                    <DialogHeader>
-                      <DialogTitle>Shop setup</DialogTitle>
-                      <DialogDescription>Town/city and postcode are required before programme creation.</DialogDescription>
-                    </DialogHeader>
+          <Card id="setup-taskboard">
+            <CardHeader>
+              <CardTitle>Setup tasks</CardTitle>
+              <CardDescription>Complete the final setup actions to unlock full daily operations.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <article className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Shop details</p>
+                  <p className="mt-1 font-semibold">{workspace.setupChecklist.shopDetailsComplete ? "Complete" : "Required"}</p>
+                  <p className="mt-1 text-sm text-foreground/75">Set shop type, location, and logo.</p>
+                </article>
+                <article className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Programme template</p>
+                  <p className="mt-1 font-semibold">{workspace.setupChecklist.hasAnyProgramme ? "Complete" : "Required"}</p>
+                  <p className="mt-1 text-sm text-foreground/75">Create your first programme to unlock Configure and Customers.</p>
+                </article>
+              </div>
 
-                    <form className="mt-2 grid gap-4 sm:grid-cols-2" onSubmit={handleSaveShopDetails}>
-                      <div className="space-y-2 sm:col-span-2">
-                        <Label htmlFor="shop-type">Shop type</Label>
-                        <Select
-                          value={shopTypeKey}
-                          onValueChange={(value) => {
-                            setShopTypeKey(value);
-                            setIsShopDraftDirty(true);
-                          }}
-                        >
-                          <SelectTrigger id="shop-type">
-                            <SelectValue placeholder="Choose shop type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {shopTypes.map((type) => (
-                              <SelectItem key={type.shopTypeKey} value={type.shopTypeKey}>
-                                {type.shopTypeLabel}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="shop-town">Town or city</Label>
-                          <Input
-                            id="shop-town"
-                            value={shopTownOrCity}
-                            onChange={(event) => {
-                              setShopTownOrCity(event.target.value);
-                              setIsShopDraftDirty(true);
-                            }}
-                            placeholder="Bristol"
-                          />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="shop-postcode">Postcode</Label>
-                          <Input
-                            id="shop-postcode"
-                            value={shopPostcode}
-                            onChange={(event) => {
-                              setShopPostcode(event.target.value);
-                              setIsShopDraftDirty(true);
-                            }}
-                            placeholder="BS1 4DJ"
-                          />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <Button
-                          type="submit"
-                          disabled={isSavingShopDetails || isUploadingLogo || !shopTypeKey.trim() || !shopTownOrCity.trim() || !shopPostcode.trim()}
-                        >
-                          {isSavingShopDetails ? "Saving..." : "Save shop details"}
-                        </Button>
-                      </div>
-                    </form>
+              {!workspace.setupChecklist.shopDetailsComplete ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 p-4">
+                  <p className="text-sm text-foreground/80">Next action: open shop setup and save shop details.</p>
+                  <Button onClick={() => setIsShopSetupOpen(true)}>Open shop setup</Button>
+                </div>
+              ) : (
+                <div className="space-y-3 rounded-2xl border border-border/70 bg-background/80 p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="template">Template</Label>
+                    <Select value={selectedTemplateKey} onValueChange={setSelectedTemplateKey}>
+                      <SelectTrigger id="template">
+                        <SelectValue placeholder="Choose template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map((template) => (
+                          <SelectItem key={template.templateKey} value={template.templateKey}>
+                            {template.templateLabel}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
+                    {isMutating ? "Creating..." : "Create programme"}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                    <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Brand logo</p>
-                      <p className="mt-1 text-sm text-foreground/75">Upload a PNG logo for join pages and wallet previews.</p>
-                      <form className="mt-3 flex flex-wrap items-center gap-3" onSubmit={handleUploadLogo}>
-                        <Input
-                          type="file"
-                          accept="image/png"
-                          onChange={(event) => setBrandLogoFile(event.target.files?.[0] ?? null)}
-                          className="max-w-sm"
-                        />
-                        <Button type="submit" variant="outline" disabled={isUploadingLogo || !brandLogoFile}>
-                          {isUploadingLogo ? "Uploading..." : "Upload logo"}
-                        </Button>
-                      </form>
-                      {brandLogoUrl ? (
-                        <div className="mt-3 rounded-xl border border-border/70 bg-card/80 p-3">
-                          <p className="mb-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Current logo preview</p>
-                          <Image
-                            src={brandLogoUrl}
-                            alt={`${workspace.merchant.displayName} logo`}
-                            width={Math.max(workspace.brandProfile.logoWidth || 96, 72)}
-                            height={Math.max(workspace.brandProfile.logoHeight || 96, 72)}
-                            className="h-auto max-h-16 w-auto rounded-md border border-border/70 bg-white/80 p-1"
-                            unoptimized
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card id="programme-setup">
-              <CardHeader>
-                <CardTitle>Step 6: programme template</CardTitle>
-                <CardDescription>Choose your first template to unlock Configure and Customers.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="template">Template</Label>
-                  <Select value={selectedTemplateKey} onValueChange={setSelectedTemplateKey}>
-                    <SelectTrigger id="template">
-                      <SelectValue placeholder="Choose template" />
+          <Dialog open={isShopSetupOpen} onOpenChange={setIsShopSetupOpen}>
+            <DialogContent className="max-h-[88vh] overflow-y-auto p-5 sm:max-w-2xl sm:p-6">
+              <DialogHeader>
+                <DialogTitle>Shop setup</DialogTitle>
+                <DialogDescription>Town/city and postcode are required before programme creation.</DialogDescription>
+              </DialogHeader>
+
+              <form className="mt-2 grid gap-4 sm:grid-cols-2" onSubmit={handleSaveShopDetails}>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="shop-type">Shop type</Label>
+                  <Select
+                    value={shopTypeKey}
+                    onValueChange={(value) => {
+                      setShopTypeKey(value);
+                      setIsShopDraftDirty(true);
+                    }}
+                  >
+                    <SelectTrigger id="shop-type">
+                      <SelectValue placeholder="Choose shop type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {templates.map((template) => (
-                        <SelectItem key={template.templateKey} value={template.templateKey}>
-                          {template.templateLabel}
+                      {shopTypes.map((type) => (
+                        <SelectItem key={type.shopTypeKey} value={type.shopTypeKey}>
+                          {type.shopTypeLabel}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <Button className="w-full sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
-                  {isMutating ? "Creating..." : "Create programme"}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+                <div className="space-y-2">
+                  <Label htmlFor="shop-town">Town or city</Label>
+                  <Input
+                    id="shop-town"
+                    value={shopTownOrCity}
+                    onChange={(event) => {
+                      setShopTownOrCity(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    placeholder="Bristol"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shop-postcode">Postcode</Label>
+                  <Input
+                    id="shop-postcode"
+                    value={shopPostcode}
+                    onChange={(event) => {
+                      setShopPostcode(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    placeholder="BS1 4DJ"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Button
+                    type="submit"
+                    disabled={isSavingShopDetails || isUploadingLogo || !shopTypeKey.trim() || !shopTownOrCity.trim() || !shopPostcode.trim()}
+                  >
+                    {isSavingShopDetails ? "Saving..." : "Save shop details"}
+                  </Button>
+                </div>
+              </form>
+
+              <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Brand logo</p>
+                <p className="mt-1 text-sm text-foreground/75">Upload a PNG logo for join pages and wallet previews.</p>
+                <form className="mt-3 flex flex-wrap items-center gap-3" onSubmit={handleUploadLogo}>
+                  <Input
+                    type="file"
+                    accept="image/png"
+                    onChange={(event) => setBrandLogoFile(event.target.files?.[0] ?? null)}
+                    className="max-w-sm"
+                  />
+                  <Button type="submit" variant="outline" disabled={isUploadingLogo || !brandLogoFile}>
+                    {isUploadingLogo ? "Uploading..." : "Upload logo"}
+                  </Button>
+                </form>
+                {brandLogoUrl ? (
+                  <div className="mt-3 rounded-xl border border-border/70 bg-card/80 p-3">
+                    <p className="mb-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Current logo preview</p>
+                    <Image
+                      src={brandLogoUrl}
+                      alt={`${workspace.merchant.displayName} logo`}
+                      width={Math.max(workspace.brandProfile.logoWidth || 96, 72)}
+                      height={Math.max(workspace.brandProfile.logoHeight || 96, 72)}
+                      className="h-auto max-h-16 w-auto rounded-md border border-border/70 bg-white/80 p-1"
+                      unoptimized
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           {message ? <p className="text-sm text-primary">{message}</p> : null}

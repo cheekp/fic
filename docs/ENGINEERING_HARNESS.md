@@ -210,6 +210,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F39`
   - portal utility IA and onboarding workflow polish so core steps stay focused while support destinations remain accessible
   - validator: `scripts/validate-f39-portal-utility-ia-and-workflow-polish.sh`
+- `F40`
+  - onboarding flow convergence so roadmap and workspace next-action handoff read as one guided lane after billing
+  - validator: `scripts/validate-f40-onboarding-flow-convergence.sh`
 
 ## Current Product Reality
 
