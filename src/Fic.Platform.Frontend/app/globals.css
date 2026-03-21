@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  --font-body: "Avenir Next", "Segoe UI", sans-serif;
+  --brand-primary-hex: #1f3731;
+  --brand-accent-hex: #f4c15d;
+  --brand-ink-hex: #14211d;
+  --brand-canvas-start-hex: #f3ecdd;
+  --brand-canvas-end-hex: #ebe0cf;
+  --background: 43 28% 96%;
+  --foreground: 157 27% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 157 27% 14%;
+  --primary: 158 28% 17%;
+  --primary-foreground: 44 83% 92%;
+  --secondary: 41 69% 65%;
+  --secondary-foreground: 157 27% 14%;
+  --muted: 43 18% 90%;
+  --muted-foreground: 157 14% 30%;
+  --accent: 41 69% 65%;
+  --accent-foreground: 157 27% 14%;
+  --destructive: 0 74% 52%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 41 19% 82%;
+  --input: 41 19% 82%;
+  --ring: 158 28% 17%;
+  --radius: 1rem;
+  --shadow: 158 35% 14%;
+}
+
+* {
+  @apply border-border;
+}
+
+html,
+body {
+  @apply min-h-full bg-background text-foreground antialiased;
+}
+
+body {
+  @apply font-body;
+  background-image:
+    radial-gradient(circle at top right, hsl(41 87% 66% / 0.18), transparent 24%),
+    linear-gradient(180deg, var(--brand-canvas-start-hex) 0%, #efe5d3 52%, var(--brand-canvas-end-hex) 100%);
+}
+
+main {
+  @apply mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-10;
+}
+
+.section-intro {
+  @apply opacity-100;
+}
+
+.glass-panel {
+  @apply rounded-2xl border border-border/70 bg-card/85 shadow-luxe backdrop-blur;
+  background-color: rgb(255 250 240 / 0.82);
+}
+
+.luxe-title {
+  @apply font-display text-[2.35rem] leading-[0.97] tracking-tight sm:text-[3.9rem];
+}
+
+.luxe-subtitle {
+  @apply max-w-3xl text-[1.04rem] leading-7 text-muted-foreground sm:text-[1.22rem] sm:leading-8;
+}
+
+.metric-chip {
+  @apply inline-flex items-center rounded-full border border-border/80 bg-background/90 px-3.5 py-1.5 text-[12px] font-medium text-foreground/85;
+}
+
+.workspace-hero {
+  @apply relative overflow-hidden rounded-3xl border border-border/70 bg-card/90 p-4 shadow-luxe sm:p-5;
+}
+
+.workspace-hero::after {
+  content: "";
+  position: absolute;
+  right: -4rem;
+  top: -4rem;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, hsl(41 87% 84% / 0.55), transparent 65%);
+  pointer-events: none;
+}
+
+.brand-glow {
+  box-shadow:
+    0 0 0 1px rgb(20 33 29 / 0.1) inset,
+    0 18px 44px -26px rgb(20 33 29 / 0.25),
+    0 0 34px -16px rgb(244 193 93 / 0.48);
+}
+
+.workspace-metric-tile {
+  @apply rounded-2xl border border-border/70 bg-background/85 p-2.5 sm:p-3;
+}

@@ -23,6 +23,7 @@ Founding repository for the FIC startup.
 - `docs/specs/` implementation-ready requirements and acceptance
 - `scripts/` slice-level validation and workflow helpers
 - `tests/` automated verification as the codebase emerges
+- `src/Fic.Platform.Frontend/` Next.js migration surface for merchant onboarding/workspace
 
 ## Next Step
-Split global stylesheet hotspots into partials while enforcing budget checks on the full CSS bundle.
+Stand up the Next.js frontend migration lane on top of a versioned `/api/v1` boundary and iterate route-by-route parity from Blazor.

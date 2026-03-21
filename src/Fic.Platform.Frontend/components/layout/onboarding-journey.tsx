@@ -1,21 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Check, CheckCircle2, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import type { PortalRoadmapContract } from "@/types/portal-contracts";
 
-export type OnboardingJourneyKey = "account" | "plan" | "billing" | "shop" | "programme";
+export type OnboardingJourneyKey = "account" | "plan" | "owner" | "billing" | "shop" | "programme";
 
 type OnboardingJourneyProps = {
+  roadmap?: PortalRoadmapContract | null;
   currentStep: OnboardingJourneyKey;
   accountComplete: boolean;
   planComplete: boolean;
+  ownerComplete: boolean;
   billingComplete: boolean;
   shopComplete: boolean;
   programmeComplete: boolean;
   accountUrl?: string;
   planUrl?: string;
+  ownerUrl?: string;
   billingUrl?: string;
   shopUrl?: string;
   programmeUrl?: string;
@@ -34,29 +37,43 @@ type JourneyStep = {
 };
 
 export function OnboardingJourney({
+  roadmap,
   currentStep,
   accountComplete,
   planComplete,
+  ownerComplete,
   billingComplete,
   shopComplete,
   programmeComplete,
   accountUrl,
   planUrl,
+  ownerUrl,
   billingUrl,
   shopUrl,
   programmeUrl,
   hint,
   variant = "default",
 }: OnboardingJourneyProps) {
-  const steps: JourneyStep[] = [
-    { order: 1, key: "account", label: "Create account", isComplete: accountComplete, isCurrent: currentStep === "account", href: accountUrl },
-    { order: 2, key: "plan", label: "Choose plan", isComplete: planComplete, isCurrent: currentStep === "plan", href: planUrl },
-    { order: 3, key: "billing", label: "Billing and access", compactLabel: "Billing", isComplete: billingComplete, isCurrent: currentStep === "billing", href: billingUrl },
-    { order: 4, key: "shop", label: "Shop details", isComplete: shopComplete, isCurrent: currentStep === "shop", href: shopUrl },
-    { order: 5, key: "programme", label: "Programme template", isComplete: programmeComplete, isCurrent: currentStep === "programme", href: programmeUrl },
-  ];
+  const steps: JourneyStep[] = roadmap
+    ? roadmap.steps.map((step, index) => ({
+      order: index + 1,
+      key: step.key,
+      label: step.label,
+      compactLabel: step.compactLabel ?? undefined,
+      isComplete: step.isComplete,
+      isCurrent: step.isCurrent,
+      href: step.isNavigable ? step.href : undefined,
+    }))
+    : [
+      { order: 1, key: "account", label: "Create account", isComplete: accountComplete, isCurrent: currentStep === "account", href: accountUrl },
+      { order: 2, key: "plan", label: "Choose plan", isComplete: planComplete, isCurrent: currentStep === "plan", href: planUrl },
+      { order: 3, key: "owner", label: "Owner access", compactLabel: "Owner", isComplete: ownerComplete, isCurrent: currentStep === "owner", href: ownerUrl },
+      { order: 4, key: "billing", label: "Billing", compactLabel: "Billing", isComplete: billingComplete, isCurrent: currentStep === "billing", href: billingUrl },
+      { order: 5, key: "shop", label: "Shop details", isComplete: shopComplete, isCurrent: currentStep === "shop", href: shopUrl },
+      { order: 6, key: "programme", label: "Programme template", isComplete: programmeComplete, isCurrent: currentStep === "programme", href: programmeUrl },
+    ];
 
-  const completeCount = steps.filter((step) => step.isComplete).length;
+  const completeCount = roadmap?.completeCount ?? steps.filter((step) => step.isComplete).length;
   const currentIndex = Math.max(0, steps.findIndex((step) => step.isCurrent));
   const mobileWindowSteps = steps.filter((_, index) => Math.abs(index - currentIndex) <= 1);
 
@@ -107,19 +124,9 @@ export function OnboardingJourney({
     const isSegmentComplete = step.isComplete;
 
     const node = (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: index * 0.04 }}
-        className="relative flex flex-col items-center gap-1 text-center"
-      >
+      <div className="relative flex flex-col items-center gap-1 text-center">
         {step.isCurrent ? (
-          <motion.span
-            className="absolute -top-2 h-12 w-12 rounded-full bg-primary/25 blur-xl"
-            animate={{ opacity: [0.4, 0.9, 0.4] }}
-            transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-            aria-hidden
-          />
+          <span className="absolute -top-2 h-12 w-12 rounded-full bg-primary/20 blur-xl" aria-hidden />
         ) : null}
         <span
           className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold sm:h-9 sm:w-9 sm:text-xs ${
@@ -138,7 +145,7 @@ export function OnboardingJourney({
             {step.compactLabel ? <span className="hidden sm:inline">{step.label}</span> : step.label}
           </p>
         </div>
-      </motion.div>
+      </div>
     );
 
     return (
@@ -150,12 +157,10 @@ export function OnboardingJourney({
           />
         ) : null}
         {index < total - 1 && isSegmentComplete ? (
-          <motion.span
+          <span
             aria-hidden
             className="absolute left-1/2 right-[-50%] top-4 h-px bg-[linear-gradient(90deg,#1f3731,#2d5b50,#f4c15d)] sm:top-[1.25rem]"
-            initial={{ opacity: 0.78 }}
-            animate={{ opacity: [0.74, 1, 0.74] }}
-            transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
+            style={{ opacity: 0.92 }}
           />
         ) : null}
         {isNavigable ? (

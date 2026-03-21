@@ -30,6 +30,8 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 - Docker/Aspire for local orchestration and test loops
 - Azure for stage and production
 - ASP.NET Core Blazor Web App for the merchant-facing application shell
+- versioned HTTP API boundary at `/api/v1` for frontend migration seams
+- Next.js migration lane for merchant-facing frontend surfaces (running in parallel with Blazor during transition)
 - Apple Wallet first for customer pass delivery
 - Cosmos DB for product data direction
 - Blob storage for merchant brand assets
@@ -196,6 +198,18 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F32`
   - app.css partial split and bundled guardrails so stylesheet decomposition does not bypass UX quality budgets
   - validator: `scripts/validate-f32-app-css-partial-split.sh`
+- `F36`
+  - reusable Next.js portal chrome and theme/nav contracts so shell composition remains coherent across signup/workspace slices
+  - validator: `scripts/validate-f36-portal-chrome-and-theme-contracts.sh`
+- `F37`
+  - API-owned portal nav contract so route badges/completion and shell nav states come from a single C# source of truth
+  - validator: `scripts/validate-f37-api-nav-contract-source-of-truth.sh`
+- `F38`
+  - roadmap progression unified with portal nav contract so tube-map and rail read from one API payload
+  - validator: `scripts/validate-f38-roadmap-unified-with-nav-contract.sh`
+- `F39`
+  - portal utility IA and onboarding workflow polish so core steps stay focused while support destinations remain accessible
+  - validator: `scripts/validate-f39-portal-utility-ia-and-workflow-polish.sh`
 
 ## Current Product Reality
 
@@ -263,8 +277,14 @@ Current high-value local loops:
   - run `scripts/validate-ux-surface.sh` for contract-level UX checks
   - run `scripts/validate-css-budget.sh` when stylesheet work is significant, even before full test runs
   - optionally set `FIC_UX_BROWSER_SMOKE=1` to run Playwright overflow smoke checks with screenshot artifacts
+- C# file size loop:
+  - run `scripts/validate-csharp-file-size.sh` to enforce the default per-file line limit
+  - pass `--max-lines <N>` when a temporary higher threshold is explicitly needed for a local check
 - direct web preview:
   - run the Blazor app with the local profile for browser and LAN demos
+- Next.js frontend preview:
+  - run `npm run dev` in `src/Fic.Platform.Frontend` when validating migration slices
+  - run `npm run build` before handoff for route-level frontend migrations
 - wallet demo:
   - use `docs/runbooks/APPLE_WALLET_LOCAL_DEMO.md`
   - use `scripts/run-wallet-demo-lan.sh` when Apple signing material is configured
@@ -298,5 +318,7 @@ Review the harness when:
 The next likely product slices are:
 
 - continue splitting high-churn global stylesheet areas into bounded partials while preserving bundled budget checks
+- establish Next.js onboarding/workspace parity against `/api/v1` and retire Blazor route-by-route
+- stabilize premium mobile-first PWA polish on migrated Next.js routes while preserving existing FIC brand cues
 - stronger merchant account and tenant ownership boundaries beyond the current in-memory session baseline
 - production auth/session flow that removes the remaining in-memory and single-owner assumptions
