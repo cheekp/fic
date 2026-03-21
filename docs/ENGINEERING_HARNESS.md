@@ -213,6 +213,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F40`
   - onboarding flow convergence so roadmap and workspace next-action handoff read as one guided lane after billing
   - validator: `scripts/validate-f40-onboarding-flow-convergence.sh`
+- `F41`
+  - workspace next-action contract so immediate onboarding intent is API-owned and consistent with roadmap progression state
+  - validator: `scripts/validate-f41-workspace-next-action-contract.sh`
 
 ## Current Product Reality
 

@@ -32,9 +32,26 @@ public sealed record PortalRoadmapContract(
     string? Hint,
     IReadOnlyList<PortalRoadmapStepContract> Steps);
 
+public sealed record PortalNextActionTaskContract(
+    string Key,
+    string Label,
+    bool IsComplete,
+    bool IsBlocked,
+    string? BlockedReason);
+
+public sealed record PortalNextActionContract(
+    string Key,
+    string Title,
+    string Summary,
+    string CtaLabel,
+    string? CtaHref,
+    string? BlockedReason,
+    IReadOnlyList<PortalNextActionTaskContract> Tasks);
+
 public sealed record PortalNavigationContract(
     string Surface,
     string ActiveKey,
     PortalThemeContract Theme,
     IReadOnlyList<PortalNavItemContract> Items,
-    PortalRoadmapContract? Roadmap);
+    PortalRoadmapContract? Roadmap,
+    PortalNextActionContract? NextAction);

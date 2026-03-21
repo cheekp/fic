@@ -9,3 +9,4 @@ Current active plan:
 - `F38-roadmap-unified-with-nav-contract.md`
 - `F39-portal-utility-ia-and-workflow-polish.md`
 - `F40-onboarding-flow-convergence.md`
+- `F41-workspace-next-action-contract.md`

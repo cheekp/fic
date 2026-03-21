@@ -286,6 +286,7 @@ public sealed class MerchantApiTests
         Assert.Contains(contract.Items, item => item.Key == "signup");
         Assert.Contains(contract.Items, item => item.Key == "plan");
         Assert.Contains(contract.Items, item => item.Key == "billing");
+        Assert.Null(contract.NextAction);
     }
 
     [Fact]
@@ -344,6 +345,11 @@ public sealed class MerchantApiTests
         Assert.Contains(contract.Items, item => item.Key == "operate");
         Assert.Contains(contract.Items, item => item.Key == "configure");
         Assert.Contains(contract.Items, item => item.Key == "customers");
+        Assert.NotNull(contract.NextAction);
+        Assert.Equal("programme", contract.NextAction!.Key);
+        Assert.Equal("Create programme", contract.NextAction.CtaLabel);
+        Assert.Contains(contract.NextAction.Tasks, task => task.Key == "shop" && task.IsComplete);
+        Assert.Contains(contract.NextAction.Tasks, task => task.Key == "programme" && !task.IsComplete);
     }
 
     private static Task<MerchantWorkspaceSnapshot> CreateMerchantAsync(DemoPlatformState state) =>

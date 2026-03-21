@@ -72,7 +72,7 @@ public sealed class PortalNavigationContractBuilder
             shopComplete: workspace?.SetupChecklist.ShopDetailsComplete ?? false,
             programmeComplete: workspace?.SetupChecklist.HasAnyProgramme ?? false);
 
-        return new PortalNavigationContract("signup", activeKey, ResolveTheme(workspace), items, roadmap);
+        return new PortalNavigationContract("signup", activeKey, ResolveTheme(workspace), items, roadmap, null);
     }
 
     public PortalNavigationContract BuildWorkspaceNavigation(
@@ -134,7 +134,13 @@ public sealed class PortalNavigationContractBuilder
             shopComplete: shopComplete,
             programmeComplete: programmeComplete);
 
-        return new PortalNavigationContract("workspace", activeKey, ResolveTheme(workspace), items, roadmap);
+        return new PortalNavigationContract(
+            "workspace",
+            activeKey,
+            ResolveTheme(workspace),
+            items,
+            roadmap,
+            BuildWorkspaceNextAction(merchantId, workspace));
     }
 
     private static string ToRoadmapKeyFromSignup(string? step) =>
@@ -164,6 +170,69 @@ public sealed class PortalNavigationContractBuilder
         }
 
         return "programme";
+    }
+
+    private static PortalNextActionContract? BuildWorkspaceNextAction(Guid merchantId, MerchantWorkspaceSnapshot workspace)
+    {
+        var basePath = $"/portal/merchant/{merchantId:D}?programmeSection=operate";
+
+        if (!workspace.SetupChecklist.ShopDetailsComplete)
+        {
+            var tasks = (IReadOnlyList<PortalNextActionTaskContract>)
+            [
+                new PortalNextActionTaskContract(
+                    "shop",
+                    "Shop details",
+                    IsComplete: false,
+                    IsBlocked: false,
+                    BlockedReason: null),
+                new PortalNextActionTaskContract(
+                    "programme",
+                    "Programme template",
+                    IsComplete: false,
+                    IsBlocked: true,
+                    BlockedReason: "Requires shop details first."),
+            ];
+
+            return new PortalNextActionContract(
+                "shop",
+                "Finish shop setup",
+                "Add shop type, location, and logo to unlock programme creation.",
+                "Open shop setup",
+                $"{basePath}&setup=shop",
+                null,
+                tasks);
+        }
+
+        if (!workspace.SetupChecklist.HasAnyProgramme)
+        {
+            var tasks = (IReadOnlyList<PortalNextActionTaskContract>)
+            [
+                new PortalNextActionTaskContract(
+                    "shop",
+                    "Shop details",
+                    IsComplete: true,
+                    IsBlocked: false,
+                    BlockedReason: null),
+                new PortalNextActionTaskContract(
+                    "programme",
+                    "Programme template",
+                    IsComplete: false,
+                    IsBlocked: false,
+                    BlockedReason: null),
+            ];
+
+            return new PortalNextActionContract(
+                "programme",
+                "Create your first programme",
+                "Choose a template to unlock Configure and Customers.",
+                "Create programme",
+                $"{basePath}#setup-taskboard",
+                null,
+                tasks);
+        }
+
+        return null;
     }
 
     private static PortalRoadmapContract BuildRoadmap(
