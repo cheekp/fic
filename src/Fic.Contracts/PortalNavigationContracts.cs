@@ -16,6 +16,12 @@ public sealed record PortalNavItemContract(
     bool IsComplete,
     bool IsDisabled);
 
+public sealed record PortalUtilityLinkContract(
+    string Key,
+    string Label,
+    string Href,
+    bool IsExternal);
+
 public sealed record PortalRoadmapStepContract(
     string Key,
     string Label,
@@ -53,5 +59,6 @@ public sealed record PortalNavigationContract(
     string ActiveKey,
     PortalThemeContract Theme,
     IReadOnlyList<PortalNavItemContract> Items,
+    IReadOnlyList<PortalUtilityLinkContract> UtilityLinks,
     PortalRoadmapContract? Roadmap,
     PortalNextActionContract? NextAction);

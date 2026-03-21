@@ -130,6 +130,7 @@ export default function SignupPlanPage() {
       activeKey={portalNav?.activeKey ?? "plan"}
       railItems={portalNav?.items ?? []}
       theme={portalNav?.theme ?? ficPortalTheme}
+      utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
     >

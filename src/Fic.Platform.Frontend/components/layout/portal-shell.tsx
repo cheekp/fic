@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { ReactNode, useMemo } from "react";
-import type { PortalNavItemContract, PortalNavKey, PortalThemeContract } from "@/types/portal-contracts";
+import type {
+  PortalNavItemContract,
+  PortalNavKey,
+  PortalThemeContract,
+  PortalUtilityLinkContract,
+} from "@/types/portal-contracts";
 import { ficPortalTheme } from "@/types/portal-contracts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,21 +28,32 @@ type PortalShellProps = {
   children: ReactNode;
   secondary?: ReactNode;
   theme?: PortalThemeContract;
+  utilityLinks?: PortalUtilityLinkContract[];
   showRail?: boolean;
   showActiveBadge?: boolean;
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_FIC_API_BASE_URL ?? "http://localhost:5276";
-const utilityLinks: Array<{ href: string; label: string; external?: boolean }> = [
-  { href: "/blogs", label: "Blogs" },
-  { href: "/training", label: "Training" },
-  { href: "/consultancy", label: "Consultancy" },
-  { href: "/account", label: "Account" },
-  { href: "/billing", label: "Billing" },
-  { href: `${apiBaseUrl}/account/logout`, label: "Log out", external: true },
+const fallbackUtilityLinks: PortalUtilityLinkContract[] = [
+  { key: "blogs", href: "/blogs", label: "Blogs", isExternal: false },
+  { key: "training", href: "/training", label: "Training", isExternal: false },
+  { key: "consultancy", href: "/consultancy", label: "Consultancy", isExternal: false },
+  { key: "account", href: "/account", label: "Account", isExternal: false },
+  { key: "billing", href: "/billing", label: "Billing", isExternal: false },
+  { key: "logout", href: "/account/logout", label: "Log out", isExternal: true },
 ] as const;
-const utilityPrimaryLinks = utilityLinks.slice(0, 2);
-const utilityMoreLinks = utilityLinks.slice(2);
+
+function resolveUtilityHref(link: PortalUtilityLinkContract) {
+  if (!link.isExternal) {
+    return link.href;
+  }
+
+  if (link.href.startsWith("http://") || link.href.startsWith("https://")) {
+    return link.href;
+  }
+
+  return `${apiBaseUrl}${link.href}`;
+}
 
 function PortalRail({
   activeKey,
@@ -94,6 +110,7 @@ export function PortalShell({
   children,
   secondary,
   theme = ficPortalTheme,
+  utilityLinks,
   showRail = false,
   showActiveBadge = true,
 }: PortalShellProps) {
@@ -101,6 +118,15 @@ export function PortalShell({
     () => railItems.find((item) => item.key === activeKey),
     [activeKey, railItems],
   );
+  const resolvedUtilityLinks = useMemo(() => {
+    const source = utilityLinks && utilityLinks.length > 0 ? utilityLinks : fallbackUtilityLinks;
+    return source.map((link) => ({
+      ...link,
+      href: resolveUtilityHref(link),
+    }));
+  }, [utilityLinks]);
+  const utilityPrimaryLinks = resolvedUtilityLinks.slice(0, 2);
+  const utilityMoreLinks = resolvedUtilityLinks.slice(2);
 
   return (
     <section
@@ -137,12 +163,12 @@ export function PortalShell({
         <div className="flex items-center gap-2">
           <nav className="hidden items-center gap-2.5 lg:flex" aria-label="Portal utilities">
             {utilityPrimaryLinks.map((item) => (
-              item.external ? (
-                <a key={item.href} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
+              item.isExternal ? (
+                <a key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
                   {item.label}
                 </a>
               ) : (
-                <Link key={item.href} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
+                <Link key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
                   {item.label}
                 </Link>
               )
@@ -159,12 +185,12 @@ export function PortalShell({
                 </DialogHeader>
                 <div className="grid gap-2">
                   {utilityMoreLinks.map((item) => (
-                    item.external ? (
-                      <a key={item.href} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/80 transition hover:bg-muted/50">
+                    item.isExternal ? (
+                      <a key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/80 transition hover:bg-muted/50">
                         {item.label}
                       </a>
                     ) : (
-                      <Link key={item.href} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/80 transition hover:bg-muted/50">
+                      <Link key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/80 transition hover:bg-muted/50">
                         {item.label}
                       </Link>
                     )

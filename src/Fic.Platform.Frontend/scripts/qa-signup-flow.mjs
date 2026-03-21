@@ -43,7 +43,7 @@ async function runScenario(browser, viewport) {
     result.screenshots.push(homeShot);
 
     await page.goto(`${frontendBaseUrl}/portal/signup`, { waitUntil: "networkidle" });
-    await page.waitForSelector("text=Signup roadmap", { timeout: 20000 });
+    await page.getByText(/Signup roadmap/i).first().waitFor({ state: "visible", timeout: 20000 });
     const loadFailed = page.getByText(/Load failed/i);
     if (await loadFailed.count()) {
       throw new Error("Signup shows 'Load failed'.");

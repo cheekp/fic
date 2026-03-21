@@ -15,6 +15,13 @@ export type PortalNavItemContract = {
   isDisabled?: boolean;
 };
 
+export type PortalUtilityLinkContract = {
+  key: string;
+  label: string;
+  href: string;
+  isExternal: boolean;
+};
+
 export type PortalThemeContract = {
   primary: string;
   accent: string;
@@ -65,6 +72,7 @@ export type PortalNavigationContract = {
   activeKey: PortalNavKey;
   theme: PortalThemeContract;
   items: PortalNavItemContract[];
+  utilityLinks?: PortalUtilityLinkContract[];
   roadmap?: PortalRoadmapContract | null;
   nextAction?: PortalNextActionContract | null;
 };

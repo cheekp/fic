@@ -434,6 +434,7 @@ export default function WorkspacePage() {
         activeKey={portalNav?.activeKey ?? "operate"}
         railItems={portalNav?.items ?? []}
         theme={portalNav?.theme ?? ficPortalTheme}
+        utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
       >
@@ -451,6 +452,7 @@ export default function WorkspacePage() {
         activeKey={portalNav?.activeKey ?? "operate"}
         railItems={portalNav?.items ?? []}
         theme={portalNav?.theme ?? ficPortalTheme}
+        utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
       >
@@ -517,6 +519,7 @@ export default function WorkspacePage() {
         activeKey="operate"
         railItems={portalNav?.items ?? []}
         theme={portalNav?.theme ?? ficPortalTheme}
+        utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
       >
@@ -694,6 +697,7 @@ export default function WorkspacePage() {
       activeKey={portalNav?.activeKey ?? section}
       railItems={portalNav?.items ?? []}
       theme={portalNav?.theme ?? ficPortalTheme}
+      utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
     >
