@@ -108,6 +108,7 @@ export default function SignupBillingPage() {
 
     setError(null);
     setOwnerAccessConfirmed(true);
+    toast.success("Owner access confirmed.");
     if (isOwnerStage) {
       router.replace(`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=billing`);
     }
@@ -126,6 +127,7 @@ export default function SignupBillingPage() {
 
     setError(null);
     setBillingConfirmed(true);
+    toast.success("Billing details confirmed.");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -196,13 +198,43 @@ export default function SignupBillingPage() {
       />
 
       <section className="section-intro space-y-3">
-        <Badge>{isOwnerStage ? "Step 3 of 6" : "Step 4 of 6"}</Badge>
         <h1 className="luxe-title">{isOwnerStage ? "Set owner access" : "Confirm billing"}</h1>
         <p className="luxe-subtitle text-foreground/90">
           {isOwnerStage
-            ? `Plan selected: ${selectedPlan}. Secure owner access before payment setup.`
-            : `Plan selected: ${selectedPlan}. Confirm payment details to continue to workspace.`}
+            ? `Plan selected: ${selectedPlan}. Secure owner credentials first.`
+            : `Plan selected: ${selectedPlan}. Confirm payment to continue to workspace.`}
         </p>
+      </section>
+
+      <section className="glass-panel p-3">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Link
+            href={`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=owner`}
+            className={`rounded-xl border px-3 py-2 text-sm transition ${
+              isOwnerStage
+                ? "border-primary/70 bg-primary/10 text-foreground"
+                : ownerAccessConfirmed
+                  ? "border-primary/35 bg-primary/5 text-foreground/85"
+                  : "border-border/70 bg-background/75 text-foreground/72"
+            }`}
+          >
+            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Step 3</p>
+            <p className="font-semibold">Owner access</p>
+          </Link>
+          <Link
+            href={`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=billing`}
+            className={`rounded-xl border px-3 py-2 text-sm transition ${
+              isBillingStage
+                ? "border-primary/70 bg-primary/10 text-foreground"
+                : billingConfirmed
+                  ? "border-primary/35 bg-primary/5 text-foreground/85"
+                  : "border-border/70 bg-background/75 text-foreground/72"
+            } ${!ownerAccessConfirmed && !isBillingStage ? "pointer-events-none opacity-60" : ""}`}
+          >
+            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Step 4</p>
+            <p className="font-semibold">Billing</p>
+          </Link>
+        </div>
       </section>
 
       <section>
@@ -215,7 +247,7 @@ export default function SignupBillingPage() {
             <CardDescription className="text-foreground/90">
               {isOwnerStage
                 ? "Create secure owner credentials to unlock billing."
-                : "Owner access is in place. Confirm payment to finish onboarding."}
+                : "Owner access is set. Confirm payment details to finish onboarding."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -271,18 +303,10 @@ export default function SignupBillingPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <Button
                       type="button"
-                      variant={ownerAccessConfirmed ? "secondary" : "default"}
+                      variant="default"
                       onClick={handleConfirmOwnerAccess}
                     >
-                      {ownerAccessConfirmed ? "Owner access confirmed" : "Confirm owner access"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => router.replace(`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=billing`)}
-                      disabled={!ownerAccessConfirmed}
-                    >
-                      Continue to billing
+                      Save owner access and continue
                     </Button>
                   </div>
                 </section>
@@ -302,7 +326,7 @@ export default function SignupBillingPage() {
                     </Button>
                   </div>
                   {!ownerAccessConfirmed ? (
-                    <p className="text-sm text-destructive">Return to step 3 and confirm owner access before billing.</p>
+                    <p className="text-sm text-destructive">Return to owner access before confirming billing.</p>
                   ) : null}
                 </section>
               )}
