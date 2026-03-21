@@ -33,6 +33,7 @@ type PortalShellProps = {
   utilityLinks?: PortalUtilityLinkContract[];
   showRail?: boolean;
   showActiveBadge?: boolean;
+  headerMode?: "workspace" | "onboarding";
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_FIC_API_BASE_URL ?? "http://localhost:5276";
@@ -115,6 +116,7 @@ export function PortalShell({
   utilityLinks,
   showRail = false,
   showActiveBadge = true,
+  headerMode = "workspace",
 }: PortalShellProps) {
   const prefersReducedMotion = useReducedMotion();
   const activeItem = useMemo(
@@ -128,6 +130,7 @@ export function PortalShell({
       href: resolveUtilityHref(link),
     }));
   }, [utilityLinks]);
+  const isOnboardingHeader = headerMode === "onboarding";
 
   return (
     <section
@@ -141,34 +144,36 @@ export function PortalShell({
     >
       <header className="sticky top-0 z-30 mb-4 flex items-center justify-between rounded-2xl border border-border/70 bg-[var(--portal-surface)] px-3 py-2 backdrop-blur sm:px-4">
         <div className="flex items-center gap-2">
-          <Drawer.Root shouldScaleBackground={false}>
-            <Drawer.Trigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9">
-                <Menu className="h-4 w-4" />
-                <span className="sr-only">Open portal links</span>
-              </Button>
-            </Drawer.Trigger>
-            <Drawer.Portal>
-              <Drawer.Overlay className="fixed inset-0 z-40 bg-black/35" />
-              <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[78vh] rounded-t-2xl border border-border/80 bg-[var(--portal-surface)] p-4">
-                <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border/80" />
-                <p className="mb-3 text-sm font-semibold">Portal links</p>
-                <div className="grid gap-2 pb-2">
-                  {resolvedUtilityLinks.map((item) => (
-                    item.isExternal ? (
-                      <a key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/82 transition hover:bg-muted/50">
-                        {item.label}
-                      </a>
-                    ) : (
-                      <Link key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/82 transition hover:bg-muted/50">
-                        {item.label}
-                      </Link>
-                    )
-                  ))}
-                </div>
-              </Drawer.Content>
-            </Drawer.Portal>
-          </Drawer.Root>
+          {!isOnboardingHeader ? (
+            <Drawer.Root shouldScaleBackground={false}>
+              <Drawer.Trigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9">
+                  <Menu className="h-4 w-4" />
+                  <span className="sr-only">Open portal links</span>
+                </Button>
+              </Drawer.Trigger>
+              <Drawer.Portal>
+                <Drawer.Overlay className="fixed inset-0 z-40 bg-black/35" />
+                <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[78vh] rounded-t-2xl border border-border/80 bg-[var(--portal-surface)] p-4">
+                  <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border/80" />
+                  <p className="mb-3 text-sm font-semibold">Portal links</p>
+                  <div className="grid gap-2 pb-2">
+                    {resolvedUtilityLinks.map((item) => (
+                      item.isExternal ? (
+                        <a key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/82 transition hover:bg-muted/50">
+                          {item.label}
+                        </a>
+                      ) : (
+                        <Link key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/82 transition hover:bg-muted/50">
+                          {item.label}
+                        </Link>
+                      )
+                    ))}
+                  </div>
+                </Drawer.Content>
+              </Drawer.Portal>
+            </Drawer.Root>
+          ) : null}
 
           {showRail ? (
             <Dialog>
@@ -186,24 +191,41 @@ export function PortalShell({
               </DialogContent>
             </Dialog>
           ) : null}
-          <p className="text-sm font-semibold sm:text-base">{title}</p>
+          {isOnboardingHeader ? (
+            <Link href="/" className="text-sm font-semibold sm:text-base">
+              {title}
+            </Link>
+          ) : (
+            <p className="text-sm font-semibold sm:text-base">{title}</p>
+          )}
           {showActiveBadge && activeItem ? <Badge variant="outline" className="hidden sm:inline-flex">{activeItem.label}</Badge> : null}
         </div>
 
         <div className="flex items-center gap-2">
-          <nav className="hidden items-center gap-2.5 lg:flex" aria-label="Portal utilities">
-            {resolvedUtilityLinks.map((item) => (
-              item.isExternal ? (
-                <a key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
-                  {item.label}
-                </a>
-              ) : (
-                <Link key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
-                  {item.label}
-                </Link>
-              )
-            ))}
-          </nav>
+          {isOnboardingHeader ? (
+            <>
+              <Button asChild variant="ghost" size="sm" className="h-8 px-2.5 text-xs">
+                <Link href="/">Home</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="h-8 px-3 text-xs">
+                <a href={`${apiBaseUrl}/account/login`}>Log in</a>
+              </Button>
+            </>
+          ) : (
+            <nav className="hidden items-center gap-2.5 lg:flex" aria-label="Portal utilities">
+              {resolvedUtilityLinks.map((item) => (
+                item.isExternal ? (
+                  <a key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
+                    {item.label}
+                  </Link>
+                )
+              ))}
+            </nav>
+          )}
 
         </div>
       </header>

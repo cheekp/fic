@@ -14,3 +14,4 @@ Current active plan:
 - `F43-premium-foundation-query-motion-feedback.md`
 - `F44-owner-billing-and-setup-lane-cleanup.md`
 - `F45-portal-ia-and-card-management-lane.md`
+- `F46-onboarding-entry-focus.md`
