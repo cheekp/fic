@@ -27,7 +27,7 @@ public sealed class BlobMerchantBrandAssetStore(
 
         await _container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
 
-        var blobName = $"{merchantId:N}/logo.png";
+        var blobName = $"{merchantId:N}/logo-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.png";
         var blobClient = _container.GetBlobClient(blobName);
 
         await using var stream = new MemoryStream(upload.Bytes);

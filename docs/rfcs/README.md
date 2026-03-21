@@ -17,3 +17,10 @@ Current RFCs:
 - `RFC-002-ux-quality-gates.md`
 - `RFC-003-css-budget-and-tokenization-discipline.md`
 - `RFC-004-app-css-partials-and-bundled-budgeting.md`
+- `RFC-005-nextjs-frontend-and-http-api-boundary.md`
+- `RFC-006-nextjs-signup-and-workspace-route-parity.md`
+- `RFC-007-nextjs-premium-pwa-ui-system.md`
+- `RFC-008-portal-chrome-and-theme-contracts.md`
+- `RFC-009-api-nav-contract-source-of-truth.md`
+- `RFC-010-roadmap-unified-with-nav-contract.md`
+- `RFC-011-portal-utility-ia-and-workflow-polish.md`

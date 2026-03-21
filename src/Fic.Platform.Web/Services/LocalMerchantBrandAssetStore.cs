@@ -23,10 +23,16 @@ public sealed class LocalMerchantBrandAssetStore(IWebHostEnvironment environment
         var merchantDirectory = Path.Combine(_rootPath, merchantId.ToString("N"));
         Directory.CreateDirectory(merchantDirectory);
 
-        var filePath = Path.Combine(merchantDirectory, "logo.png");
+        foreach (var existingLogo in Directory.EnumerateFiles(merchantDirectory, "*.png"))
+        {
+            File.Delete(existingLogo);
+        }
+
+        var fileName = $"logo-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.png";
+        var filePath = Path.Combine(merchantDirectory, fileName);
         await File.WriteAllBytesAsync(filePath, upload.Bytes, cancellationToken);
 
-        return $"{MerchantBrandAssetDefaults.PublicRequestPath}/{merchantId:N}/logo.png";
+        return $"{MerchantBrandAssetDefaults.PublicRequestPath}/{merchantId:N}/{fileName}";
     }
 
     public async Task<MerchantBrandAsset?> GetAssetAsync(
