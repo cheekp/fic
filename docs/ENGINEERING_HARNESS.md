@@ -222,6 +222,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F43`
   - premium interaction foundation with TanStack Query, Sonner feedback, Vaul mobile utility drawer, and restrained motion hierarchy
   - validator: `scripts/validate-f43-premium-foundation-query-motion-feedback.sh`
+- `F44`
+  - owner/billing progression cleanup and a single post-billing setup lane in workspace onboarding flow
+  - validator: `scripts/validate-f44-owner-billing-and-setup-lane-cleanup.sh`
 
 ## Current Product Reality
 

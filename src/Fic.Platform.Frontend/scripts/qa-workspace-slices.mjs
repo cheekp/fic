@@ -32,7 +32,7 @@ async function bootstrapMerchant(page) {
   await page.waitForURL(/\/portal\/signup\/billing\//, { timeout: 30000 });
   await page.fill('input[id="password"]', "jo-demo-setup");
   await page.fill('input[id="confirm-password"]', "jo-demo-setup");
-  const confirmOwner = page.getByRole("button", { name: /Confirm owner access|Owner access confirmed/i });
+  const confirmOwner = page.getByRole("button", { name: /Confirm owner access|Owner access confirmed|Save owner access and continue/i });
   if (await confirmOwner.count()) {
     await confirmOwner.first().click();
     await page.waitForURL(/stage=billing/, { timeout: 10000 }).catch(() => {});

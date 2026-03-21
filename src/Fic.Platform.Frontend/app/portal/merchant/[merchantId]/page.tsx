@@ -513,7 +513,7 @@ export default function WorkspacePage() {
   const onboardingIncompleteFallback = !workspace.setupChecklist.shopDetailsComplete || !workspace.setupChecklist.hasAnyProgramme;
   const onboardingIncompleteFromContract = Boolean(contractNextAction);
   const shouldShowOnboarding = onboardingIncompleteFromContract || onboardingIncompleteFallback;
-  const taskboardTasks = contractNextAction?.tasks ?? [
+  const setupLaneTasks = contractNextAction?.tasks ?? [
     {
       key: "shop",
       label: "Shop details",
@@ -529,22 +529,24 @@ export default function WorkspacePage() {
       blockedReason: !workspace.setupChecklist.shopDetailsComplete ? "Requires shop details first." : null,
     },
   ];
-  const taskboardActionKey = contractNextAction?.key ?? (workspace.setupChecklist.shopDetailsComplete ? "programme" : "shop");
-  const taskboardSummary =
+  const setupLaneActionKey = contractNextAction?.key ?? (workspace.setupChecklist.shopDetailsComplete ? "programme" : "shop");
+  const setupLaneSummary =
     contractNextAction?.summary
     ?? (!workspace.setupChecklist.shopDetailsComplete
       ? "Add shop type, location, and logo to unlock programme creation."
       : "Choose a template to unlock Configure and Customers.");
-  const taskboardCtaLabel =
+  const setupLaneCtaLabel =
     contractNextAction?.ctaLabel
-    ?? (taskboardActionKey === "shop" ? "Open shop setup" : "Create programme");
+    ?? (setupLaneActionKey === "shop" ? "Open shop setup" : "Create programme");
+  const setupLaneTitle = setupLaneActionKey === "shop" ? "Step 5: complete shop setup" : "Step 6: choose programme template";
+  const setupLaneStatus = setupLaneTasks.filter((task) => task.isComplete).length;
   const onboardingCurrentStep =
     !workspace.setupChecklist.ownerAccessConfigured
       ? "owner"
       : !workspace.setupChecklist.shopDetailsComplete
         ? "shop"
         : "programme";
-  const shopUrl = "#setup-taskboard";
+  const shopUrl = "#setup-lane";
   const programmeUrl = selectedProgramme
     ? `?programmeSection=operate&programme=${selectedProgramme.programmeId}`
     : "?programmeSection=operate";
@@ -579,28 +581,36 @@ export default function WorkspacePage() {
             variant="compact"
           />
 
-          <Card id="setup-taskboard">
+          <Card id="setup-lane">
             <CardHeader>
-              <CardTitle>Setup tasks</CardTitle>
-              <CardDescription>{taskboardSummary}</CardDescription>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle>{setupLaneTitle}</CardTitle>
+                <Badge>{setupLaneStatus}/{setupLaneTasks.length} complete</Badge>
+              </div>
+              <CardDescription>{setupLaneSummary}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {taskboardTasks.map((task) => (
-                  <article key={task.key} className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{task.label}</p>
-                    <p className="mt-1 font-semibold">
-                      {task.isComplete ? "Complete" : task.isBlocked ? "Blocked" : "Required"}
-                    </p>
-                    {task.blockedReason ? <p className="mt-1 text-sm text-foreground/75">{task.blockedReason}</p> : null}
-                  </article>
+              <div className="flex flex-wrap gap-2">
+                {setupLaneTasks.map((task) => (
+                  <span
+                    key={task.key}
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs ${
+                      task.isComplete
+                        ? "border-primary/35 bg-primary/10 text-foreground"
+                        : task.isBlocked
+                          ? "border-border/70 bg-background text-muted-foreground"
+                          : "border-secondary/45 bg-secondary/10 text-foreground"
+                    }`}
+                  >
+                    {task.label}: {task.isComplete ? "Complete" : task.isBlocked ? "Blocked" : "Required"}
+                  </span>
                 ))}
               </div>
 
-              {taskboardActionKey === "shop" ? (
+              {setupLaneActionKey === "shop" ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 p-4">
-                  <p className="text-sm text-foreground/80">{taskboardSummary}</p>
-                  <Button onClick={() => setIsShopSetupOpen(true)}>{taskboardCtaLabel}</Button>
+                  <p className="text-sm text-foreground/80">Open setup blade to update shop type, location, and brand logo.</p>
+                  <Button onClick={() => setIsShopSetupOpen(true)}>{setupLaneCtaLabel}</Button>
                 </div>
               ) : (
                 <div className="space-y-3 rounded-2xl border border-border/70 bg-background/80 p-4">
@@ -620,7 +630,7 @@ export default function WorkspacePage() {
                     </Select>
                   </div>
                   <Button className="w-full sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
-                    {isMutating ? "Creating..." : taskboardCtaLabel}
+                    {isMutating ? "Creating..." : setupLaneCtaLabel}
                   </Button>
                 </div>
               )}
