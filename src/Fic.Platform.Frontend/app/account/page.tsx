@@ -1,8 +1,12 @@
+import { PublicPortalHeader } from "@/components/layout/public-portal-header";
+
 const apiBaseUrl = process.env.NEXT_PUBLIC_FIC_API_BASE_URL ?? "http://localhost:5276";
 
 export default function AccountPage() {
   return (
     <main className="space-y-6">
+      <PublicPortalHeader />
+
       <section className="glass-panel p-6">
         <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Account</p>
         <h1 className="mt-2 font-display text-5xl leading-[0.94] tracking-tight">Merchant account</h1>

@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { PublicPortalHeader } from "@/components/layout/public-portal-header";
 
 export default function ConsultancyPage() {
   return (
     <main className="space-y-6">
+      <PublicPortalHeader />
+
       <section className="glass-panel p-6">
         <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Consultancy</p>
         <h1 className="mt-2 font-display text-5xl leading-[0.94] tracking-tight">Rollout support</h1>

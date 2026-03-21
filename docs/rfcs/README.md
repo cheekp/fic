@@ -29,3 +29,4 @@ Current RFCs:
 - `RFC-014-api-owned-portal-utility-links.md`
 - `RFC-015-premium-foundation-query-motion-feedback.md`
 - `RFC-016-owner-billing-setup-lane-cleanup.md`
+- `RFC-017-portal-ia-and-card-management-lane.md`

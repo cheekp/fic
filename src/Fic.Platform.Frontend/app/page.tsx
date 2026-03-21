@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ShieldCheck, Wallet } from "lucide-react";
+import { PublicPortalHeader } from "@/components/layout/public-portal-header";
 import { Button } from "@/components/ui/button";
-
-const apiBaseUrl = process.env.NEXT_PUBLIC_FIC_API_BASE_URL ?? "http://localhost:5276";
 
 export default function HomePage() {
   return (
     <main className="space-y-8">
+      <PublicPortalHeader />
+
       <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-[linear-gradient(145deg,#1c342f,#275248)] p-5 text-slate-100 shadow-luxe sm:p-8">
         <div
           aria-hidden
@@ -18,17 +19,6 @@ export default function HomePage() {
         />
 
         <div className="relative grid gap-7">
-          <header className="flex items-center justify-between gap-3">
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-300">FIC merchant platform</p>
-            </div>
-            <nav aria-label="Company links">
-              <a className="text-sm text-slate-200/95 underline-offset-4 hover:underline" href={`${apiBaseUrl}/account/login`}>
-                Merchant log in
-              </a>
-            </nav>
-          </header>
-
           <div className="grid gap-6 lg:grid-cols-[1.06fr_0.94fr]">
             <section className="space-y-5">
               <p className="text-xs uppercase tracking-[0.18em] text-amber-200/90">Launch in minutes</p>
