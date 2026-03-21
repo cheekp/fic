@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowRight, Check, Crown } from "lucide-react";
-import { getSignupPortalNavigation, getWorkspace } from "@/lib/api";
+import { toast } from "sonner";
 import { readSignupMerchantDraft, saveSignupMerchantDraft } from "@/lib/onboarding-draft";
+import { useSignupPortalNavigationQuery, useWorkspaceSnapshotQuery } from "@/lib/queries";
 import type { MerchantWorkspaceSnapshot } from "@/types/contracts";
 import { ficPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
 import { OnboardingJourney } from "@/components/layout/onboarding-journey";
@@ -19,9 +20,11 @@ export default function SignupPlanPage() {
   const params = useParams<{ merchantId: string }>();
   const merchantId = Array.isArray(params.merchantId) ? params.merchantId[0] : params.merchantId;
 
-  const [workspace, setWorkspace] = useState<MerchantWorkspaceSnapshot | null>(null);
   const [draftDisplayName, setDraftDisplayName] = useState("Your shop");
-  const [portalNav, setPortalNav] = useState<PortalNavigationContract | null>(null);
+  const workspaceQuery = useWorkspaceSnapshotQuery(merchantId);
+  const portalNavQuery = useSignupPortalNavigationQuery("plan", merchantId);
+  const workspace: MerchantWorkspaceSnapshot | null = workspaceQuery.data ?? null;
+  const portalNav: PortalNavigationContract | null = portalNavQuery.data ?? null;
 
   useEffect(() => {
     const draft = readSignupMerchantDraft(merchantId);
@@ -31,56 +34,27 @@ export default function SignupPlanPage() {
   }, [merchantId]);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!workspace) {
+      return;
+    }
 
-    getWorkspace(merchantId)
-      .then((nextWorkspace) => {
-        if (cancelled) {
-          return;
-        }
-
-        const existingDraft = readSignupMerchantDraft(merchantId);
-
-        setWorkspace(nextWorkspace);
-        saveSignupMerchantDraft({
-          merchantId: nextWorkspace.merchant.merchantId,
-          displayName: nextWorkspace.merchant.displayName,
-          contactEmail: nextWorkspace.merchant.contactEmail,
-          ownerName: existingDraft?.ownerName,
-          shopTypeKey: nextWorkspace.merchant.shopTypeKey,
-          townOrCity: nextWorkspace.merchant.townOrCity,
-          postcode: nextWorkspace.merchant.postcode,
-        });
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setWorkspace(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [merchantId]);
+    const existingDraft = readSignupMerchantDraft(merchantId);
+    saveSignupMerchantDraft({
+      merchantId: workspace.merchant.merchantId,
+      displayName: workspace.merchant.displayName,
+      contactEmail: workspace.merchant.contactEmail,
+      ownerName: existingDraft?.ownerName,
+      shopTypeKey: workspace.merchant.shopTypeKey,
+      townOrCity: workspace.merchant.townOrCity,
+      postcode: workspace.merchant.postcode,
+    });
+  }, [merchantId, workspace]);
 
   useEffect(() => {
-    let cancelled = false;
-    getSignupPortalNavigation("plan", merchantId)
-      .then((next) => {
-        if (!cancelled) {
-          setPortalNav(next);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPortalNav(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [merchantId]);
+    if (workspaceQuery.error) {
+      toast.error("Workspace data could not be loaded.");
+    }
+  }, [workspaceQuery.error]);
 
   const tiers = [
     {
