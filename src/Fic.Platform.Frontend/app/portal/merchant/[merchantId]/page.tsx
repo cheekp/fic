@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Copy } from "lucide-react";
+import { Copy, Eye, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import {
   awardVisit,
@@ -43,6 +43,9 @@ import type {
 import { ficPortalTheme } from "@/types/portal-contracts";
 
 type WorkspaceSection = "operate" | "configure" | "customers";
+type CardStatusFilter = "all" | "ready" | "active" | "redeemed" | "scheduled" | "expired";
+
+const apiBaseUrl = process.env.NEXT_PUBLIC_FIC_API_BASE_URL ?? "http://localhost:5276";
 
 const fallbackShopTypes: ShopTypeOption[] = [
   {
@@ -109,6 +112,27 @@ function getCardStatusClass(card: WalletCardSnapshot) {
   return "border-border bg-background text-foreground/80";
 }
 
+function getCardStatusFilter(card: WalletCardSnapshot): Exclude<CardStatusFilter, "all"> {
+  const label = card.customerCardStatusLabel.toLowerCase();
+  if (card.canRedeem || label.includes("reward ready")) {
+    return "ready";
+  }
+
+  if (label.includes("redeemed")) {
+    return "redeemed";
+  }
+
+  if (label.includes("scheduled")) {
+    return "scheduled";
+  }
+
+  if (label.includes("expired")) {
+    return "expired";
+  }
+
+  return "active";
+}
+
 export default function WorkspacePage() {
   const params = useParams<{ merchantId: string }>();
   const searchParams = useSearchParams();
@@ -129,6 +153,9 @@ export default function WorkspacePage() {
   const [message, setMessage] = useState<string | null>(null);
   const [scanCode, setScanCode] = useState("");
   const [cardFilter, setCardFilter] = useState("");
+  const [cardStatusFilter, setCardStatusFilter] = useState<CardStatusFilter>("all");
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isCardDetailOpen, setIsCardDetailOpen] = useState(false);
   const [rewardItemLabel, setRewardItemLabel] = useState("");
   const [rewardThreshold, setRewardThreshold] = useState("1");
   const [rewardCopy, setRewardCopy] = useState("");
@@ -313,6 +340,11 @@ export default function WorkspacePage() {
     } catch {
       toast.error("Unable to copy card code.");
     }
+  }
+
+  function handleOpenCardDetail(cardId: string) {
+    setSelectedCardId(cardId);
+    setIsCardDetailOpen(true);
   }
 
   async function handleCreateProgramme() {
@@ -594,20 +626,41 @@ export default function WorkspacePage() {
   const programmeUrl = selectedProgramme
     ? `?programmeSection=operate&programme=${selectedProgramme.programmeId}`
     : "?programmeSection=operate";
-  const filteredCards = workspace.selectedProgrammeCards.filter((card) => {
-    const term = cardFilter.trim().toLowerCase();
-    if (!term) {
-      return true;
-    }
+  const filteredCards = workspace.selectedProgrammeCards
+    .filter((card) => {
+      const term = cardFilter.trim().toLowerCase();
+      if (!term) {
+        return true;
+      }
 
-    return (
-      card.cardCode.toLowerCase().includes(term)
-      || card.customerCardStatusLabel.toLowerCase().includes(term)
-      || card.rewardItemLabel.toLowerCase().includes(term)
-      || card.progressDisplayText.toLowerCase().includes(term)
-    );
-  });
+      return (
+        card.cardCode.toLowerCase().includes(term)
+        || card.customerCardStatusLabel.toLowerCase().includes(term)
+        || card.rewardItemLabel.toLowerCase().includes(term)
+        || card.progressDisplayText.toLowerCase().includes(term)
+      );
+    })
+    .filter((card) => {
+      if (cardStatusFilter === "all") {
+        return true;
+      }
+
+      return getCardStatusFilter(card) === cardStatusFilter;
+    })
+    .sort((left, right) => {
+      const leftTime = new Date(left.lastUpdatedUtc).getTime();
+      const rightTime = new Date(right.lastUpdatedUtc).getTime();
+      return rightTime - leftTime;
+    });
   const redeemableCardsCount = workspace.selectedProgrammeCards.filter((card) => card.canRedeem).length;
+  const selectedCard = selectedCardId
+    ? workspace.selectedProgrammeCards.find((card) => card.cardId === selectedCardId) ?? null
+    : null;
+  const selectedCardTimeline = selectedCard
+    ? workspace.timeline
+      .filter((event) => event.summary.toLowerCase().includes(selectedCard.cardCode.toLowerCase()))
+      .slice(0, 6)
+    : [];
 
   if (shouldShowOnboarding && section === "operate") {
     return (
@@ -1011,13 +1064,31 @@ export default function WorkspacePage() {
                       ) : null}
                     </div>
                   </div>
-                  <div className="mt-3">
+                  <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_13rem]">
                     <Input
                       value={cardFilter}
                       onChange={(event) => setCardFilter(event.target.value)}
                       placeholder="Filter by card code, status, reward, or progress"
                     />
+                    <Select value={cardStatusFilter} onValueChange={(value) => setCardStatusFilter(value as CardStatusFilter)}>
+                      <SelectTrigger aria-label="Card status filter">
+                        <SelectValue placeholder="Filter status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All statuses</SelectItem>
+                        <SelectItem value="ready">Reward ready</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="redeemed">Redeemed</SelectItem>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="expired">Expired</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {workspace.selectedProgrammeCards.length > 0 ? (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Showing {filteredCards.length} of {workspace.selectedProgrammeCards.length} cards.
+                    </p>
+                  ) : null}
                 </section>
 
                 {workspace.selectedProgrammeCards.length === 0 ? (
@@ -1075,6 +1146,15 @@ export default function WorkspacePage() {
                                   type="button"
                                   size="sm"
                                   variant="outline"
+                                  onClick={() => handleOpenCardDetail(card.cardId)}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                  Details
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
                                   onClick={() => handleCopyCardCode(card.cardCode)}
                                 >
                                   <Copy className="h-3.5 w-3.5" />
@@ -1100,6 +1180,113 @@ export default function WorkspacePage() {
                 {workspace.selectedProgrammeCards.length > 0 && filteredCards.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No cards match that filter.</p>
                 ) : null}
+
+                <Dialog
+                  open={isCardDetailOpen}
+                  onOpenChange={(open) => {
+                    setIsCardDetailOpen(open);
+                    if (!open) {
+                      setSelectedCardId(null);
+                    }
+                  }}
+                >
+                  <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
+                    {selectedCard ? (
+                      <div className="space-y-4">
+                        <DialogHeader>
+                          <DialogTitle>Card detail: {selectedCard.cardCode}</DialogTitle>
+                          <DialogDescription>
+                            Live status, progress, and recent activity for this customer card.
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <section className="rounded-2xl border border-border/70 bg-background/85 p-4">
+                          <div className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                            <div className="relative h-24 overflow-hidden rounded-lg border border-border/60 shadow-sm">
+                              <div
+                                className="absolute inset-0"
+                                style={{
+                                  background: `linear-gradient(132deg, ${selectedCard.primaryColor}, ${selectedCard.accentColor})`,
+                                }}
+                              />
+                              <div className="relative flex h-full flex-col justify-between p-2 text-[11px] text-white">
+                                <span className="truncate font-semibold">{workspace.merchant.displayName}</span>
+                                <span className="truncate text-white/90">{selectedCard.rewardItemLabel}</span>
+                                <span className="font-semibold">{selectedCard.currentCount}/{selectedCard.targetCount}</span>
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Status</p>
+                                <span className={`mt-1 inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getCardStatusClass(selectedCard)}`}>
+                                  {selectedCard.customerCardStatusLabel}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Progress</p>
+                                <p className="mt-1 text-sm font-medium">{selectedCard.progressDisplayText}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Window</p>
+                                <p className="mt-1 text-sm">{formatDateLabel(selectedCard.startsOn)} to {formatDateLabel(selectedCard.endsOn)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Updated</p>
+                                <p className="mt-1 text-sm">{formatDateLabel(selectedCard.lastUpdatedUtc)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </section>
+
+                        <section className="space-y-2 rounded-2xl border border-border/70 bg-background/85 p-4">
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Actions</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Button type="button" size="sm" variant="outline" onClick={() => handleCopyCardCode(selectedCard.cardCode)}>
+                              <Copy className="h-3.5 w-3.5" />
+                              Copy code
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              disabled={isMutating || !selectedCard.canRedeem}
+                              onClick={() => handleRedeem(selectedCard.cardId)}
+                            >
+                              Redeem
+                            </Button>
+                            <Button asChild type="button" size="sm" variant="outline">
+                              <a href={`${apiBaseUrl}/api/v1/wallet/cards/${selectedCard.cardId}`} target="_blank" rel="noreferrer">
+                                Card JSON
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            </Button>
+                          </div>
+                        </section>
+
+                        <section className="space-y-2 rounded-2xl border border-border/70 bg-background/85 p-4">
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Recent activity</p>
+                          {selectedCardTimeline.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No recent card-specific timeline events.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {selectedCardTimeline.map((event) => (
+                                <article key={event.eventId} className="rounded-xl border border-border/70 bg-card/80 p-2.5">
+                                  <p className="text-xs text-muted-foreground">{formatDateLabel(event.occurredAtUtc)}</p>
+                                  <p className="text-sm text-foreground/88">{event.summary}</p>
+                                </article>
+                              ))}
+                            </div>
+                          )}
+                        </section>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 py-4">
+                        <DialogTitle>Card detail unavailable</DialogTitle>
+                        <DialogDescription>Select a card row to view details.</DialogDescription>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
           ) : (

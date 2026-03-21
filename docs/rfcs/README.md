@@ -31,3 +31,4 @@ Current RFCs:
 - `RFC-016-owner-billing-setup-lane-cleanup.md`
 - `RFC-017-portal-ia-and-card-management-lane.md`
 - `RFC-018-onboarding-entry-focus.md`
+- `RFC-019-card-operations-detail-lane.md`
