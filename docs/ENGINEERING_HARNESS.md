@@ -225,6 +225,9 @@ Each new slice should follow that same pattern: spec, code, validator, evidence.
 - `F44`
   - owner/billing progression cleanup and a single post-billing setup lane in workspace onboarding flow
   - validator: `scripts/validate-f44-owner-billing-and-setup-lane-cleanup.sh`
+- `F45`
+  - portal IA cleanup and card-management-at-scale lane for clearer hierarchy and faster operator actions
+  - validator: `scripts/validate-f45-portal-ia-and-card-management-lane.sh`
 
 ## Current Product Reality
 

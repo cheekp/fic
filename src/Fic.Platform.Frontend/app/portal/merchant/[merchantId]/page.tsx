@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import {
   awardVisit,
@@ -33,7 +34,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { MerchantWorkspaceSnapshot, ProgrammeTemplateOption, ShopTypeOption } from "@/types/contracts";
+import type {
+  MerchantWorkspaceSnapshot,
+  ProgrammeTemplateOption,
+  ShopTypeOption,
+  WalletCardSnapshot,
+} from "@/types/contracts";
 import { ficPortalTheme } from "@/types/portal-contracts";
 
 type WorkspaceSection = "operate" | "configure" | "customers";
@@ -74,6 +80,35 @@ function withCacheBust(url: string, token: number) {
   return `${url}${separator}v=${token}`;
 }
 
+function formatDateLabel(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "N/A";
+  }
+
+  return parsed.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getCardStatusClass(card: WalletCardSnapshot) {
+  if (card.canRedeem) {
+    return "border-emerald-600/30 bg-emerald-600/10 text-emerald-900";
+  }
+
+  if (card.customerCardStatusLabel.toLowerCase().includes("redeemed")) {
+    return "border-primary/30 bg-primary/10 text-primary";
+  }
+
+  if (card.customerCardStatusLabel.toLowerCase().includes("expired")) {
+    return "border-border bg-muted text-muted-foreground";
+  }
+
+  return "border-border bg-background text-foreground/80";
+}
+
 export default function WorkspacePage() {
   const params = useParams<{ merchantId: string }>();
   const searchParams = useSearchParams();
@@ -93,6 +128,7 @@ export default function WorkspacePage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [scanCode, setScanCode] = useState("");
+  const [cardFilter, setCardFilter] = useState("");
   const [rewardItemLabel, setRewardItemLabel] = useState("");
   const [rewardThreshold, setRewardThreshold] = useState("1");
   const [rewardCopy, setRewardCopy] = useState("");
@@ -268,6 +304,15 @@ export default function WorkspacePage() {
   function publishError(text: string) {
     setError(text);
     toast.error(text);
+  }
+
+  async function handleCopyCardCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success("Card code copied.");
+    } catch {
+      toast.error("Unable to copy card code.");
+    }
   }
 
   async function handleCreateProgramme() {
@@ -508,7 +553,6 @@ export default function WorkspacePage() {
     );
   }
 
-  const onboardingIncomplete = !workspace.setupChecklist.shopDetailsComplete || !workspace.setupChecklist.hasAnyProgramme;
   const contractNextAction = portalNav?.nextAction ?? null;
   const onboardingIncompleteFallback = !workspace.setupChecklist.shopDetailsComplete || !workspace.setupChecklist.hasAnyProgramme;
   const onboardingIncompleteFromContract = Boolean(contractNextAction);
@@ -550,6 +594,20 @@ export default function WorkspacePage() {
   const programmeUrl = selectedProgramme
     ? `?programmeSection=operate&programme=${selectedProgramme.programmeId}`
     : "?programmeSection=operate";
+  const filteredCards = workspace.selectedProgrammeCards.filter((card) => {
+    const term = cardFilter.trim().toLowerCase();
+    if (!term) {
+      return true;
+    }
+
+    return (
+      card.cardCode.toLowerCase().includes(term)
+      || card.customerCardStatusLabel.toLowerCase().includes(term)
+      || card.rewardItemLabel.toLowerCase().includes(term)
+      || card.progressDisplayText.toLowerCase().includes(term)
+    );
+  });
+  const redeemableCardsCount = workspace.selectedProgrammeCards.filter((card) => card.canRedeem).length;
 
   if (shouldShowOnboarding && section === "operate") {
     return (
@@ -749,45 +807,47 @@ export default function WorkspacePage() {
       showActiveBadge={false}
     >
       <div className="space-y-4">
-        <section className="glass-panel p-2">
-          <nav className="flex flex-wrap gap-2" aria-label="Workspace sections">
-            {(portalNav?.items ?? []).map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`rounded-full border px-3 py-1.5 text-sm transition ${
-                  item.key === (portalNav?.activeKey ?? section)
-                    ? "border-[var(--portal-primary)] bg-[color-mix(in_srgb,var(--portal-primary)_12%,white_88%)] text-foreground"
-                    : "border-border/70 bg-background/70 text-foreground/78 hover:bg-[color-mix(in_srgb,var(--portal-primary)_8%,white_92%)]"
-                } ${item.isDisabled ? "pointer-events-none opacity-45" : ""}`}
-              >
-                {item.label}
-                {item.badge ? <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px]">{item.badge}</span> : null}
-              </Link>
-            ))}
-          </nav>
-        </section>
-
         <section className="workspace-hero section-intro space-y-3">
-          <div className="relative z-10 space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge>Merchant workspace</Badge>
-              {brandLogoUrl ? (
-                <Image
-                  src={brandLogoUrl}
-                  alt={`${workspace.merchant.displayName} logo`}
-                  width={Math.max(workspace.brandProfile.logoWidth || 56, 40)}
-                  height={Math.max(workspace.brandProfile.logoHeight || 56, 40)}
-                  className="h-8 w-auto rounded-md border border-border/60 bg-white/80 p-1"
-                  unoptimized
-                />
-              ) : null}
+          <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <Badge>Merchant workspace</Badge>
+                {brandLogoUrl ? (
+                  <Image
+                    src={brandLogoUrl}
+                    alt={`${workspace.merchant.displayName} logo`}
+                    width={Math.max(workspace.brandProfile.logoWidth || 56, 40)}
+                    height={Math.max(workspace.brandProfile.logoHeight || 56, 40)}
+                    className="h-8 w-auto rounded-md border border-border/60 bg-white/80 p-1"
+                    unoptimized
+                  />
+                ) : null}
+              </div>
+              <h1 className="luxe-title">{workspace.merchant.displayName}</h1>
+              <p className="max-w-3xl text-balance text-[1.08rem] leading-8 text-foreground/88 sm:text-[1.2rem]">
+                Operate daily loyalty, refine programme settings, and manage customer cards with a mobile-first control lane.
+              </p>
             </div>
-            <h1 className="luxe-title">{workspace.merchant.displayName}</h1>
-            <p className="text-balance text-[1.08rem] leading-8 text-foreground/88 sm:text-[1.2rem]">
-              Operate daily loyalty, refine programme settings, and manage customer cards with a mobile-first control lane.
-            </p>
+
+            <nav className="w-full rounded-2xl border border-border/70 bg-background/70 p-1.5 md:w-auto" aria-label="Workspace sections">
+              <div className="flex flex-wrap gap-1">
+                {(portalNav?.items ?? []).map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                      item.key === (portalNav?.activeKey ?? section)
+                        ? "border-[var(--portal-primary)] bg-[color-mix(in_srgb,var(--portal-primary)_12%,white_88%)] text-foreground"
+                        : "border-border/70 bg-background/70 text-foreground/78 hover:bg-[color-mix(in_srgb,var(--portal-primary)_8%,white_92%)]"
+                    } ${item.isDisabled ? "pointer-events-none opacity-45" : ""}`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </nav>
           </div>
+
           <div className="relative z-10 grid gap-2.5 sm:grid-cols-4">
             <div className="workspace-metric-tile">
               <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Location</p>
@@ -927,33 +987,119 @@ export default function WorkspacePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Customer cards</CardTitle>
-                <CardDescription className="text-foreground/72">Track and redeem customer rewards for the selected programme.</CardDescription>
+                <CardDescription className="text-foreground/72">
+                  Manage active cards at scale with live status, progress, and redeem actions.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <section className="rounded-2xl border border-border/70 bg-background/80 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline">{workspace.selectedProgrammeCards.length} cards</Badge>
+                      <Badge variant="outline">{redeemableCardsCount} ready to redeem</Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button size="sm" onClick={handleDemoJoin} disabled={isMutating}>
+                        Create demo join
+                      </Button>
+                      {selectedProgramme.joinCode ? (
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
+                            Open join link
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <Input
+                      value={cardFilter}
+                      onChange={(event) => setCardFilter(event.target.value)}
+                      placeholder="Filter by card code, status, reward, or progress"
+                    />
+                  </div>
+                </section>
+
                 {workspace.selectedProgrammeCards.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No cards yet. Create a demo join from Operate.</p>
                 ) : (
-                  <div className="space-y-3">
-                    {workspace.selectedProgrammeCards.map((card) => (
-                      <article key={card.cardId} className="glass-panel p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold">{card.cardCode}</p>
-                            <p className="text-xs text-muted-foreground">{card.progressDisplayText} - {card.customerCardStatusLabel}</p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={isMutating || !card.canRedeem}
-                            onClick={() => handleRedeem(card.cardId)}
-                          >
-                            Redeem
-                          </Button>
-                        </div>
-                      </article>
-                    ))}
+                  <div className="overflow-x-auto rounded-2xl border border-border/70 bg-background/85">
+                    <table className="min-w-[62rem] w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/70 text-left text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                          <th className="px-3 py-2 font-medium">Card</th>
+                          <th className="px-3 py-2 font-medium">Status</th>
+                          <th className="px-3 py-2 font-medium">Progress</th>
+                          <th className="px-3 py-2 font-medium">Window</th>
+                          <th className="px-3 py-2 font-medium">Updated</th>
+                          <th className="px-3 py-2 font-medium text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCards.map((card) => (
+                          <tr key={card.cardId} className="border-b border-border/55 align-top last:border-b-0">
+                            <td className="px-3 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-border/60 shadow-sm">
+                                  <div
+                                    className="absolute inset-0"
+                                    style={{
+                                      background: `linear-gradient(132deg, ${card.primaryColor}, ${card.accentColor})`,
+                                    }}
+                                  />
+                                  <div className="relative flex h-full flex-col justify-between p-1.5 text-[10px] leading-tight text-white">
+                                    <span className="truncate font-semibold">{workspace.merchant.displayName}</span>
+                                    <span className="truncate text-white/90">{card.rewardItemLabel}</span>
+                                    <span className="font-medium text-white/95">{card.currentCount}/{card.targetCount}</span>
+                                  </div>
+                                </div>
+                                <div className="space-y-0.5">
+                                  <p className="text-sm font-semibold">{card.cardCode}</p>
+                                  <p className="text-xs text-muted-foreground">{card.rewardCopy}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3">
+                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getCardStatusClass(card)}`}>
+                                {card.customerCardStatusLabel}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-foreground/84">{card.progressDisplayText}</td>
+                            <td className="px-3 py-3 text-foreground/76">
+                              {formatDateLabel(card.startsOn)} to {formatDateLabel(card.endsOn)}
+                            </td>
+                            <td className="px-3 py-3 text-foreground/76">{formatDateLabel(card.lastUpdatedUtc)}</td>
+                            <td className="px-3 py-3">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCopyCardCode(card.cardCode)}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                  Copy code
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  disabled={isMutating || !card.canRedeem}
+                                  onClick={() => handleRedeem(card.cardId)}
+                                >
+                                  Redeem
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
+                {workspace.selectedProgrammeCards.length > 0 && filteredCards.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No cards match that filter.</p>
+                ) : null}
               </CardContent>
             </Card>
           ) : (

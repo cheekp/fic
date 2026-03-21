@@ -128,8 +128,6 @@ export function PortalShell({
       href: resolveUtilityHref(link),
     }));
   }, [utilityLinks]);
-  const utilityPrimaryLinks = resolvedUtilityLinks.slice(0, 2);
-  const utilityMoreLinks = resolvedUtilityLinks.slice(2);
 
   return (
     <section
@@ -143,31 +141,11 @@ export function PortalShell({
     >
       <header className="sticky top-0 z-30 mb-4 flex items-center justify-between rounded-2xl border border-border/70 bg-[var(--portal-surface)] px-3 py-2 backdrop-blur sm:px-4">
         <div className="flex items-center gap-2">
-          {showRail ? (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size="icon" variant="outline" className="h-9 w-9 md:hidden">
-                  <Menu className="h-4 w-4" />
-                  <span className="sr-only">Open navigation</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="left-0 top-0 h-full w-[86%] max-w-xs translate-x-0 translate-y-0 rounded-none border-r p-4">
-                <DialogHeader>
-                  <DialogTitle>{title}</DialogTitle>
-                </DialogHeader>
-                <PortalRail activeKey={activeKey} items={railItems} />
-              </DialogContent>
-            </Dialog>
-          ) : null}
-          <p className="text-sm font-semibold sm:text-base">{title}</p>
-          {showActiveBadge && activeItem ? <Badge variant="outline" className="hidden sm:inline-flex">{activeItem.label}</Badge> : null}
-        </div>
-
-        <div className="flex items-center gap-2">
           <Drawer.Root shouldScaleBackground={false}>
             <Drawer.Trigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-foreground/70 lg:hidden">
-                More
+              <Button variant="outline" size="icon" className="h-9 w-9">
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">Open portal links</span>
               </Button>
             </Drawer.Trigger>
             <Drawer.Portal>
@@ -192,8 +170,29 @@ export function PortalShell({
             </Drawer.Portal>
           </Drawer.Root>
 
+          {showRail ? (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="icon" variant="outline" className="h-9 w-9 md:hidden">
+                  <Menu className="h-4 w-4" />
+                  <span className="sr-only">Open navigation</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="left-0 top-0 h-full w-[86%] max-w-xs translate-x-0 translate-y-0 rounded-none border-r p-4">
+                <DialogHeader>
+                  <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                <PortalRail activeKey={activeKey} items={railItems} />
+              </DialogContent>
+            </Dialog>
+          ) : null}
+          <p className="text-sm font-semibold sm:text-base">{title}</p>
+          {showActiveBadge && activeItem ? <Badge variant="outline" className="hidden sm:inline-flex">{activeItem.label}</Badge> : null}
+        </div>
+
+        <div className="flex items-center gap-2">
           <nav className="hidden items-center gap-2.5 lg:flex" aria-label="Portal utilities">
-            {utilityPrimaryLinks.map((item) => (
+            {resolvedUtilityLinks.map((item) => (
               item.isExternal ? (
                 <a key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
                   {item.label}
@@ -204,31 +203,6 @@ export function PortalShell({
                 </Link>
               )
             ))}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-foreground/70">
-                  More
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-xs">
-                <DialogHeader>
-                  <DialogTitle>Portal links</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-2">
-                  {utilityMoreLinks.map((item) => (
-                    item.isExternal ? (
-                      <a key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/80 transition hover:bg-muted/50">
-                        {item.label}
-                      </a>
-                    ) : (
-                      <Link key={item.key} href={item.href} className="rounded-lg border px-3 py-2 text-sm text-foreground/80 transition hover:bg-muted/50">
-                        {item.label}
-                      </Link>
-                    )
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
           </nav>
 
         </div>
