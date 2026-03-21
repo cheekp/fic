@@ -24,3 +24,4 @@ Current RFCs:
 - `RFC-009-api-nav-contract-source-of-truth.md`
 - `RFC-010-roadmap-unified-with-nav-contract.md`
 - `RFC-011-portal-utility-ia-and-workflow-polish.md`
+- `RFC-012-onboarding-flow-convergence.md`

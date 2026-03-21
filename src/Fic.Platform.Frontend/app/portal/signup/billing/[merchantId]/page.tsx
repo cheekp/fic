@@ -173,7 +173,7 @@ export default function SignupBillingPage() {
         confirmPassword,
       });
 
-      router.push(`/portal/merchant/${merchantId}`);
+      router.push(`/portal/merchant/${merchantId}?programmeSection=operate&setup=shop`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to complete signup.";
       setError(message);

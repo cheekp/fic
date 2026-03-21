@@ -8,3 +8,4 @@ Current active plan:
 - `F37-api-nav-contract-source-of-truth.md`
 - `F38-roadmap-unified-with-nav-contract.md`
 - `F39-portal-utility-ia-and-workflow-polish.md`
+- `F40-onboarding-flow-convergence.md`
