@@ -2,6 +2,17 @@
 
 Add technical architecture documents here.
 
+Use `docs/architecture/` for durable system shape:
+- platform context and target users
+- product surfaces and core workflows
+- bounded contexts or major services
+- external integrations
+- deployment model
+- cross-slice technical risks and open questions
+
+Do not use this folder as a running log of slice-by-slice UI or delivery decisions once those decisions are local to one implementation slice.
+For slice-local design notes, prefer `docs/specs/<slice>/DESIGN.md`.
+
 Recommended contents for the first architecture note:
 - system context and target users
 - product surfaces and core workflows
@@ -14,6 +25,9 @@ Current draft:
 - `FIC_PLATFORM_ARCHITECTURE_DRAFT.md`
 
 Current supporting notes:
+- These are historical architecture-supporting notes that predate the `docs/specs/<slice>/DESIGN.md` convention.
+- Keep them for traceability.
+- Do not add new slice-local design notes here unless they materially change durable platform architecture.
 - `F30_UX_QUALITY_GATE_ARCHITECTURE_NOTE.md`
 - `F31_CSS_BUDGET_AND_TOKEN_DISCIPLINE_NOTE.md`
 - `F32_APP_CSS_PARTIAL_SPLIT_NOTE.md`

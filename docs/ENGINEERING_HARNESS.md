@@ -43,7 +43,8 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 - `docs/ENGINEERING_HARNESS.md`
   - repo-level workflow, layering, and entropy rules
 - `docs/architecture/`
-  - architecture drafts and system notes
+  - architecture drafts and durable system notes
+  - use this for cross-slice platform shape, not slice-local implementation thinking
 - `docs/runbooks/`
   - founder-demo and operator workflows
 - `docs/rfcs/`
@@ -54,6 +55,7 @@ If engineering intent conflicts with the business plan, the conflict must be rai
   - `active/` means in-flight work, not necessarily one single slice
 - `docs/specs/`
   - slice requirements and acceptance criteria
+  - optional slice-local design notes belong here when they do not change durable platform architecture
   - specs are not a status board
 - `scripts/`
   - validator and workflow helpers tied to slices
@@ -61,9 +63,11 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 ## Working Loop
 
 1. Start from business intent or a concrete founder need.
-2. Update architecture or RFC material if the slice changes product or system shape.
+   - use `docs/plans/SLICE_INTAKE_TEMPLATE.md` when a new slice needs a quick intake pass before docs/code work begins
+2. Update architecture or RFC material if the slice changes durable product or system shape.
 3. Make sure the slice is represented in `docs/plans/` with the right status.
 4. Write or revise the slice spec in `docs/specs/<slice>/`.
+   - if the slice needs local design reasoning, add `docs/specs/<slice>/DESIGN.md` instead of creating a new architecture note
 5. Implement the minimum code needed for the slice.
 6. Add or update a repo validator script for that slice.
 7. Add targeted automated tests for domain/state-heavy behavior when the slice introduces meaningful logic.
@@ -78,6 +82,7 @@ If engineering intent conflicts with the business plan, the conflict must be rai
   - if you prefer the word `open`, treat current `planned/` as that concept unless we do a repo-wide rename
 - `specs` own implementation detail for a slice
   - one slice folder per implemented or implementation-ready slice
+  - use optional `DESIGN.md` files there for slice-local design notes
   - do not add `active/`, `open/`, or `completed/` folders under `docs/specs/`
 - a spec can stay in place after the slice lands
   - it becomes the historical contract for what was built
