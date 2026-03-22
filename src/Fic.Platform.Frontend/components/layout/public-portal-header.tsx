@@ -56,8 +56,8 @@ export function PublicPortalHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 mb-5 flex items-center justify-between rounded-2xl border border-[rgba(15,27,42,0.12)] bg-[rgba(245,243,239,0.92)] px-3 py-2.5 shadow-[0_18px_40px_-30px_rgba(15,27,42,0.4)] backdrop-blur sm:px-4">
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-40 mb-6 flex items-center justify-between rounded-[1.6rem] border border-[rgba(15,27,42,0.12)] bg-[rgba(245,243,239,0.94)] px-3 py-2.5 shadow-[0_18px_40px_-30px_rgba(15,27,42,0.35)] backdrop-blur sm:px-4">
+      <div className="flex items-center gap-3">
         <Drawer.Root shouldScaleBackground={false}>
           <Drawer.Trigger asChild>
             <Button variant="outline" size="icon" className="h-9 w-9 border-[rgba(15,27,42,0.16)] bg-transparent text-[#4a4f55] hover:bg-[rgba(15,27,42,0.04)]">
@@ -90,8 +90,18 @@ export function PublicPortalHeader() {
             </Drawer.Content>
           </Drawer.Portal>
         </Drawer.Root>
-        <Link href="/" className="text-sm font-semibold tracking-[0.01em] text-[#0f1b2a] sm:text-base">
-          North Star Customer Solutions
+        <Link href="/" className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(200,169,106,0.32)] bg-[linear-gradient(180deg,rgba(255,251,244,0.92),rgba(247,241,231,0.92))] text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0f1b2a]">
+            NS
+          </span>
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold tracking-[0.01em] text-[#0f1b2a] sm:text-base">
+              North Star Customer Solutions
+            </span>
+            <span className="hidden text-[11px] uppercase tracking-[0.2em] text-[rgba(74,79,85,0.74)] sm:block">
+              Loyalty. Membership. Customer strategy.
+            </span>
+          </span>
         </Link>
       </div>
 
@@ -99,7 +109,7 @@ export function PublicPortalHeader() {
         <Button asChild variant="ghost" size="sm" className="h-9 px-3 text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
           <a href={`${apiBaseUrl}/account/login`}>Log in</a>
         </Button>
-        <Button asChild size="sm" className="h-9 px-4 bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#1b2d40]">
+        <Button asChild size="sm" className="h-9 px-4 bg-[#0f1b2a] text-[#f5f3ef] shadow-[0_12px_28px_-18px_rgba(15,27,42,0.85)] hover:bg-[#1b2d40]">
           <Link href="/portal/signup">Sign up</Link>
         </Button>
       </div>

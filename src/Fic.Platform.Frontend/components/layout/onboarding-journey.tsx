@@ -179,9 +179,9 @@ export function OnboardingJourney({
   };
 
   return (
-    <section className="glass-panel brand-glow relative max-h-[12rem] space-y-1.5 overflow-hidden p-3 sm:max-h-none sm:space-y-2 sm:p-4" aria-label="Onboarding journey">
-      <div aria-hidden className="pointer-events-none absolute -left-16 -top-14 h-52 w-52 rounded-full bg-primary/10 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -right-10 top-6 h-44 w-44 rounded-full bg-secondary/20 blur-3xl" />
+    <section className="glass-panel relative max-h-[12rem] space-y-1.5 overflow-hidden rounded-[1.85rem] border-[rgba(15,27,42,0.12)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(247,243,236,0.94))] p-3 shadow-[0_22px_48px_-36px_rgba(15,27,42,0.34)] sm:max-h-none sm:space-y-2 sm:p-4" aria-label="Onboarding journey">
+      <div aria-hidden className="pointer-events-none absolute -left-16 -top-14 h-52 w-52 rounded-full bg-primary/8 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-10 top-6 h-44 w-44 rounded-full bg-secondary/12 blur-3xl" />
 
       <div className="flex items-center justify-between gap-2">
         <div className="inline-flex items-center gap-1.5">
@@ -189,7 +189,7 @@ export function OnboardingJourney({
           {variant === "compact" ? <Sparkles className="h-3.5 w-3.5 text-primary" /> : null}
         </div>
         <div className="flex items-center gap-1.5">
-          <Badge>
+          <Badge className="border-[rgba(200,169,106,0.24)] bg-[rgba(200,169,106,0.12)] text-[#6f592f]">
             <span className="sm:hidden">{completeCount}/{steps.length}</span>
             <span className="hidden sm:inline">{completeCount} of {steps.length} complete</span>
           </Badge>
