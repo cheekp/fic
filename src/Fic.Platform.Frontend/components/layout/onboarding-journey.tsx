@@ -127,15 +127,15 @@ export function OnboardingJourney({
     const node = (
       <div className="relative flex flex-col items-center gap-1 text-center">
         {step.isCurrent ? (
-          <span className="absolute -top-2 h-12 w-12 rounded-full bg-primary/20 blur-xl" aria-hidden />
+          <span className="absolute -top-2 h-12 w-12 rounded-full bg-[rgba(200,169,106,0.18)] blur-xl" aria-hidden />
         ) : null}
         <span
           className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold sm:h-9 sm:w-9 sm:text-xs ${
             step.isCurrent
-              ? "border-primary/70 bg-primary text-primary-foreground shadow-[0_0_24px_rgba(15,27,42,0.32)]"
+              ? "border-[rgba(200,169,106,0.42)] bg-[rgba(15,27,42,0.9)] text-[#f5f3ef] shadow-[0_10px_24px_-18px_rgba(15,27,42,0.45)]"
               : step.isComplete
                 ? "border-[rgba(200,169,106,0.78)] bg-[#c8a96a] text-[#0f1b2a] shadow-[0_12px_24px_-16px_rgba(200,169,106,0.92)]"
-                : "border-border bg-background text-muted-foreground"
+                : "border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.92)] text-[rgba(74,79,85,0.72)]"
           }`}
         >
           {step.isComplete ? <Check className="h-4 w-4" /> : step.order}
