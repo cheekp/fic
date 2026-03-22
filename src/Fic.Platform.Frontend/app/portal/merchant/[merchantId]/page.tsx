@@ -1427,25 +1427,12 @@ export default function WorkspacePage() {
                   >
                     Edit shop
                   </Button>
-                  {selectedProgramme?.joinCode ? (
-                    <Button asChild variant="outline">
-                      <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
-                        Open join
-                      </Link>
-                    </Button>
-                  ) : null}
-                  {selectedProgramme ? (
-                    <Button onClick={handleDemoJoin} disabled={isMutating}>
-                      Create demo join
-                    </Button>
-                  ) : null}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <span className="metric-chip">{programmeDescriptor}</span>
                 <span className="metric-chip">{programmeWindow}</span>
-                {selectedProgrammeSummary ? <span className="metric-chip">Join code: {selectedProgrammeSummary.joinCode}</span> : null}
                 {selectedProgrammeSummary ? <span className="metric-chip">{selectedProgrammeSummary.rewardsUnlocked} rewards unlocked</span> : null}
               </div>
             </CardHeader>
@@ -1579,17 +1566,30 @@ export default function WorkspacePage() {
           selectedProgramme ? (
             <Card>
               <CardHeader>
-                <CardTitle>Operate selected programme</CardTitle>
+                <CardTitle>Daily actions</CardTitle>
                 <CardDescription className="text-foreground/72">
-                  Run join, stamp visits, and keep the currently selected loyalty card live.
+                  Run join and stamp visits for the currently selected programme.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20rem)]">
+              <CardContent className="space-y-4">
                 <section className="space-y-4">
                   <div className="flex flex-wrap gap-2">
                     <span className="metric-chip">Join: {selectedProgramme.joinCode ? `/join/${selectedProgramme.joinCode}` : "Unavailable"}</span>
                     <span className="metric-chip">Cards: {workspace.selectedProgrammeCards.length}</span>
                     <span className="metric-chip">Ready: {redeemableCardsCount}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button onClick={handleDemoJoin} disabled={isMutating}>
+                      Create demo join
+                    </Button>
+                    {selectedProgramme.joinCode ? (
+                      <Button asChild variant="outline">
+                        <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
+                          Open join link
+                        </Link>
+                      </Button>
+                    ) : null}
                   </div>
 
                   <form className="space-y-3" onSubmit={handleAwardVisit}>
@@ -1604,24 +1604,6 @@ export default function WorkspacePage() {
                       Award visit
                     </Button>
                   </form>
-                </section>
-
-                <section className="rounded-[1.4rem] border border-border/70 bg-background/78 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Selected programme</p>
-                  <p className="mt-2 text-lg font-semibold">{selectedProgrammeSummary?.templateLabel}</p>
-                  <p className="mt-1 text-sm text-foreground/74">{selectedProgramme.rewardItemLabel} after {selectedProgramme.rewardThreshold} visits.</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button onClick={handleDemoJoin} disabled={isMutating}>
-                      Create demo join
-                    </Button>
-                    {selectedProgramme.joinCode ? (
-                      <Button asChild variant="outline">
-                        <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
-                          Open join link
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </div>
                 </section>
               </CardContent>
             </Card>
