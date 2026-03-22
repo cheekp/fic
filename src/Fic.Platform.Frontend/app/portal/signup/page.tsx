@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Compass, ShieldCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, Compass, Mail, Store } from "lucide-react";
 import { toast } from "sonner";
 import { createMerchant } from "@/lib/api";
 import { saveSignupMerchantDraft } from "@/lib/onboarding-draft";
@@ -105,10 +105,10 @@ export default function SignupPage() {
             <section className="section-intro space-y-4">
               <div className="onboarding-kicker">
                 <Compass className="h-3.5 w-3.5" />
-                Merchant onboarding
+                Merchant setup
               </div>
-              <h1 className="luxe-title">Create your merchant account</h1>
-              <p className="luxe-subtitle text-foreground/85">Set the core merchant details now, then move through plan, ownership, billing, and programme setup in one guided lane.</p>
+              <h1 className="luxe-title">Open your merchant workspace</h1>
+              <p className="luxe-subtitle text-foreground/85">Enter the merchant details we need to start setup. Plan selection, owner access, billing, and programme configuration follow.</p>
             </section>
 
             <Card className="onboarding-premium-panel rounded-[2rem] border-[rgba(15,27,42,0.12)] bg-transparent">
@@ -121,8 +121,8 @@ export default function SignupPage() {
                     </CardDescription>
                   </div>
                   <div className="rounded-[1.3rem] border border-[rgba(200,169,106,0.24)] bg-[rgba(200,169,106,0.08)] px-4 py-3 text-sm text-[#6f592f]">
-                    <p className="text-[11px] uppercase tracking-[0.18em]">North Star standard</p>
-                    <p className="mt-1 max-w-[14rem] leading-6">Clear setup first, complexity later.</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em]">This step captures</p>
+                    <p className="mt-1 max-w-[14rem] leading-6">Merchant name, owner name, and the owner email used for access.</p>
                   </div>
                 </div>
               </CardHeader>
@@ -183,33 +183,37 @@ export default function SignupPage() {
           <aside className="space-y-4">
             <section className="relative overflow-hidden rounded-[1.8rem] border border-[rgba(200,169,106,0.18)] bg-[linear-gradient(180deg,#0f1b2a,#16283a)] p-6 text-[#f5f3ef] shadow-[0_24px_60px_-40px_rgba(15,27,42,0.7)]">
               <div aria-hidden className="pointer-events-none absolute -right-10 -top-8 h-32 w-32 rounded-full bg-[rgba(200,169,106,0.12)] blur-3xl" />
-              <p className="relative z-10 text-xs uppercase tracking-[0.18em] text-[rgba(200,169,106,0.86)]">What happens next</p>
+              <p className="relative z-10 text-xs uppercase tracking-[0.18em] text-[rgba(200,169,106,0.86)]">What this step defines</p>
               <div className="mt-4 space-y-4">
                 <div className="relative z-10">
-                  <p className="font-medium text-[#f5f3ef]">1. Choose your starting plan</p>
-                  <p className="mt-1 text-sm leading-7 text-[rgba(245,243,239,0.74)]">Pick the self-serve route that fits your rollout pace and commercial needs.</p>
+                  <p className="font-medium text-[#f5f3ef]">1. Merchant identity</p>
+                  <p className="mt-1 text-sm leading-7 text-[rgba(245,243,239,0.74)]">The name customers and operators will see across setup and workspace views.</p>
                 </div>
                 <div className="relative z-10">
-                  <p className="font-medium text-[#f5f3ef]">2. Confirm owner access</p>
-                  <p className="mt-1 text-sm leading-7 text-[rgba(245,243,239,0.74)]">Create credentials and set billing so the workspace is properly owned from day one.</p>
+                  <p className="font-medium text-[#f5f3ef]">2. Account ownership</p>
+                  <p className="mt-1 text-sm leading-7 text-[rgba(245,243,239,0.74)]">The owner name and email used for access, billing, and accountability.</p>
                 </div>
                 <div className="relative z-10">
-                  <p className="font-medium text-[#f5f3ef]">3. Set up your first programme</p>
-                  <p className="mt-1 text-sm leading-7 text-[rgba(245,243,239,0.74)]">Add shop details, choose a template, and move into operating mode.</p>
+                  <p className="font-medium text-[#f5f3ef]">3. Setup path</p>
+                  <p className="mt-1 text-sm leading-7 text-[rgba(245,243,239,0.74)]">The next stages for commercial plan, billing, shop details, and programme launch.</p>
                 </div>
               </div>
             </section>
 
             <section className="onboarding-aside-card">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">North Star principles</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Before you continue</p>
               <div className="mt-4 space-y-4">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#c8a96a]" />
-                  <p className="text-sm leading-7 text-muted-foreground">Keep early steps short and decisive so setup feels credible, not overwhelming.</p>
+                  <Store className="mt-0.5 h-4 w-4 text-[#c8a96a]" />
+                  <p className="text-sm leading-7 text-muted-foreground">Use the public-facing merchant name customers should recognise.</p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 text-[#c8a96a]" />
-                  <p className="text-sm leading-7 text-muted-foreground">Carry one calm visual language from entry page to account creation and onward into the workspace.</p>
+                  <Mail className="mt-0.5 h-4 w-4 text-[#c8a96a]" />
+                  <p className="text-sm leading-7 text-muted-foreground">The owner email entered here becomes the primary access point for setup and billing.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <BadgeCheck className="mt-0.5 h-4 w-4 text-[#c8a96a]" />
+                  <p className="text-sm leading-7 text-muted-foreground">You can adjust shop details and programme structure after this step.</p>
                 </div>
               </div>
             </section>
