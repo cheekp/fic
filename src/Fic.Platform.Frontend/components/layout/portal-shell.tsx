@@ -132,6 +132,21 @@ export function PortalShell({
     }));
   }, [utilityLinks]);
   const isOnboardingHeader = headerMode === "onboarding";
+  const headerClassName = theme.useDarkChrome
+    ? "mb-5 flex items-center justify-between rounded-[1.6rem] border border-[rgba(200,169,106,0.16)] bg-[linear-gradient(180deg,rgba(15,27,42,0.96),rgba(22,36,52,0.92))] px-3 py-2.5 text-[#f5f3ef] shadow-[0_18px_40px_-28px_rgba(15,27,42,0.75)] backdrop-blur sm:px-4"
+    : "mb-5 flex items-center justify-between rounded-[1.6rem] border border-border/70 bg-[var(--portal-surface)] px-3 py-2.5 shadow-[0_16px_36px_-28px_rgba(15,27,42,0.38)] backdrop-blur sm:px-4";
+  const headerButtonOutlineClass = theme.useDarkChrome
+    ? "border-[rgba(200,169,106,0.2)] bg-[rgba(255,255,255,0.04)] text-[#f5f3ef] hover:bg-[rgba(255,255,255,0.08)]"
+    : "";
+  const headerGhostClass = theme.useDarkChrome
+    ? "text-[#f5f3ef] hover:bg-[rgba(255,255,255,0.06)]"
+    : "text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]";
+  const headerOutlineLinkClass = theme.useDarkChrome
+    ? "h-8 border-[rgba(200,169,106,0.2)] bg-[rgba(255,255,255,0.04)] px-3 text-xs text-[#f5f3ef] hover:bg-[rgba(255,255,255,0.08)]"
+    : "h-8 border-[rgba(15,27,42,0.16)] bg-transparent px-3 text-xs text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]";
+  const utilityLinkClass = theme.useDarkChrome
+    ? "text-xs text-[#f5f3ef]/72 transition hover:text-[#f5f3ef]"
+    : "text-xs text-foreground/65 transition hover:text-foreground";
 
   return (
     <section
@@ -144,12 +159,12 @@ export function PortalShell({
         ["--portal-surface" as string]: theme.surface,
       }}
     >
-      <header className="mb-5 flex items-center justify-between rounded-[1.6rem] border border-border/70 bg-[var(--portal-surface)] px-3 py-2.5 shadow-[0_16px_36px_-28px_rgba(15,27,42,0.38)] backdrop-blur sm:px-4">
+      <header className={headerClassName}>
         <div className="flex items-center gap-2">
           {!isOnboardingHeader ? (
             <Drawer.Root shouldScaleBackground={false}>
               <Drawer.Trigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9">
+                <Button variant="outline" size="icon" className={`h-9 w-9 ${headerButtonOutlineClass}`}>
                   <Menu className="h-4 w-4" />
                   <span className="sr-only">Open portal links</span>
                 </Button>
@@ -180,7 +195,7 @@ export function PortalShell({
           {showRail ? (
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="icon" variant="outline" className="h-9 w-9 md:hidden">
+                <Button size="icon" variant="outline" className={`h-9 w-9 md:hidden ${headerButtonOutlineClass}`}>
                   <Menu className="h-4 w-4" />
                   <span className="sr-only">Open navigation</span>
                 </Button>
@@ -196,7 +211,7 @@ export function PortalShell({
           {isOnboardingHeader ? (
             <Link href="/" className="flex flex-col">
               <span className="text-sm font-semibold sm:text-base">{title}</span>
-              <span className="hidden text-[10px] uppercase tracking-[0.18em] text-foreground/48 sm:block">
+              <span className={`hidden text-[10px] uppercase tracking-[0.18em] sm:block ${theme.useDarkChrome ? "text-[#f5f3ef]/60" : "text-foreground/48"}`}>
                 North Star platform
               </span>
             </Link>
@@ -209,10 +224,10 @@ export function PortalShell({
         <div className="flex items-center gap-2">
           {isOnboardingHeader ? (
             <>
-              <Button asChild variant="ghost" size="sm" className="h-8 px-2.5 text-xs text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
+              <Button asChild variant="ghost" size="sm" className={`h-8 px-2.5 text-xs ${headerGhostClass}`}>
                 <Link href="/">Home</Link>
               </Button>
-              <Button asChild variant="outline" size="sm" className="h-8 border-[rgba(15,27,42,0.16)] bg-transparent px-3 text-xs text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
+              <Button asChild variant="outline" size="sm" className={headerOutlineLinkClass}>
                 <a href={`${apiBaseUrl}/account/login`}>Log in</a>
               </Button>
             </>
@@ -220,11 +235,11 @@ export function PortalShell({
             <nav className="hidden items-center gap-2.5 lg:flex" aria-label="Portal utilities">
               {resolvedUtilityLinks.map((item) => (
                 item.isExternal ? (
-                  <a key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
+                  <a key={item.key} href={item.href} className={utilityLinkClass}>
                     {item.label}
                   </a>
                 ) : (
-                  <Link key={item.key} href={item.href} className="text-xs text-foreground/65 transition hover:text-foreground">
+                  <Link key={item.key} href={item.href} className={utilityLinkClass}>
                     {item.label}
                   </Link>
                 )
