@@ -12,6 +12,7 @@
 8. Homepage remains a FIC-level entry surface rather than a heavy multi-merchant control plane.
 9. The Apple Wallet package builder uses the derived theme for pass colours.
 10. The solution builds successfully after the new brand engine is introduced.
+11. Next.js portal navigation/theme payload exposes enough compiled brand tokens for workspace and join surfaces to render without inventing a second theme system client-side.
 
 ## Demo Walkthrough
 

@@ -1,11 +1,13 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import { buildBrandCssVars } from "@/lib/brand";
 import { AppProviders } from "@/components/providers/app-providers";
 import { PwaRegister } from "@/components/pwa-register";
+import { ficPortalTheme } from "@/types/portal-contracts";
 
 export const metadata: Metadata = {
-  title: "FIC Merchant Workspace",
-  description: "Premium mobile-first loyalty workspace for merchants.",
+  title: "FIC | Merchant loyalty workspace",
+  description: "Mobile-first loyalty setup and operations for merchants.",
   manifest: "/manifest.webmanifest",
   applicationName: "FIC",
   appleWebApp: {
@@ -22,7 +24,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body style={buildBrandCssVars(ficPortalTheme)}>
         <AppProviders>
           <PwaRegister />
           {children}

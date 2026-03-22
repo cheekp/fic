@@ -14,7 +14,7 @@ Next.js route parity exists, but portal-level structure is still page-local and 
   - `PortalSurface` primitives for hero/metric/card stacks
 - Introduce frontend contracts for portal navigation and theme tokens.
 - Keep FIC as default theme and support optional merchant overrides with safe fallbacks.
-- Keep backend API contract stable; this slice starts with frontend contracts/adapters and can be expanded to API-backed navigation/theme later.
+- Keep backend API contract as the source of truth for platform and merchant theme tokens; Next.js should consume compiled theme tokens rather than reconstructing visual language from only primary/accent values.
 
 ## Consequences
 
@@ -22,3 +22,4 @@ Next.js route parity exists, but portal-level structure is still page-local and 
 - Mobile and desktop navigation behavior become consistent across routes.
 - Future cross-app portal surfaces can reuse the same shell contract.
 - Route slices become easier to migrate and validate under a single chrome system.
+- Merchant workspace and join flows can stay visibly aligned because they read the same compiled brand token set.

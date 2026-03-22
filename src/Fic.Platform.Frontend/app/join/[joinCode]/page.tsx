@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getJoinExperience, joinProgramme } from "@/lib/api";
+import { buildBrandCssVars, resolvePortalBrandTheme } from "@/lib/brand";
 import type { JoinExperienceSnapshot, WalletCardSnapshot } from "@/types/contracts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,13 @@ export default function JoinPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const joinTheme = useMemo(
+    () => resolvePortalBrandTheme({
+      primaryColor: experience?.brandProfile.primaryColor,
+      accentColor: experience?.brandProfile.accentColor,
+    }),
+    [experience?.brandProfile.accentColor, experience?.brandProfile.primaryColor],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -80,38 +88,40 @@ export default function JoinPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8 sm:px-6">
+    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8 sm:px-6" style={buildBrandCssVars(joinTheme)}>
       <section
-        className="rounded-[2rem] border border-white/30 p-6 text-white shadow-[0_24px_60px_-30px_rgba(20,33,29,0.6)] sm:p-8"
+        className="rounded-[2rem] border p-6 shadow-[0_24px_60px_-30px_rgba(20,33,29,0.6)] sm:p-8"
         style={{
-          background: `linear-gradient(120deg, ${experience.brandProfile.primaryColor} 0%, color-mix(in srgb, ${experience.brandProfile.primaryColor} 45%, ${experience.brandProfile.accentColor} 55%) 55%, ${experience.brandProfile.accentColor} 100%)`,
+          background: `linear-gradient(120deg, ${joinTheme.canvasStart} 0%, ${joinTheme.primary} 38%, ${joinTheme.canvasEnd} 100%)`,
+          color: joinTheme.useDarkChrome ? "#fffaf2" : joinTheme.ink,
+          borderColor: joinTheme.line,
         }}
       >
-        <p className="text-xs uppercase tracking-[0.22em] text-white/80">Customer join flow</p>
+        <p className="text-xs uppercase tracking-[0.22em]" style={{ color: joinTheme.mutedInk }}>Customer join flow</p>
         <h1 className="mt-3 font-display text-5xl leading-[0.95] sm:text-6xl">{experience.merchant.displayName}</h1>
-        <p className="mt-4 max-w-2xl text-base text-white/90 sm:text-lg">
+        <p className="mt-4 max-w-2xl text-base sm:text-lg" style={{ color: joinTheme.mutedInk }}>
           Join {experience.programme.templateLabel.toLowerCase()} and start collecting progress immediately.
         </p>
 
-        <div className="mt-6 rounded-2xl bg-white/12 p-4 backdrop-blur">
-          <p className="text-sm text-white/80">Reward</p>
+        <div className="mt-6 rounded-2xl p-4 backdrop-blur" style={{ background: joinTheme.surfaceStrong, color: joinTheme.ink }}>
+          <p className="text-sm" style={{ color: joinTheme.mutedInk }}>Reward</p>
           <p className="text-2xl font-semibold">{experience.programme.rewardCopy}</p>
-          <p className="mt-1 text-sm text-white/80">
+          <p className="mt-1 text-sm" style={{ color: joinTheme.mutedInk }}>
             {experience.programme.rewardThreshold} visits to unlock {experience.programme.rewardItemLabel.toLowerCase()}.
           </p>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {card ? (
-            <Button className="bg-white text-[color:var(--join-ink,#14211d)] hover:bg-white/90" disabled>
+            <Button className="hover:brightness-105" style={{ background: joinTheme.primaryButton, color: joinTheme.primaryButtonInk }} disabled>
               Joined: {card.cardCode}
             </Button>
           ) : (
-            <Button className="bg-white text-[color:var(--join-ink,#14211d)] hover:bg-white/90" onClick={handleJoin} disabled={isJoining}>
+            <Button className="hover:brightness-105" style={{ background: joinTheme.primaryButton, color: joinTheme.primaryButtonInk }} onClick={handleJoin} disabled={isJoining}>
               {isJoining ? "Joining..." : "Join now"}
             </Button>
           )}
-          <span className="text-sm text-white/85">Code: {experience.programme.joinCode}</span>
+          <span className="text-sm" style={{ color: joinTheme.mutedInk }}>Code: {experience.programme.joinCode}</span>
         </div>
       </section>
 
@@ -131,14 +141,16 @@ export default function JoinPage() {
 
       {experience.brandProfile.logoUrl ? (
         <div className="mt-4 text-right">
-          <Image
-            src={experience.brandProfile.logoUrl}
-            alt={`${experience.merchant.displayName} logo`}
-            width={experience.brandProfile.logoWidth || 96}
-            height={experience.brandProfile.logoHeight || 96}
-            className="inline-block rounded-md border border-border/60 bg-white/70 p-1"
-            unoptimized
-          />
+          <span className="brand-logo-plate inline-flex">
+            <Image
+              src={experience.brandProfile.logoUrl}
+              alt={`${experience.merchant.displayName} logo`}
+              width={experience.brandProfile.logoWidth || 96}
+              height={experience.brandProfile.logoHeight || 96}
+              className="inline-block h-auto w-auto"
+              unoptimized
+            />
+          </span>
         </div>
       ) : null}
 

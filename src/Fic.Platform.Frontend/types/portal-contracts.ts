@@ -26,7 +26,24 @@ export type PortalThemeContract = {
   primary: string;
   accent: string;
   surface: string;
+  surfaceStrong: string;
   ink: string;
+  mutedInk: string;
+  line: string;
+  canvasStart: string;
+  canvasEnd: string;
+  primaryButton: string;
+  primaryButtonInk: string;
+  accentSoft: string;
+  accentInk: string;
+  logoPlate: string;
+  logoPlateBorder: string;
+  stampFilled: string;
+  stampEmpty: string;
+  stampInk: string;
+  glow: string;
+  variant: "ribbon" | "glow" | "bloom";
+  useDarkChrome: boolean;
   radius: "soft" | "rounded";
   shadow: "soft" | "medium";
 };
@@ -81,7 +98,24 @@ export const ficPortalTheme: PortalThemeContract = {
   primary: "#1f3731",
   accent: "#f4c15d",
   surface: "rgb(255 250 240 / 0.82)",
+  surfaceStrong: "rgb(255 252 247 / 0.96)",
   ink: "#14211d",
+  mutedInk: "rgba(20, 33, 29, 0.74)",
+  line: "rgba(20, 33, 29, 0.1)",
+  canvasStart: "#f3ecdd",
+  canvasEnd: "#ebe0cf",
+  primaryButton: "#1f3731",
+  primaryButtonInk: "#f8f4ea",
+  accentSoft: "rgba(244, 193, 93, 0.18)",
+  accentInk: "#14211d",
+  logoPlate: "rgba(250, 247, 241, 0.96)",
+  logoPlateBorder: "rgba(31, 55, 49, 0.12)",
+  stampFilled: "#f4c15d",
+  stampEmpty: "rgba(31, 55, 49, 0.08)",
+  stampInk: "#14211d",
+  glow: "rgba(244, 193, 93, 0.16)",
+  variant: "bloom",
+  useDarkChrome: false,
   radius: "rounded",
   shadow: "soft",
 };

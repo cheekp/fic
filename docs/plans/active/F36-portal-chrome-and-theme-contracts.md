@@ -36,3 +36,4 @@ Establish a reusable portal shell and contract layer in Next.js so signup/worksp
 - Completed: workspace rail state now derives from domain checklist and card counts (`buildWorkspacePortalNav` input uses `setupChecklist` + `cardsCount`).
 - Completed: merchant-brand theme override now resolves with null-safe fallback to FIC defaults (`resolvePortalTheme`).
 - Completed: shell nav reflects completion state consistently via adapter-provided flags.
+- Completed: shared brand-token wiring now lets the Next.js shell and workspace surfaces consume one theme seam instead of scattering hardcoded palette values across pages.

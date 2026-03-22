@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Fic.Contracts;
+using Fic.MerchantAccounts;
 
 namespace Fic.Platform.Web.Services;
 
@@ -11,7 +12,24 @@ public sealed class PortalNavigationContractBuilder
         "#1f3731",
         "#f4c15d",
         "rgb(255 250 240 / 0.82)",
+        "rgb(255 252 247 / 0.96)",
         "#14211d",
+        "rgba(20, 33, 29, 0.74)",
+        "rgba(20, 33, 29, 0.1)",
+        "#f3ecdd",
+        "#ebe0cf",
+        "#1f3731",
+        "#f8f4ea",
+        "rgba(244, 193, 93, 0.18)",
+        "#14211d",
+        "rgba(250, 247, 241, 0.96)",
+        "rgba(31, 55, 49, 0.12)",
+        "#f4c15d",
+        "rgba(31, 55, 49, 0.08)",
+        "#14211d",
+        "rgba(244, 193, 93, 0.16)",
+        "bloom",
+        false,
         "rounded",
         "soft");
 
@@ -290,12 +308,35 @@ public sealed class PortalNavigationContractBuilder
 
         var primary = IsHexColor(workspace.BrandProfile.PrimaryColor) ? workspace.BrandProfile.PrimaryColor : DefaultTheme.Primary;
         var accent = IsHexColor(workspace.BrandProfile.AccentColor) ? workspace.BrandProfile.AccentColor : DefaultTheme.Accent;
+        var compiledTheme = MerchantBrandThemeCompiler.Compile(
+            primary,
+            accent,
+            new MerchantLogoMetadata(workspace.BrandProfile.LogoWidth, workspace.BrandProfile.LogoHeight));
 
-        return DefaultTheme with
-        {
-            Primary = primary,
-            Accent = accent,
-        };
+        return new PortalThemeContract(
+            compiledTheme.PrimaryColor,
+            compiledTheme.AccentColor,
+            compiledTheme.SurfaceColor,
+            compiledTheme.SurfaceStrongColor,
+            compiledTheme.InkColor,
+            compiledTheme.MutedInkColor,
+            compiledTheme.LineColor,
+            compiledTheme.CanvasStartColor,
+            compiledTheme.CanvasEndColor,
+            compiledTheme.PrimaryButtonColor,
+            compiledTheme.PrimaryButtonInkColor,
+            compiledTheme.AccentSoftColor,
+            compiledTheme.AccentInkColor,
+            compiledTheme.LogoPlateColor,
+            compiledTheme.LogoPlateBorderColor,
+            compiledTheme.StampFilledColor,
+            compiledTheme.StampEmptyColor,
+            compiledTheme.StampInkColor,
+            compiledTheme.GlowColor,
+            compiledTheme.Variant,
+            compiledTheme.UseDarkChrome,
+            "rounded",
+            "soft");
     }
 
     private static bool IsHexColor(string? value) =>
