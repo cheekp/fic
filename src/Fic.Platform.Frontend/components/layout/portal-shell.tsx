@@ -147,6 +147,18 @@ export function PortalShell({
   const utilityLinkClass = theme.useDarkChrome
     ? "text-xs text-[#f5f3ef]/72 transition hover:text-[#f5f3ef]"
     : "text-xs text-foreground/65 transition hover:text-foreground";
+  const brandMarkClass = theme.useDarkChrome
+    ? "flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(200,169,106,0.34)] bg-[linear-gradient(180deg,rgba(255,251,244,0.16),rgba(200,169,106,0.2))] text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f5f3ef]"
+    : "flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(15,27,42,0.12)] bg-[rgba(255,255,255,0.72)] text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0f1b2a]";
+  const brandTitleClass = theme.useDarkChrome
+    ? "text-sm font-semibold tracking-[0.01em] text-[#f5f3ef] sm:text-base"
+    : "text-sm font-semibold tracking-[0.01em] text-[#0f1b2a] sm:text-base";
+  const brandSubtitleClass = theme.useDarkChrome
+    ? "hidden text-[11px] uppercase tracking-[0.2em] text-[#f5f3ef]/62 sm:block"
+    : "hidden text-[11px] uppercase tracking-[0.2em] text-[#4a4f55] sm:block";
+  const sectionLabelClass = theme.useDarkChrome
+    ? "text-[10px] uppercase tracking-[0.18em] text-[#f5f3ef]/54"
+    : "text-[10px] uppercase tracking-[0.18em] text-[#4a4f55]/72";
 
   return (
     <section
@@ -160,7 +172,7 @@ export function PortalShell({
       }}
     >
       <header className={headerClassName}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {!isOnboardingHeader ? (
             <Drawer.Root shouldScaleBackground={false}>
               <Drawer.Trigger asChild>
@@ -208,26 +220,24 @@ export function PortalShell({
               </DialogContent>
             </Dialog>
           ) : null}
-          {isOnboardingHeader ? (
-            <Link href="/" className="flex flex-col">
-              <span className="text-sm font-semibold sm:text-base">{title}</span>
-              <span className={`hidden text-[10px] uppercase tracking-[0.18em] sm:block ${theme.useDarkChrome ? "text-[#f5f3ef]/60" : "text-foreground/48"}`}>
-                North Star platform
-              </span>
-            </Link>
-          ) : (
-            <p className="text-sm font-semibold sm:text-base">{title}</p>
-          )}
+          <Link href="/" className="flex items-center gap-3">
+            <span className={brandMarkClass}>NS</span>
+            <span className="flex flex-col">
+              <span className={sectionLabelClass}>{title}</span>
+              <span className={brandTitleClass}>North Star Customer Solutions</span>
+              <span className={brandSubtitleClass}>Loyalty. Membership. Customer strategy.</span>
+            </span>
+          </Link>
           {showActiveBadge && activeItem ? <Badge variant="outline" className="hidden sm:inline-flex">{activeItem.label}</Badge> : null}
         </div>
 
         <div className="flex items-center gap-2">
           {isOnboardingHeader ? (
             <>
-              <Button asChild variant="ghost" size="sm" className={`h-8 px-2.5 text-xs ${headerGhostClass}`}>
+              <Button asChild variant="ghost" size="sm" className={`h-9 px-3 text-xs ${headerGhostClass}`}>
                 <Link href="/">Home</Link>
               </Button>
-              <Button asChild variant="outline" size="sm" className={headerOutlineLinkClass}>
+              <Button asChild variant="outline" size="sm" className={`h-9 px-4 ${headerOutlineLinkClass}`}>
                 <a href={`${apiBaseUrl}/account/login`}>Log in</a>
               </Button>
             </>
