@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, CheckCircle2, Sparkles } from "lucide-react";
+import { Check, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { PortalRoadmapContract } from "@/types/portal-contracts";
 
@@ -76,6 +76,7 @@ export function OnboardingJourney({
   const completeCount = roadmap?.completeCount ?? steps.filter((step) => step.isComplete).length;
   const currentIndex = Math.max(0, steps.findIndex((step) => step.isCurrent));
   const mobileWindowSteps = steps.filter((_, index) => Math.abs(index - currentIndex) <= 1);
+  const currentStepNumber = currentIndex + 1;
 
   const renderStandardRow = (step: JourneyStep) => {
     const isNavigable = Boolean(step.href && (step.isComplete || step.isCurrent));
@@ -86,7 +87,7 @@ export function OnboardingJourney({
           step.isCurrent
             ? "border-secondary/70 bg-secondary/10"
             : step.isComplete
-              ? "border-primary/40 bg-primary/5"
+              ? "border-[rgba(200,169,106,0.42)] bg-[rgba(200,169,106,0.08)]"
               : "border-border bg-background"
         }`}
       >
@@ -95,7 +96,7 @@ export function OnboardingJourney({
             step.isCurrent
               ? "border-primary/70 bg-primary text-primary-foreground"
               : step.isComplete
-                ? "border-primary/60 bg-primary/15 text-primary"
+                ? "border-[rgba(200,169,106,0.78)] bg-[#c8a96a] text-[#0f1b2a]"
                 : "border-border bg-background text-muted-foreground"
           }`}
         >
@@ -131,16 +132,16 @@ export function OnboardingJourney({
         <span
           className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold sm:h-9 sm:w-9 sm:text-xs ${
             step.isCurrent
-              ? "border-primary/70 bg-primary text-primary-foreground shadow-[0_0_24px_rgba(22,94,70,0.45)]"
+              ? "border-primary/70 bg-primary text-primary-foreground shadow-[0_0_24px_rgba(15,27,42,0.32)]"
               : step.isComplete
-                ? "border-primary/60 bg-[rgb(255,250,240)] text-primary"
+                ? "border-[rgba(200,169,106,0.78)] bg-[#c8a96a] text-[#0f1b2a] shadow-[0_12px_24px_-16px_rgba(200,169,106,0.92)]"
                 : "border-border bg-background text-muted-foreground"
           }`}
         >
           {step.isComplete ? <Check className="h-4 w-4" /> : step.order}
         </span>
         <div className="mt-0.5">
-          <p className={`text-xs font-medium leading-4 sm:text-sm sm:leading-5 ${step.isCurrent ? "text-foreground" : "text-foreground/70"} ${step.isCurrent ? "" : "hidden sm:block"}`}>
+          <p className={`text-xs font-medium leading-4 sm:text-sm sm:leading-5 ${step.isCurrent ? "text-foreground" : step.isComplete ? "text-foreground/88" : "text-foreground/70"} ${step.isCurrent ? "" : "hidden sm:block"}`}>
             {step.compactLabel ? <span className="sm:hidden">{step.compactLabel}</span> : null}
             {step.compactLabel ? <span className="hidden sm:inline">{step.label}</span> : step.label}
           </p>
@@ -159,7 +160,7 @@ export function OnboardingJourney({
         {index < total - 1 && isSegmentComplete ? (
           <span
             aria-hidden
-            className="absolute left-1/2 right-[-50%] top-4 h-px bg-[linear-gradient(90deg,#1f3731,#2d5b50,#f4c15d)] sm:top-[1.25rem]"
+            className="absolute left-1/2 right-[-50%] top-4 h-px bg-[linear-gradient(90deg,#0f1b2a,#6d5a34,#c8a96a)] sm:top-[1.25rem]"
             style={{ opacity: 0.92 }}
           />
         ) : null}
@@ -179,19 +180,18 @@ export function OnboardingJourney({
   };
 
   return (
-    <section className="glass-panel brand-glow relative max-h-[12rem] space-y-1.5 overflow-hidden p-3 sm:max-h-none sm:space-y-2 sm:p-4" aria-label="Onboarding journey">
-      <div aria-hidden className="pointer-events-none absolute -left-16 -top-14 h-52 w-52 rounded-full bg-primary/10 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -right-10 top-6 h-44 w-44 rounded-full bg-secondary/20 blur-3xl" />
+    <section className="glass-panel relative max-h-[12rem] space-y-1.5 overflow-hidden rounded-[1.85rem] border-[rgba(15,27,42,0.12)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(247,243,236,0.94))] p-3 shadow-[0_22px_48px_-36px_rgba(15,27,42,0.34)] sm:max-h-none sm:space-y-2 sm:p-4" aria-label="Onboarding journey">
+      <div aria-hidden className="pointer-events-none absolute -left-16 -top-14 h-52 w-52 rounded-full bg-primary/8 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-10 top-6 h-44 w-44 rounded-full bg-secondary/12 blur-3xl" />
 
       <div className="flex items-center justify-between gap-2">
         <div className="inline-flex items-center gap-1.5">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Signup roadmap</p>
-          {variant === "compact" ? <Sparkles className="h-3.5 w-3.5 text-primary" /> : null}
         </div>
         <div className="flex items-center gap-1.5">
-          <Badge>
-            <span className="sm:hidden">{completeCount}/{steps.length}</span>
-            <span className="hidden sm:inline">{completeCount} of {steps.length} complete</span>
+          <Badge className="border-[rgba(200,169,106,0.24)] bg-[rgba(200,169,106,0.12)] text-[#6f592f]">
+            <span className="sm:hidden">{currentStepNumber}/{steps.length}</span>
+            <span className="hidden sm:inline">Step {currentStepNumber} of {steps.length}</span>
           </Badge>
         </div>
       </div>

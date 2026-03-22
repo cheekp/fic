@@ -40,6 +40,7 @@ Optional modes:
 - Visual hierarchy: headline, supporting copy, CTA, and imagery should read clearly
 - Brand fit against North Star Customer Solutions guidance
 - Regressions in signup and workspace flows
+- Copy quality: flag interface narration, duplicated explanation, filler panels, and “plausible consultancy” copy that does not add real information
 
 ## Reporting
 

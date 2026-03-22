@@ -6,6 +6,7 @@
 2. Signup, plan, and billing routes use onboarding header mode.
 3. Onboarding header mode hides full utility navigation and keeps a focused conversion frame.
 4. Workspace routes retain full operator chrome behavior.
+5. Public entry and signup surfaces use one cohesive North Star visual system so header, roadmap, panels, and form controls read as one premium onboarding lane.
 
 ## Non-Functional
 

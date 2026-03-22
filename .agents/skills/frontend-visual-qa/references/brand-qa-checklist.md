@@ -28,6 +28,9 @@ Use this checklist with `docs/business/brand-guidlines.txt`.
   - headline
   - supporting copy
   - primary CTA
+- Copy should describe the decision or action on the page, not narrate the interface.
+- If a side panel or support card does not add new information, it should be removed.
+- Repeated headings such as `What this step affects`, `Used for`, `Approach`, `Operating model`, or other meta labels should be treated as likely filler and challenged.
 
 ## Imagery and composition
 
@@ -43,3 +46,6 @@ Use this checklist with `docs/business/brand-guidlines.txt`.
 - A headline that is large but unreadable
 - Navigation or utility elements stronger than the core proposition
 - Layouts that feel generic, trendy, or louder than “calm authority”
+- Copy that sounds respectable but says little
+- Panels that restate the form or roadmap without adding new information
+- “Consultancy” language used as decoration rather than concrete meaning

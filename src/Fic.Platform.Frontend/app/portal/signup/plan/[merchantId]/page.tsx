@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { readSignupMerchantDraft, saveSignupMerchantDraft } from "@/lib/onboarding-draft";
 import { useSignupPortalNavigationQuery, useWorkspaceSnapshotQuery } from "@/lib/queries";
 import type { MerchantWorkspaceSnapshot } from "@/types/contracts";
-import { ficPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
+import { northStarPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
 import { OnboardingJourney } from "@/components/layout/onboarding-journey";
 import { PortalShell } from "@/components/layout/portal-shell";
 import { Badge } from "@/components/ui/badge";
@@ -62,7 +62,7 @@ export default function SignupPlanPage() {
       name: "Starter",
       tagline: "Self-serve",
       priceLabel: "GBP 19.99/mo",
-      description: "For independent shops launching quickly with one primary programme lane.",
+      description: "For independent merchants launching a first programme with a self-serve setup path.",
       isSelfServeEnabled: true,
       features: [
         "Programme templates and QR join flow",
@@ -75,7 +75,7 @@ export default function SignupPlanPage() {
       name: "Growth",
       tagline: "Sales assisted",
       priceLabel: "GBP 79/mo",
-      description: "For multi-site operators that need support onboarding and operational controls.",
+      description: "For multi-site operators that need more rollout support and operating controls.",
       isSelfServeEnabled: false,
       features: [
         "Multi-location rollout planning",
@@ -88,7 +88,7 @@ export default function SignupPlanPage() {
       name: "Enterprise",
       tagline: "Contact us",
       priceLabel: "Custom",
-      description: "For chains needing governance, integration controls, and consultancy rollout.",
+      description: "For operators that need governance, integrations, and a consultancy-led rollout.",
       isSelfServeEnabled: false,
       features: [
         "SSO and access governance",
@@ -103,7 +103,7 @@ export default function SignupPlanPage() {
       title="Merchant setup"
       activeKey={portalNav?.activeKey ?? "plan"}
       railItems={portalNav?.items ?? []}
-      theme={portalNav?.theme ?? ficPortalTheme}
+      theme={northStarPortalTheme}
       utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
@@ -126,8 +126,8 @@ export default function SignupPlanPage() {
 
       <section className="section-intro space-y-3">
         <Badge>Step 2 of 6</Badge>
-        <h1 className="luxe-title">Choose your plan</h1>
-        <p className="luxe-subtitle text-foreground/90">Select your launch tier for {workspace?.merchant.displayName ?? draftDisplayName}.</p>
+        <h1 className="luxe-title">Choose the launch model</h1>
+        <p className="luxe-subtitle text-foreground/90">Select the commercial route for {workspace?.merchant.displayName ?? draftDisplayName} based on rollout scope and support needs.</p>
       </section>
 
       <section>
@@ -137,7 +137,7 @@ export default function SignupPlanPage() {
               <Crown className="h-5 w-5 text-secondary" />
               Plan selection
             </CardTitle>
-            <CardDescription className="text-foreground/90">Billing and owner access continue next.</CardDescription>
+            <CardDescription className="text-foreground/90">Starter continues directly into owner access and billing. Larger rollouts move into a supported delivery path.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-4 lg:grid-cols-3">
@@ -161,7 +161,7 @@ export default function SignupPlanPage() {
                   <ul className="mt-4 grid gap-2 text-sm leading-6 text-foreground/90">
                     {(tier.isSelfServeEnabled ? tier.features : tier.features.slice(0, 2)).map((feature) => (
                       <li key={feature} className="flex items-start gap-2">
-                        <Check className="mt-0.5 h-4 w-4 text-primary" />
+                        <Check className="mt-0.5 h-4 w-4 text-[#c8a96a]" />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -179,7 +179,7 @@ export default function SignupPlanPage() {
                       </Button>
                     ) : (
                       <Button asChild variant="outline" className="w-full">
-                        <Link href="/consultancy">Contact us</Link>
+                        <Link href="/consultancy">Discuss this rollout</Link>
                       </Button>
                     )}
                   </div>
@@ -188,7 +188,7 @@ export default function SignupPlanPage() {
             </div>
 
             <Button asChild variant="ghost">
-              <Link href="/portal/signup">Back to create shop</Link>
+              <Link href="/portal/signup">Back to merchant details</Link>
             </Button>
           </CardContent>
         </Card>
