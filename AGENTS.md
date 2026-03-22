@@ -17,7 +17,7 @@ Repository-specific instructions for agents working in this repo.
 - Sequence work in this order:
   1. Capture architecture in `docs/architecture/`
   2. Write or update the relevant RFC in `docs/rfcs/`
-  3. Track the current delivery slice in `docs/plans/active/`
+  3. Track the current delivery slice or in-flight set in `docs/plans/active/`
   4. Create implementation specs in `docs/specs/`
   5. Implement and prove behavior with tests
 
@@ -27,7 +27,7 @@ Repository-specific instructions for agents working in this repo.
 - `docs/ENGINEERING_HARNESS.md`
 - the active architecture note in `docs/architecture/`
 - the active RFC in `docs/rfcs/`
-- the active plan in `docs/plans/active/`
+- the relevant in-flight plan in `docs/plans/active/`
 - the relevant spec in `docs/specs/`
 
 ## Conventions

@@ -1,8 +1,8 @@
 # Active Plans
 
-Keep the current delivery plan here.
+Keep in-flight delivery plans here.
 
-Current active plan:
+Current in-flight plans:
 - `F32-app-css-partial-split-and-bundle-guardrails.md`
 - `F36-portal-chrome-and-theme-contracts.md`
 - `F37-api-nav-contract-source-of-truth.md`

@@ -51,6 +51,7 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 - `docs/plans/`
   - delivery status and sequencing
   - this is where `active`, `planned`, and `completed` live
+  - `active/` means in-flight work, not necessarily one single slice
 - `docs/specs/`
   - slice requirements and acceptance criteria
   - specs are not a status board
@@ -73,6 +74,7 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 
 - `plans` own workflow status
   - use `active/`, `planned/`, and `completed/` there
+  - treat `active/` as the set of in-flight slices
   - if you prefer the word `open`, treat current `planned/` as that concept unless we do a repo-wide rename
 - `specs` own implementation detail for a slice
   - one slice folder per implemented or implementation-ready slice
@@ -193,7 +195,7 @@ Completed slice chain to date:
 
 Each new slice should follow that same pattern: spec, code, validator, evidence.
 
-## Current Active Slice
+## Current In-Flight Slices
 
 - `F32`
   - app.css partial split and bundled guardrails so stylesheet decomposition does not bypass UX quality budgets
