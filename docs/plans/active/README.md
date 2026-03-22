@@ -1,6 +1,7 @@
 # Active Plans
 
 Keep in-flight delivery plans here.
+Use `docs/plans/SLICE_INTAKE_TEMPLATE.md` when opening a new slice or re-scoping an existing one.
 
 Current in-flight plans:
 - `F32-app-css-partial-split-and-bundle-guardrails.md`
