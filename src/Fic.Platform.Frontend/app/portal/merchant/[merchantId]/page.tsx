@@ -548,6 +548,16 @@ export default function WorkspacePage() {
       return;
     }
 
+    if (!shopTownOrCity.trim()) {
+      publishError("Enter the town or city to continue.");
+      return;
+    }
+
+    if (!shopPostcode.trim()) {
+      publishError("Enter the postcode to continue.");
+      return;
+    }
+
     setIsSavingShopDetails(true);
     setError(null);
     setMessage(null);
@@ -687,7 +697,6 @@ export default function WorkspacePage() {
     ?? (setupLaneActionKey === "shop" ? "Open shop setup" : "Create programme");
   const setupLaneTitle = setupLaneActionKey === "shop" ? "Complete shop details" : "Choose a programme template";
   const setupLaneStatus = setupLaneTasks.filter((task) => task.isComplete).length;
-  const canSaveShopDetails = shopTypeKey.trim().length > 0 && shopTownOrCity.trim().length > 0 && shopPostcode.trim().length > 0;
   const onboardingCurrentStep =
     !workspace.setupChecklist.ownerAccessConfigured
       ? "owner"
@@ -892,7 +901,7 @@ export default function WorkspacePage() {
                       onClick={() => {
                         void submitShopDetails();
                       }}
-                      disabled={isSavingShopDetails || !canSaveShopDetails}
+                      disabled={isSavingShopDetails}
                     >
                       {isSavingShopDetails ? "Saving..." : "Save shop details"}
                     </Button>
@@ -993,7 +1002,7 @@ export default function WorkspacePage() {
                   <Button
                     type="submit"
                     className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
-                    disabled={isSavingShopDetails || !canSaveShopDetails}
+                    disabled={isSavingShopDetails}
                   >
                     {isSavingShopDetails ? "Saving..." : "Save shop details"}
                   </Button>

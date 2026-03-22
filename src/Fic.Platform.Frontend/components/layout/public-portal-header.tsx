@@ -56,11 +56,11 @@ export function PublicPortalHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="mb-6 flex items-center justify-between rounded-[1.6rem] border border-[rgba(15,27,42,0.12)] bg-[rgba(245,243,239,0.94)] px-3 py-2.5 shadow-[0_18px_40px_-30px_rgba(15,27,42,0.35)] backdrop-blur sm:px-4">
+    <header className="mb-6 flex items-center justify-between rounded-[1.6rem] border border-[rgba(200,169,106,0.16)] bg-[linear-gradient(180deg,rgba(15,27,42,0.96),rgba(22,36,52,0.92))] px-3 py-2.5 text-[#f5f3ef] shadow-[0_18px_40px_-28px_rgba(15,27,42,0.75)] backdrop-blur sm:px-4">
       <div className="flex items-center gap-3">
         <Drawer.Root shouldScaleBackground={false}>
           <Drawer.Trigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9 border-[rgba(15,27,42,0.16)] bg-transparent text-[#4a4f55] hover:bg-[rgba(15,27,42,0.04)]">
+            <Button variant="outline" size="icon" className="h-9 w-9 border-[rgba(200,169,106,0.2)] bg-[rgba(255,255,255,0.04)] text-[#f5f3ef] hover:bg-[rgba(255,255,255,0.08)]">
               <Menu className="h-4 w-4" />
               <span className="sr-only">Open site navigation</span>
             </Button>
@@ -91,14 +91,14 @@ export function PublicPortalHeader() {
           </Drawer.Portal>
         </Drawer.Root>
         <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(200,169,106,0.32)] bg-[linear-gradient(180deg,rgba(255,251,244,0.92),rgba(247,241,231,0.92))] text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0f1b2a]">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(200,169,106,0.34)] bg-[linear-gradient(180deg,rgba(255,251,244,0.16),rgba(200,169,106,0.2))] text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f5f3ef]">
             NS
           </span>
           <span className="flex flex-col">
-            <span className="text-sm font-semibold tracking-[0.01em] text-[#0f1b2a] sm:text-base">
+            <span className="text-sm font-semibold tracking-[0.01em] text-[#f5f3ef] sm:text-base">
               North Star Customer Solutions
             </span>
-            <span className="hidden text-[11px] uppercase tracking-[0.2em] text-[rgba(74,79,85,0.74)] sm:block">
+            <span className="hidden text-[11px] uppercase tracking-[0.2em] text-[#f5f3ef]/62 sm:block">
               Loyalty. Membership. Customer strategy.
             </span>
           </span>
@@ -106,10 +106,10 @@ export function PublicPortalHeader() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="sm" className="h-9 px-3 text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
+        <Button asChild variant="ghost" size="sm" className="h-9 px-3 text-[#f5f3ef] hover:bg-[rgba(255,255,255,0.06)]">
           <a href={`${apiBaseUrl}/account/login`}>Log in</a>
         </Button>
-        <Button asChild size="sm" className="h-9 px-4 bg-[#0f1b2a] text-[#f5f3ef] shadow-[0_12px_28px_-18px_rgba(15,27,42,0.85)] hover:bg-[#1b2d40]">
+        <Button asChild size="sm" className="h-9 px-4 bg-[#c8a96a] text-[#0f1b2a] shadow-[0_12px_28px_-18px_rgba(15,27,42,0.85)] hover:bg-[#d4b57a]">
           <Link href="/portal/signup">Sign up</Link>
         </Button>
       </div>
