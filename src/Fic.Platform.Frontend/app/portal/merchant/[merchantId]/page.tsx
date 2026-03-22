@@ -7,6 +7,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy, Eye, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { resolvePortalBrandTheme } from "@/lib/brand";
 import {
   awardVisit,
   createProgramme,
@@ -188,7 +189,13 @@ export default function WorkspacePage() {
   const shopTypesQuery = useShopTypesQuery();
   const portalNavQuery = useWorkspacePortalNavigationQuery(merchantId, section, selectedProgrammeId);
   const portalNav = portalNavQuery.data ?? null;
-  const workspaceTheme = northStarPortalTheme;
+  const workspaceTheme = useMemo(
+    () => resolvePortalBrandTheme({
+      primaryColor: workspace?.brandProfile.primaryColor ?? northStarPortalTheme.primary,
+      accentColor: workspace?.brandProfile.accentColor ?? northStarPortalTheme.accent,
+    }),
+    [workspace?.brandProfile.accentColor, workspace?.brandProfile.primaryColor],
+  );
   const brandLogoUrl = workspace?.brandProfile.logoUrl
     ? withCacheBust(workspace.brandProfile.logoUrl, logoCacheBuster)
     : null;
@@ -733,7 +740,7 @@ export default function WorkspacePage() {
         title="Merchant portal"
         activeKey="operate"
         railItems={portalNav?.items ?? []}
-        theme={northStarPortalTheme}
+        theme={workspaceTheme}
         utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
