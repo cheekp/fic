@@ -37,5 +37,6 @@ Repository-specific instructions for agents working in this repo.
 - Prefer short, reviewable slices over large speculative plans.
 - Each spec should define explicit requirements and acceptance criteria.
 - Use `docs/architecture/` for durable system shape and `docs/specs/<slice>/DESIGN.md` for slice-local design notes.
+- After meaningful frontend visual changes, use the repo-local skill `.agents/skills/frontend-visual-qa/` to run screenshot-based QA and brand checks against `docs/business/brand-guidlines.txt`.
 - If behavior or architecture changes, update the corresponding RFC or spec in the same change.
 - Use branch names like `rfc/<slug>`, `feature/<slug>`, `bug/<slug>`, and `chore/<slug>`.
