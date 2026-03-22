@@ -144,7 +144,7 @@ export function PortalShell({
         ["--portal-surface" as string]: theme.surface,
       }}
     >
-      <header className="sticky top-0 z-30 mb-5 flex items-center justify-between rounded-[1.6rem] border border-border/70 bg-[var(--portal-surface)] px-3 py-2.5 shadow-[0_16px_36px_-28px_rgba(15,27,42,0.38)] backdrop-blur sm:px-4">
+      <header className="mb-5 flex items-center justify-between rounded-[1.6rem] border border-border/70 bg-[var(--portal-surface)] px-3 py-2.5 shadow-[0_16px_36px_-28px_rgba(15,27,42,0.38)] backdrop-blur sm:px-4">
         <div className="flex items-center gap-2">
           {!isOnboardingHeader ? (
             <Drawer.Root shouldScaleBackground={false}>
@@ -209,10 +209,10 @@ export function PortalShell({
         <div className="flex items-center gap-2">
           {isOnboardingHeader ? (
             <>
-              <Button asChild variant="ghost" size="sm" className="h-8 px-2.5 text-xs">
+              <Button asChild variant="ghost" size="sm" className="h-8 px-2.5 text-xs text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
                 <Link href="/">Home</Link>
               </Button>
-              <Button asChild variant="outline" size="sm" className="h-8 px-3 text-xs">
+              <Button asChild variant="outline" size="sm" className="h-8 border-[rgba(15,27,42,0.16)] bg-transparent px-3 text-xs text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
                 <a href={`${apiBaseUrl}/account/login`}>Log in</a>
               </Button>
             </>

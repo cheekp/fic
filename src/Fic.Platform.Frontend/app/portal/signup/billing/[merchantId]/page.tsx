@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { completeSignup } from "@/lib/api";
 import { readSignupMerchantDraft } from "@/lib/onboarding-draft";
 import { useSignupPortalNavigationQuery } from "@/lib/queries";
-import { ficPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
+import { northStarPortalTheme, type PortalNavigationContract } from "@/types/portal-contracts";
 import { OnboardingJourney } from "@/components/layout/onboarding-journey";
 import { PortalShell } from "@/components/layout/portal-shell";
 import { Badge } from "@/components/ui/badge";
@@ -175,7 +175,7 @@ export default function SignupBillingPage() {
       title="Merchant setup"
       activeKey={portalNav?.activeKey ?? "billing"}
       railItems={portalNav?.items ?? []}
-      theme={portalNav?.theme ?? ficPortalTheme}
+      theme={northStarPortalTheme}
       utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
@@ -199,11 +199,11 @@ export default function SignupBillingPage() {
       />
 
       <section className="section-intro space-y-3">
-        <h1 className="luxe-title">{isOwnerStage ? "Set owner access" : "Confirm billing"}</h1>
+        <h1 className="luxe-title">{isOwnerStage ? "Formalise account ownership" : "Activate the commercial plan"}</h1>
         <p className="luxe-subtitle text-foreground/90">
           {isOwnerStage
-            ? `Plan selected: ${selectedPlan}. Secure owner credentials first.`
-            : `Plan selected: ${selectedPlan}. Confirm payment to continue to workspace.`}
+            ? `Plan selected: ${selectedPlan}. Set the owner login that will control the merchant account.`
+            : `Plan selected: ${selectedPlan}. Confirm billing details to activate the selected route.`}
         </p>
       </section>
 
@@ -243,12 +243,12 @@ export default function SignupBillingPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-3xl">
               <LockKeyhole className="h-5 w-5 text-secondary" />
-              {isOwnerStage ? "Owner security setup" : "Billing confirmation"}
+              {isOwnerStage ? "Owner access" : "Billing"}
             </CardTitle>
             <CardDescription className="text-foreground/90">
               {isOwnerStage
-                ? "Create secure owner credentials to unlock billing."
-                : "Owner access is set. Confirm payment details to finish onboarding."}
+                ? "Create the owner password before moving to billing."
+                : "Owner access is set. Confirm billing details before entering the workspace."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -258,7 +258,7 @@ export default function SignupBillingPage() {
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Selected plan</p>
                     <p className="mt-1 text-lg font-semibold">Starter</p>
-                    <p className="text-sm text-foreground/75">GBP 19.99/mo self-serve onboarding path.</p>
+                    <p className="text-sm text-foreground/75">GBP 19.99/mo self-serve starting plan.</p>
                   </div>
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/portal/signup/plan/${merchantId}`}>Change plan</Link>
@@ -302,11 +302,7 @@ export default function SignupBillingPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="default"
-                      onClick={handleConfirmOwnerAccess}
-                    >
+                    <Button type="button" variant="default" onClick={handleConfirmOwnerAccess}>
                       Save owner access and continue
                     </Button>
                   </div>
@@ -347,9 +343,9 @@ export default function SignupBillingPage() {
                     onClick={() => setPaymentMethod("apple-pay")}
                     disabled={!ownerAccessConfirmed}
                   >
-                    <span>
-                      <span className="block text-sm font-semibold">Apple Pay</span>
-                      <span className="text-xs text-foreground/70">Fastest setup on supported devices and browsers.</span>
+                      <span>
+                        <span className="block text-sm font-semibold">Apple Pay</span>
+                      <span className="text-xs text-foreground/70">Fastest option on supported devices and browsers.</span>
                     </span>
                     <Image src="/branding/apple-pay-mark.svg" alt="Apple Pay" width={48} height={20} className="h-5 w-auto opacity-80" />
                   </button>
@@ -362,8 +358,8 @@ export default function SignupBillingPage() {
                     onClick={() => setPaymentMethod("card")}
                     disabled={!ownerAccessConfirmed}
                   >
-                    <span>
-                      <span className="block text-sm font-semibold">Card</span>
+                      <span>
+                        <span className="block text-sm font-semibold">Card</span>
                       <span className="text-xs text-foreground/70">Use a business debit or credit card.</span>
                     </span>
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -421,7 +417,7 @@ export default function SignupBillingPage() {
                   onClick={handleConfirmBillingDetails}
                   disabled={!ownerAccessConfirmed}
                 >
-                  {billingConfirmed ? "Billing confirmed" : "Confirm billing details"}
+                  {billingConfirmed ? "Billing confirmed" : "Confirm billing"}
                 </Button>
               </section>
               ) : null}

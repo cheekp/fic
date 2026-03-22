@@ -76,6 +76,7 @@ export function OnboardingJourney({
   const completeCount = roadmap?.completeCount ?? steps.filter((step) => step.isComplete).length;
   const currentIndex = Math.max(0, steps.findIndex((step) => step.isCurrent));
   const mobileWindowSteps = steps.filter((_, index) => Math.abs(index - currentIndex) <= 1);
+  const currentStepNumber = currentIndex + 1;
 
   const renderStandardRow = (step: JourneyStep) => {
     const isNavigable = Boolean(step.href && (step.isComplete || step.isCurrent));
@@ -189,8 +190,8 @@ export function OnboardingJourney({
         </div>
         <div className="flex items-center gap-1.5">
           <Badge className="border-[rgba(200,169,106,0.24)] bg-[rgba(200,169,106,0.12)] text-[#6f592f]">
-            <span className="sm:hidden">{completeCount}/{steps.length}</span>
-            <span className="hidden sm:inline">{completeCount} of {steps.length} complete</span>
+            <span className="sm:hidden">{currentStepNumber}/{steps.length}</span>
+            <span className="hidden sm:inline">Step {currentStepNumber} of {steps.length}</span>
           </Badge>
         </div>
       </div>

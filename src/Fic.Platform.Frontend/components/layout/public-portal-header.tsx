@@ -56,7 +56,7 @@ export function PublicPortalHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 mb-6 flex items-center justify-between rounded-[1.6rem] border border-[rgba(15,27,42,0.12)] bg-[rgba(245,243,239,0.94)] px-3 py-2.5 shadow-[0_18px_40px_-30px_rgba(15,27,42,0.35)] backdrop-blur sm:px-4">
+    <header className="mb-6 flex items-center justify-between rounded-[1.6rem] border border-[rgba(15,27,42,0.12)] bg-[rgba(245,243,239,0.94)] px-3 py-2.5 shadow-[0_18px_40px_-30px_rgba(15,27,42,0.35)] backdrop-blur sm:px-4">
       <div className="flex items-center gap-3">
         <Drawer.Root shouldScaleBackground={false}>
           <Drawer.Trigger asChild>
