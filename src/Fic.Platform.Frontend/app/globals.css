@@ -191,3 +191,39 @@ main {
   background: rgba(200, 169, 106, 0.08);
   color: #806537;
 }
+
+.onboarding-shell {
+  @apply mx-auto max-w-5xl space-y-5;
+}
+
+.onboarding-stage-card {
+  @apply onboarding-premium-panel rounded-[2rem] border-[rgba(15,27,42,0.12)] bg-transparent;
+}
+
+.onboarding-choice-card {
+  @apply rounded-[1.6rem] border p-5 shadow-[0_20px_40px_-32px_rgba(15,27,42,0.28)];
+  border-color: rgba(15, 27, 42, 0.1);
+  background: linear-gradient(180deg, rgba(255, 251, 245, 0.98) 0%, rgba(248, 244, 237, 0.94) 100%);
+}
+
+.onboarding-choice-card--active {
+  border-color: rgba(200, 169, 106, 0.4);
+  background: linear-gradient(180deg, rgba(252, 247, 238, 0.98) 0%, rgba(246, 236, 217, 0.92) 100%);
+  box-shadow: 0 24px 48px -34px rgba(200, 169, 106, 0.52);
+}
+
+.onboarding-step-toggle {
+  @apply rounded-[1.15rem] border px-4 py-3 text-sm transition;
+  border-color: rgba(15, 27, 42, 0.1);
+  background: rgba(255, 251, 245, 0.82);
+}
+
+.onboarding-step-toggle--active {
+  border-color: rgba(200, 169, 106, 0.38);
+  background: rgba(200, 169, 106, 0.12);
+}
+
+.onboarding-step-toggle--complete {
+  border-color: rgba(200, 169, 106, 0.26);
+  background: rgba(200, 169, 106, 0.08);
+}

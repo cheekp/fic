@@ -100,7 +100,7 @@ export default function SignupPage() {
           variant="compact"
         />
 
-        <div className="mx-auto max-w-3xl space-y-5">
+        <div className="onboarding-shell max-w-3xl">
           <section className="section-intro space-y-4">
             <div className="onboarding-kicker">
               <Compass className="h-3.5 w-3.5" />
@@ -110,7 +110,7 @@ export default function SignupPage() {
             <p className="luxe-subtitle text-foreground/85">Enter the merchant name, owner name, and owner email. Plan, billing, and programme setup follow.</p>
           </section>
 
-          <Card className="onboarding-premium-panel rounded-[2rem] border-[rgba(15,27,42,0.12)] bg-transparent">
+          <Card className="onboarding-stage-card">
             <CardHeader className="relative z-10 pb-5">
               <div>
                 <CardTitle className="text-[2rem] text-[#0f1b2a]">Merchant details</CardTitle>

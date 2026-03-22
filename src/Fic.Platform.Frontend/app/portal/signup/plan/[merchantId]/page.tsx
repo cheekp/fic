@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Check, Crown } from "lucide-react";
+import { ArrowRight, Check, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { readSignupMerchantDraft, saveSignupMerchantDraft } from "@/lib/onboarding-draft";
 import { useSignupPortalNavigationQuery, useWorkspaceSnapshotQuery } from "@/lib/queries";
@@ -109,7 +109,7 @@ export default function SignupPlanPage() {
       showActiveBadge={false}
       headerMode="onboarding"
     >
-      <div className="space-y-5">
+      <div className="onboarding-shell">
       <OnboardingJourney
         roadmap={portalNav?.roadmap}
         currentStep="plan"
@@ -124,19 +124,19 @@ export default function SignupPlanPage() {
         variant="compact"
       />
 
-      <section className="section-intro space-y-3">
-        <Badge>Step 2 of 6</Badge>
+      <section className="section-intro space-y-4">
+        <div className="onboarding-kicker">
+          <Compass className="h-3.5 w-3.5" />
+          Plan
+        </div>
         <h1 className="luxe-title">Choose the launch model</h1>
         <p className="luxe-subtitle text-foreground/90">Select the commercial route for {workspace?.merchant.displayName ?? draftDisplayName} based on rollout scope and support needs.</p>
       </section>
 
       <section>
-        <Card>
+        <Card className="onboarding-stage-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-3xl">
-              <Crown className="h-5 w-5 text-secondary" />
-              Plan selection
-            </CardTitle>
+            <CardTitle className="text-3xl">Plan selection</CardTitle>
             <CardDescription className="text-foreground/90">Starter continues directly into owner access and billing. Larger rollouts move into a supported delivery path.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -144,14 +144,14 @@ export default function SignupPlanPage() {
               {tiers.map((tier) => (
                 <article
                   key={tier.key}
-                  className={`glass-panel flex h-full flex-col p-4 ${
-                    tier.isSelfServeEnabled ? "border-secondary/70 bg-secondary/15 shadow-[0_12px_30px_rgba(20,33,29,0.12)]" : "bg-card/95"
+                  className={`onboarding-choice-card flex h-full flex-col ${
+                    tier.isSelfServeEnabled ? "onboarding-choice-card--active" : ""
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{tier.tagline}</p>
-                      {tier.isSelfServeEnabled ? <Badge>Recommended</Badge> : null}
+                      {tier.isSelfServeEnabled ? <Badge className="border-[rgba(200,169,106,0.28)] bg-[rgba(200,169,106,0.16)] text-[#6f592f]">Recommended</Badge> : null}
                     </div>
                     <h3 className="font-display text-[1.9rem] leading-tight">{tier.name}</h3>
                     <p className="text-lg font-semibold">{tier.priceLabel}</p>
@@ -171,14 +171,14 @@ export default function SignupPlanPage() {
                     {tier.isSelfServeEnabled ? (
                       <Button
                         type="button"
-                        className="w-full"
+                        className="w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#1b2d40]"
                         onClick={() => router.push(`/portal/signup/billing/${merchantId}?plan=starter`)}
                       >
                         Continue with Starter
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button asChild variant="outline" className="w-full">
+                      <Button asChild variant="outline" className="w-full rounded-full border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
                         <Link href="/consultancy">Discuss this rollout</Link>
                       </Button>
                     )}

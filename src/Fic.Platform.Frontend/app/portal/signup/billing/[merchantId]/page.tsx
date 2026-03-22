@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CreditCard, LockKeyhole } from "lucide-react";
+import { Compass, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { completeSignup } from "@/lib/api";
 import { readSignupMerchantDraft } from "@/lib/onboarding-draft";
@@ -181,7 +181,7 @@ export default function SignupBillingPage() {
       showActiveBadge={false}
       headerMode="onboarding"
     >
-      <div className="space-y-5">
+      <div className="onboarding-shell">
       <OnboardingJourney
         roadmap={null}
         currentStep={currentRoadmapStep}
@@ -198,7 +198,11 @@ export default function SignupBillingPage() {
         variant="compact"
       />
 
-      <section className="section-intro space-y-3">
+      <section className="section-intro space-y-4">
+        <div className="onboarding-kicker">
+          <Compass className="h-3.5 w-3.5" />
+          {isOwnerStage ? "Owner access" : "Billing"}
+        </div>
         <h1 className="luxe-title">{isOwnerStage ? "Formalise account ownership" : "Activate the commercial plan"}</h1>
         <p className="luxe-subtitle text-foreground/90">
           {isOwnerStage
@@ -211,12 +215,12 @@ export default function SignupBillingPage() {
         <div className="grid gap-2 sm:grid-cols-2">
           <Link
             href={`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=owner`}
-            className={`rounded-xl border px-3 py-2 text-sm transition ${
+            className={`onboarding-step-toggle ${
               isOwnerStage
-                ? "border-primary/70 bg-primary/10 text-foreground"
+                ? "onboarding-step-toggle--active text-foreground"
                 : ownerAccessConfirmed
-                  ? "border-primary/35 bg-primary/5 text-foreground/85"
-                  : "border-border/70 bg-background/75 text-foreground/72"
+                  ? "onboarding-step-toggle--complete text-foreground/85"
+                  : "text-foreground/72"
             }`}
           >
             <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Step 3</p>
@@ -224,12 +228,12 @@ export default function SignupBillingPage() {
           </Link>
           <Link
             href={`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=billing`}
-            className={`rounded-xl border px-3 py-2 text-sm transition ${
+            className={`onboarding-step-toggle ${
               isBillingStage
-                ? "border-primary/70 bg-primary/10 text-foreground"
+                ? "onboarding-step-toggle--active text-foreground"
                 : billingConfirmed
-                  ? "border-primary/35 bg-primary/5 text-foreground/85"
-                  : "border-border/70 bg-background/75 text-foreground/72"
+                  ? "onboarding-step-toggle--complete text-foreground/85"
+                  : "text-foreground/72"
             } ${!ownerAccessConfirmed && !isBillingStage ? "pointer-events-none opacity-60" : ""}`}
           >
             <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Step 4</p>
@@ -239,12 +243,9 @@ export default function SignupBillingPage() {
       </section>
 
       <section>
-        <Card>
+        <Card className="onboarding-stage-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-3xl">
-              <LockKeyhole className="h-5 w-5 text-secondary" />
-              {isOwnerStage ? "Owner access" : "Billing"}
-            </CardTitle>
+            <CardTitle className="text-3xl">{isOwnerStage ? "Owner access" : "Billing"}</CardTitle>
             <CardDescription className="text-foreground/90">
               {isOwnerStage
                 ? "Create the owner password before moving to billing."
@@ -253,14 +254,14 @@ export default function SignupBillingPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <form className="space-y-5" onSubmit={handleSubmit}>
-              <section className="glass-panel space-y-4 border-secondary/35 bg-secondary/10 p-4">
+              <section className="rounded-[1.6rem] border border-[rgba(200,169,106,0.28)] bg-[rgba(200,169,106,0.1)] p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Selected plan</p>
                     <p className="mt-1 text-lg font-semibold">Starter</p>
                     <p className="text-sm text-foreground/75">GBP 19.99/mo self-serve starting plan.</p>
                   </div>
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="outline" size="sm" className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
                     <Link href={`/portal/signup/plan/${merchantId}`}>Change plan</Link>
                   </Button>
                 </div>
@@ -274,7 +275,7 @@ export default function SignupBillingPage() {
               </section>
 
               {isOwnerStage ? (
-                <section className="space-y-4 rounded-2xl border border-border/70 bg-background/80 p-4">
+                <section className="space-y-4 rounded-[1.6rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,251,245,0.82)] p-4">
                   <div className="space-y-1">
                     <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Owner access step</p>
                     <h3 className="text-lg font-semibold">Set owner credentials</h3>
@@ -302,13 +303,13 @@ export default function SignupBillingPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <Button type="button" variant="default" onClick={handleConfirmOwnerAccess}>
+                    <Button type="button" variant="default" className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#1b2d40]" onClick={handleConfirmOwnerAccess}>
                       Save owner access and continue
                     </Button>
                   </div>
                 </section>
               ) : (
-                <section className="space-y-3 rounded-2xl border border-border/70 bg-background/80 p-4">
+                <section className="space-y-3 rounded-[1.6rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,251,245,0.82)] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Owner access</p>
@@ -316,7 +317,7 @@ export default function SignupBillingPage() {
                         {ownerAccessConfirmed ? "Owner access confirmed" : "Owner access not yet confirmed in this session"}
                       </p>
                     </div>
-                    <Button asChild variant="outline" size="sm">
+                    <Button asChild variant="outline" size="sm" className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
                       <Link href={`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=owner`}>
                         Edit owner access
                       </Link>
@@ -329,7 +330,7 @@ export default function SignupBillingPage() {
               )}
 
               {isBillingStage ? (
-                <section className={`space-y-4 rounded-2xl border border-border/70 bg-background/80 p-4 ${ownerAccessConfirmed ? "" : "opacity-65"}`}>
+                <section className={`space-y-4 rounded-[1.6rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,251,245,0.82)] p-4 ${ownerAccessConfirmed ? "" : "opacity-65"}`}>
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Billing step</p>
                   <h3 className="text-lg font-semibold">Confirm payment details</h3>
@@ -337,8 +338,10 @@ export default function SignupBillingPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
-                    className={`glass-panel flex items-center justify-between p-4 text-left transition ${
-                      paymentMethod === "apple-pay" ? "border-secondary/60 bg-secondary/10" : ""
+                    className={`rounded-[1.4rem] border p-4 text-left transition ${
+                      paymentMethod === "apple-pay"
+                        ? "border-[rgba(200,169,106,0.38)] bg-[rgba(200,169,106,0.12)]"
+                        : "border-[rgba(15,27,42,0.1)] bg-[rgba(255,251,245,0.88)]"
                     }`}
                     onClick={() => setPaymentMethod("apple-pay")}
                     disabled={!ownerAccessConfirmed}
@@ -352,8 +355,10 @@ export default function SignupBillingPage() {
 
                   <button
                     type="button"
-                    className={`glass-panel flex items-center justify-between p-4 text-left transition ${
-                      paymentMethod === "card" ? "border-secondary/60 bg-secondary/10" : ""
+                    className={`rounded-[1.4rem] border p-4 text-left transition ${
+                      paymentMethod === "card"
+                        ? "border-[rgba(200,169,106,0.38)] bg-[rgba(200,169,106,0.12)]"
+                        : "border-[rgba(15,27,42,0.1)] bg-[rgba(255,251,245,0.88)]"
                     }`}
                     onClick={() => setPaymentMethod("card")}
                     disabled={!ownerAccessConfirmed}
@@ -414,6 +419,7 @@ export default function SignupBillingPage() {
                 <Button
                   type="button"
                   variant={billingConfirmed ? "secondary" : "default"}
+                  className={billingConfirmed ? "rounded-full" : "rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#1b2d40]"}
                   onClick={handleConfirmBillingDetails}
                   disabled={!ownerAccessConfirmed}
                 >
@@ -423,7 +429,7 @@ export default function SignupBillingPage() {
               ) : null}
 
               {isBillingStage ? (
-                <Button type="submit" className="w-full" size="lg" disabled={!canSubmit || isSubmitting}>
+                <Button type="submit" className="w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#1b2d40]" size="lg" disabled={!canSubmit || isSubmitting}>
                   {isSubmitting ? "Finishing setup..." : "Continue to workspace"}
                 </Button>
               ) : null}

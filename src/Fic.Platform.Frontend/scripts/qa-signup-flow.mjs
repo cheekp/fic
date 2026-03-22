@@ -22,6 +22,14 @@ async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true });
 }
 
+async function readBackgroundColor(page, selector) {
+  return page.$eval(selector, (element) => getComputedStyle(element).backgroundColor);
+}
+
+function isDarkNavy(color) {
+  return /rgb\(\s*(1[0-9]|2[0-9])\s*,\s*(2[0-9]|3[0-9])\s*,\s*(3[0-9]|4[0-9])\s*\)/.test(color);
+}
+
 async function runScenario(browser, viewport) {
   const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
   const page = await context.newPage();
@@ -51,6 +59,11 @@ async function runScenario(browser, viewport) {
     const signupShot = path.join(scenarioDir, "01-signup.png");
     await page.screenshot({ path: signupShot, fullPage: true });
     result.screenshots.push(signupShot);
+    const signupStepBadge = page.getByText(/Step 1 of 6/i);
+    if (!(await signupStepBadge.count())) {
+      result.findings.push("Signup roadmap status did not render as 'Step 1 of 6'.");
+      result.status = "warn";
+    }
 
     await page.fill('input[id="displayName"]', "Jo's QA Coffee");
     await page.fill('input[id="ownerName"]', "Jo Owner");
@@ -64,12 +77,26 @@ async function runScenario(browser, viewport) {
     if (!(await submit.isEnabled())) {
       throw new Error("Signup submit stayed disabled after entering required fields.");
     }
+    const signupCtaColor = await readBackgroundColor(page, 'button[type="submit"]');
+    if (!isDarkNavy(signupCtaColor)) {
+      result.findings.push(`Signup CTA background drifted from North Star navy: ${signupCtaColor}`);
+      result.status = "warn";
+    }
     await submit.click();
 
     await page.waitForURL(/\/portal\/signup\/plan\//, { timeout: 30000 });
     const planShot = path.join(scenarioDir, "02-plan.png");
     await page.screenshot({ path: planShot, fullPage: true });
     result.screenshots.push(planShot);
+    if (!(await page.getByText(/Step 2 of 6/i).count())) {
+      result.findings.push("Plan roadmap status did not render as 'Step 2 of 6'.");
+      result.status = "warn";
+    }
+    const planCtaColor = await readBackgroundColor(page, 'button:has-text("Continue with Starter")');
+    if (!isDarkNavy(planCtaColor)) {
+      result.findings.push(`Plan CTA background drifted from North Star navy: ${planCtaColor}`);
+      result.status = "warn";
+    }
 
     const continueStarter = page.getByRole("button", { name: /Continue with Starter/i });
     await continueStarter.waitFor({ state: "visible", timeout: 10000 });
@@ -79,6 +106,10 @@ async function runScenario(browser, viewport) {
     const billingShot = path.join(scenarioDir, "03-billing.png");
     await page.screenshot({ path: billingShot, fullPage: true });
     result.screenshots.push(billingShot);
+    if (!(await page.getByText(/Step 3 of 6/i).count())) {
+      result.findings.push("Billing roadmap status did not render as 'Step 3 of 6' on owner access.");
+      result.status = "warn";
+    }
 
     await page.fill('input[id="password"]', "jo-demo-setup");
     await page.fill('input[id="confirm-password"]', "jo-demo-setup");
@@ -87,9 +118,13 @@ async function runScenario(browser, viewport) {
       await confirmOwner.first().click();
       await page.waitForURL(/stage=billing/, { timeout: 10000 }).catch(() => {});
     }
-    const confirmBilling = page.getByRole("button", { name: /Confirm billing details|Billing confirmed/i });
+    const confirmBilling = page.getByRole("button", { name: /Confirm billing|Billing confirmed/i });
     if (await confirmBilling.count()) {
       await confirmBilling.first().click();
+    }
+    if (!(await page.getByText(/Step 4 of 6/i).count())) {
+      result.findings.push("Billing roadmap status did not render as 'Step 4 of 6' on billing stage.");
+      result.status = "warn";
     }
     const continueWorkspace = page.getByRole("button", { name: /Continue to workspace/i });
     await continueWorkspace.click();
