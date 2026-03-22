@@ -153,6 +153,35 @@ async function bootstrapMerchant(page) {
   return merchantId;
 }
 
+async function updateShopBrand(page) {
+  const editShopDetails = page.getByRole("button", { name: /Edit shop|Edit shop details/i }).first();
+  if (!(await editShopDetails.count())) {
+    return;
+  }
+
+  await editShopDetails.click();
+
+  const shopName = page.locator('input[id="shop-name"]');
+  const shopEmail = page.locator('input[id="shop-email"]');
+  const shopPrimary = page.locator('input[id="shop-primary"]');
+  const shopAccent = page.locator('input[id="shop-accent"]');
+
+  await shopName.fill("North Star Coffee House");
+  await shopEmail.fill(`brand${Date.now()}@shop.test`);
+  if (await shopPrimary.count()) {
+    await shopPrimary.fill("#10263a");
+  }
+  if (await shopAccent.count()) {
+    await shopAccent.fill("#d3ab5b");
+  }
+
+  const saveShopDetails = page.getByRole("button", { name: /Save shop details/i }).last();
+  await saveShopDetails.click();
+  await page.getByText(/Shop details saved/i).first().waitFor({ state: "visible", timeout: 15000 }).catch(() => {});
+  await page.keyboard.press("Escape").catch(() => {});
+  await page.waitForTimeout(250);
+}
+
 async function runScenario(browser, viewport) {
   const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
   const page = await context.newPage();
@@ -168,6 +197,7 @@ async function runScenario(browser, viewport) {
 
   try {
     const merchantId = await bootstrapMerchant(page);
+    await updateShopBrand(page);
     const routes = [
       { name: "operate", url: `${frontendBaseUrl}/portal/merchant/${merchantId}?programmeSection=operate` },
       { name: "configure", url: `${frontendBaseUrl}/portal/merchant/${merchantId}?programmeSection=configure` },
@@ -196,6 +226,10 @@ async function runScenario(browser, viewport) {
         const selectedProgrammeCard = page.getByTestId("selected-programme-card");
         if (!(await selectedProgrammeCard.count())) {
           throw new Error("Selected programme branded card preview did not render on operate route.");
+        }
+        const operateHeading = page.getByRole("heading", { name: /North Star Coffee House/i });
+        if (!(await operateHeading.count())) {
+          throw new Error("Updated shop name did not propagate into workspace branding.");
         }
 
         const templateOptions = page.getByTestId("template-option");

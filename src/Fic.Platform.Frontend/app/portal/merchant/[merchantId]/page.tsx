@@ -208,9 +208,13 @@ export default function WorkspacePage() {
   const [rewardCopy, setRewardCopy] = useState("");
   const [startsOn, setStartsOn] = useState("");
   const [endsOn, setEndsOn] = useState("");
+  const [shopDisplayName, setShopDisplayName] = useState("");
+  const [shopContactEmail, setShopContactEmail] = useState("");
   const [shopTownOrCity, setShopTownOrCity] = useState("");
   const [shopPostcode, setShopPostcode] = useState("");
   const [shopTypeKey, setShopTypeKey] = useState("");
+  const [shopPrimaryColor, setShopPrimaryColor] = useState(northStarPortalTheme.primary);
+  const [shopAccentColor, setShopAccentColor] = useState(northStarPortalTheme.accent);
   const [isShopDraftDirty, setIsShopDraftDirty] = useState(false);
   const [brandLogoFile, setBrandLogoFile] = useState<File | null>(null);
   const [logoCacheBuster, setLogoCacheBuster] = useState(0);
@@ -339,8 +343,12 @@ export default function WorkspacePage() {
       return;
     }
 
+    setShopDisplayName(workspace.merchant.displayName ?? "");
+    setShopContactEmail(workspace.merchant.contactEmail ?? "");
     setShopTownOrCity(workspace.merchant.townOrCity ?? "");
     setShopPostcode(workspace.merchant.postcode ?? "");
+    setShopPrimaryColor(workspace.brandProfile.primaryColor ?? northStarPortalTheme.primary);
+    setShopAccentColor(workspace.brandProfile.accentColor ?? northStarPortalTheme.accent);
     const existingShopType = workspace.merchant.shopTypeKey?.trim() ?? "";
     if (existingShopType.length > 0) {
       setShopTypeKey(existingShopType);
@@ -394,6 +402,14 @@ export default function WorkspacePage() {
     setError(text);
     toast.error(text);
   }
+
+  const shopDraftTheme = useMemo(
+    () => resolvePortalBrandTheme({
+      primaryColor: shopPrimaryColor,
+      accentColor: shopAccentColor,
+    }),
+    [shopAccentColor, shopPrimaryColor],
+  );
 
   async function handleCopyCardCode(code: string) {
     try {
@@ -594,6 +610,16 @@ export default function WorkspacePage() {
       return;
     }
 
+    if (!shopDisplayName.trim()) {
+      publishError("Enter the shop display name to continue.");
+      return;
+    }
+
+    if (!shopContactEmail.trim()) {
+      publishError("Enter the contact email to continue.");
+      return;
+    }
+
     if (!shopTownOrCity.trim()) {
       publishError("Enter the town or city to continue.");
       return;
@@ -610,13 +636,13 @@ export default function WorkspacePage() {
 
     try {
       const nextWorkspace = await updateMerchantBrand(merchantId, {
-        displayName: workspace.merchant.displayName,
+        displayName: shopDisplayName,
         townOrCity: shopTownOrCity,
         postcode: shopPostcode,
-        contactEmail: workspace.merchant.contactEmail,
+        contactEmail: shopContactEmail,
         shopTypeKey,
-        primaryColor: workspace.brandProfile.primaryColor,
-        accentColor: workspace.brandProfile.accentColor,
+        primaryColor: shopPrimaryColor,
+        accentColor: shopAccentColor,
         selectedProgrammeId: selectedProgramme?.programmeId,
       });
 
@@ -867,6 +893,37 @@ export default function WorkspacePage() {
               {setupLaneActionKey === "shop" ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <section className="setup-lane-section sm:col-span-2">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="shop-name-inline">Shop name</Label>
+                        <Input
+                          id="shop-name-inline"
+                          value={shopDisplayName}
+                          onChange={(event) => {
+                            setShopDisplayName(event.target.value);
+                            setIsShopDraftDirty(true);
+                          }}
+                          placeholder="Paul's Coffee"
+                          className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="shop-email-inline">Contact email</Label>
+                        <Input
+                          id="shop-email-inline"
+                          type="email"
+                          value={shopContactEmail}
+                          onChange={(event) => {
+                            setShopContactEmail(event.target.value);
+                            setIsShopDraftDirty(true);
+                          }}
+                          placeholder="owner@shop.test"
+                          className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                        />
+                      </div>
+                    </div>
+                  </section>
+                  <section className="setup-lane-section sm:col-span-2">
                     <div className="space-y-2">
                       <Label htmlFor="shop-type-inline">Shop type</Label>
                       <Select
@@ -917,6 +974,75 @@ export default function WorkspacePage() {
                         placeholder="IP4 2XP"
                         className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
                       />
+                    </div>
+                  </section>
+                  <section className="setup-lane-section sm:col-span-2">
+                    <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(14rem,18rem)]">
+                      <div className="space-y-2">
+                        <Label htmlFor="shop-primary-inline">Primary colour</Label>
+                        <div className="flex items-center gap-3 rounded-2xl border border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] px-3 py-2.5">
+                          <Input
+                            id="shop-primary-inline"
+                            type="color"
+                            value={shopPrimaryColor}
+                            onChange={(event) => {
+                              setShopPrimaryColor(event.target.value);
+                              setIsShopDraftDirty(true);
+                            }}
+                            className="h-10 w-14 cursor-pointer rounded-xl border-0 bg-transparent p-0"
+                          />
+                          <Input
+                            value={shopPrimaryColor}
+                            onChange={(event) => {
+                              setShopPrimaryColor(event.target.value);
+                              setIsShopDraftDirty(true);
+                            }}
+                            className="h-10 border-0 bg-transparent px-0 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="shop-accent-inline">Accent colour</Label>
+                        <div className="flex items-center gap-3 rounded-2xl border border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] px-3 py-2.5">
+                          <Input
+                            id="shop-accent-inline"
+                            type="color"
+                            value={shopAccentColor}
+                            onChange={(event) => {
+                              setShopAccentColor(event.target.value);
+                              setIsShopDraftDirty(true);
+                            }}
+                            className="h-10 w-14 cursor-pointer rounded-xl border-0 bg-transparent p-0"
+                          />
+                          <Input
+                            value={shopAccentColor}
+                            onChange={(event) => {
+                              setShopAccentColor(event.target.value);
+                              setIsShopDraftDirty(true);
+                            }}
+                            className="h-10 border-0 bg-transparent px-0 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="rounded-[1.3rem] border border-[rgba(15,27,42,0.1)] bg-white/60 p-3">
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Live brand preview</p>
+                        <div className="mt-3">
+                          <LoyaltyCardPreview
+                            merchantName={shopDisplayName || workspace.merchant.displayName}
+                            title={selectedProgrammeSummary?.rewardHeadline ?? "Loyalty card"}
+                            subtitle={selectedProgramme?.rewardCopy ?? "Brand updates apply to wallet previews and the merchant workspace."}
+                            progressLabel={programmePreviewProgress}
+                            metaLabel="Brand draft"
+                            logoUrl={brandLogoUrl}
+                            logoWidth={workspace.brandProfile.logoWidth}
+                            logoHeight={workspace.brandProfile.logoHeight}
+                            primaryColor={shopDraftTheme.primary}
+                            accentColor={shopDraftTheme.accent}
+                            variant="compact"
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </section>
                   <section className="setup-lane-section sm:col-span-2">
@@ -1013,6 +1139,33 @@ export default function WorkspacePage() {
               </DialogHeader>
 
               <form className="mt-2 grid gap-4 sm:grid-cols-2" onSubmit={handleSaveShopDetails}>
+                <div className="space-y-2">
+                  <Label htmlFor="shop-name">Shop name</Label>
+                  <Input
+                    id="shop-name"
+                    value={shopDisplayName}
+                    onChange={(event) => {
+                      setShopDisplayName(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    placeholder="Paul's Coffee"
+                    className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shop-email">Contact email</Label>
+                  <Input
+                    id="shop-email"
+                    type="email"
+                    value={shopContactEmail}
+                    onChange={(event) => {
+                      setShopContactEmail(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    placeholder="owner@shop.test"
+                    className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                  />
+                </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="shop-type">Shop type</Label>
                   <Select
@@ -1059,6 +1212,70 @@ export default function WorkspacePage() {
                     placeholder="BS1 4DJ"
                     className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shop-primary">Primary colour</Label>
+                  <div className="flex items-center gap-3 rounded-2xl border border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] px-3 py-2.5">
+                    <Input
+                      id="shop-primary"
+                      type="color"
+                      value={shopPrimaryColor}
+                      onChange={(event) => {
+                        setShopPrimaryColor(event.target.value);
+                        setIsShopDraftDirty(true);
+                      }}
+                      className="h-10 w-14 cursor-pointer rounded-xl border-0 bg-transparent p-0"
+                    />
+                    <Input
+                      value={shopPrimaryColor}
+                      onChange={(event) => {
+                        setShopPrimaryColor(event.target.value);
+                        setIsShopDraftDirty(true);
+                      }}
+                      className="h-10 border-0 bg-transparent px-0 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shop-accent">Accent colour</Label>
+                  <div className="flex items-center gap-3 rounded-2xl border border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] px-3 py-2.5">
+                    <Input
+                      id="shop-accent"
+                      type="color"
+                      value={shopAccentColor}
+                      onChange={(event) => {
+                        setShopAccentColor(event.target.value);
+                        setIsShopDraftDirty(true);
+                      }}
+                      className="h-10 w-14 cursor-pointer rounded-xl border-0 bg-transparent p-0"
+                    />
+                    <Input
+                      value={shopAccentColor}
+                      onChange={(event) => {
+                        setShopAccentColor(event.target.value);
+                        setIsShopDraftDirty(true);
+                      }}
+                      className="h-10 border-0 bg-transparent px-0 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="sm:col-span-2 rounded-[1.4rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.92)] p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Brand preview</p>
+                  <p className="mt-1 text-sm text-foreground/75">Changes here apply to the merchant workspace and loyalty card surfaces after save.</p>
+                  <div className="mt-4 max-w-sm">
+                    <LoyaltyCardPreview
+                      merchantName={shopDisplayName || workspace.merchant.displayName}
+                      title={selectedProgrammeSummary?.rewardHeadline ?? "Loyalty card"}
+                      subtitle={selectedProgramme?.rewardCopy ?? "Use shop colours and logo to create a branded loyalty card."}
+                      progressLabel={programmePreviewProgress}
+                      metaLabel="Brand draft"
+                      logoUrl={brandLogoUrl}
+                      logoWidth={workspace.brandProfile.logoWidth}
+                      logoHeight={workspace.brandProfile.logoHeight}
+                      primaryColor={shopDraftTheme.primary}
+                      accentColor={shopDraftTheme.accent}
+                    />
+                  </div>
                 </div>
                 <div className="sm:col-span-2">
                   <Button
@@ -1202,6 +1419,14 @@ export default function WorkspacePage() {
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
+                    onClick={() => setIsShopSetupOpen(true)}
+                  >
+                    Edit shop
+                  </Button>
                   {selectedProgramme?.joinCode ? (
                     <Button asChild variant="outline">
                       <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
@@ -1877,6 +2102,194 @@ export default function WorkspacePage() {
             </Card>
           )
         ) : null}
+
+        <Dialog open={isShopSetupOpen} onOpenChange={setIsShopSetupOpen}>
+          <DialogContent className="max-h-[88vh] overflow-y-auto border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.98)] p-5 sm:max-w-2xl sm:p-6">
+            <DialogHeader>
+              <DialogTitle>Shop setup</DialogTitle>
+              <DialogDescription>Update merchant identity, brand colours, shop details, and logo used across workspace and wallet previews.</DialogDescription>
+            </DialogHeader>
+
+            <form className="mt-2 grid gap-4 sm:grid-cols-2" onSubmit={handleSaveShopDetails}>
+              <div className="space-y-2">
+                <Label htmlFor="shop-name">Shop name</Label>
+                <Input
+                  id="shop-name"
+                  value={shopDisplayName}
+                  onChange={(event) => {
+                    setShopDisplayName(event.target.value);
+                    setIsShopDraftDirty(true);
+                  }}
+                  placeholder="Paul's Coffee"
+                  className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shop-email">Contact email</Label>
+                <Input
+                  id="shop-email"
+                  type="email"
+                  value={shopContactEmail}
+                  onChange={(event) => {
+                    setShopContactEmail(event.target.value);
+                    setIsShopDraftDirty(true);
+                  }}
+                  placeholder="owner@shop.test"
+                  className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="shop-type">Shop type</Label>
+                <Select
+                  value={shopTypeKey}
+                  onValueChange={(value) => {
+                    setShopTypeKey(value);
+                    setIsShopDraftDirty(true);
+                  }}
+                >
+                  <SelectTrigger id="shop-type" className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base">
+                    <SelectValue placeholder="Choose shop type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shopTypes.map((type) => (
+                      <SelectItem key={type.shopTypeKey} value={type.shopTypeKey}>
+                        {type.shopTypeLabel}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shop-town">Town or city</Label>
+                <Input
+                  id="shop-town"
+                  value={shopTownOrCity}
+                  onChange={(event) => {
+                    setShopTownOrCity(event.target.value);
+                    setIsShopDraftDirty(true);
+                  }}
+                  placeholder="Bristol"
+                  className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shop-postcode">Postcode</Label>
+                <Input
+                  id="shop-postcode"
+                  value={shopPostcode}
+                  onChange={(event) => {
+                    setShopPostcode(event.target.value);
+                    setIsShopDraftDirty(true);
+                  }}
+                  placeholder="BS1 4DJ"
+                  className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shop-primary">Primary colour</Label>
+                <div className="flex items-center gap-3 rounded-2xl border border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] px-3 py-2.5">
+                  <Input
+                    id="shop-primary"
+                    type="color"
+                    value={shopPrimaryColor}
+                    onChange={(event) => {
+                      setShopPrimaryColor(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    className="h-10 w-14 cursor-pointer rounded-xl border-0 bg-transparent p-0"
+                  />
+                  <Input
+                    value={shopPrimaryColor}
+                    onChange={(event) => {
+                      setShopPrimaryColor(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    className="h-10 border-0 bg-transparent px-0 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shop-accent">Accent colour</Label>
+                <div className="flex items-center gap-3 rounded-2xl border border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] px-3 py-2.5">
+                  <Input
+                    id="shop-accent"
+                    type="color"
+                    value={shopAccentColor}
+                    onChange={(event) => {
+                      setShopAccentColor(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    className="h-10 w-14 cursor-pointer rounded-xl border-0 bg-transparent p-0"
+                  />
+                  <Input
+                    value={shopAccentColor}
+                    onChange={(event) => {
+                      setShopAccentColor(event.target.value);
+                      setIsShopDraftDirty(true);
+                    }}
+                    className="h-10 border-0 bg-transparent px-0 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="sm:col-span-2 rounded-[1.4rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.92)] p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Brand preview</p>
+                <p className="mt-1 text-sm text-foreground/75">Changes here apply to the merchant workspace and loyalty card surfaces after save.</p>
+                <div className="mt-4 max-w-sm">
+                  <LoyaltyCardPreview
+                    merchantName={shopDisplayName || workspace.merchant.displayName}
+                    title={selectedProgrammeSummary?.rewardHeadline ?? "Loyalty card"}
+                    subtitle={selectedProgramme?.rewardCopy ?? "Use shop colours and logo to create a branded loyalty card."}
+                    progressLabel={programmePreviewProgress}
+                    metaLabel="Brand draft"
+                    logoUrl={brandLogoUrl}
+                    logoWidth={workspace.brandProfile.logoWidth}
+                    logoHeight={workspace.brandProfile.logoHeight}
+                    primaryColor={shopDraftTheme.primary}
+                    accentColor={shopDraftTheme.accent}
+                  />
+                </div>
+              </div>
+              <div className="sm:col-span-2">
+                <Button
+                  type="submit"
+                  className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
+                  disabled={isSavingShopDetails}
+                >
+                  {isSavingShopDetails ? "Saving..." : "Save shop details"}
+                </Button>
+              </div>
+            </form>
+
+            <div className="mt-4 rounded-[1.4rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.92)] p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Brand logo</p>
+              <p className="mt-1 text-sm text-foreground/75">Upload a PNG logo for join pages and wallet previews.</p>
+              <form className="mt-3 flex flex-wrap items-center gap-3" onSubmit={handleUploadLogo}>
+                <Input
+                  type="file"
+                  accept="image/png"
+                  onChange={(event) => setBrandLogoFile(event.target.files?.[0] ?? null)}
+                  className="max-w-sm rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)]"
+                />
+                <Button type="submit" variant="outline" className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]" disabled={isUploadingLogo || !brandLogoFile}>
+                  {isUploadingLogo ? "Uploading..." : "Upload logo"}
+                </Button>
+              </form>
+              {brandLogoUrl ? (
+                <div className="mt-3 rounded-[1.2rem] border border-[rgba(15,27,42,0.1)] bg-white/70 p-3">
+                  <p className="mb-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Current logo preview</p>
+                  <Image
+                    src={brandLogoUrl}
+                    alt={`${workspace.merchant.displayName} logo`}
+                    width={Math.max(workspace.brandProfile.logoWidth || 96, 72)}
+                    height={Math.max(workspace.brandProfile.logoHeight || 96, 72)}
+                    className="h-auto max-h-16 w-auto rounded-md border border-border/70 bg-white/80 p-1"
+                    unoptimized
+                  />
+                </div>
+              ) : null}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         {message ? <p className="text-sm text-primary">{message}</p> : null}
