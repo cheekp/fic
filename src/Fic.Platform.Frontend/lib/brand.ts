@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { PortalThemeContract } from "@/types/portal-contracts";
-import { ficPortalTheme } from "@/types/portal-contracts";
+import { ficPortalTheme, northStarPortalTheme } from "@/types/portal-contracts";
 
 type BrandInput = {
   primaryColor?: string | null;
@@ -108,9 +108,27 @@ function pickReadableInk(backgroundHex: string, darkInk: string, lightInk: strin
   return relativeLuminance(backgroundHex) > 0.45 ? darkInk : lightInk;
 }
 
+function rgbaToHex(input: string, fallback: string) {
+  const match = /rgba?\(([^)]+)\)/.exec(input);
+  if (!match) {
+    return fallback;
+  }
+
+  const [red, green, blue] = match[1]
+    .split(",")
+    .slice(0, 3)
+    .map((value) => Number.parseInt(value.trim(), 10));
+
+  if ([red, green, blue].some((value) => Number.isNaN(value))) {
+    return fallback;
+  }
+
+  return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
+}
+
 export function resolvePortalBrandTheme(brand?: BrandInput | null): PortalThemeContract {
   if (!brand) {
-    return ficPortalTheme;
+    return northStarPortalTheme;
   }
 
   const primary = normalizeHex(brand.primaryColor, ficPortalTheme.primary);
@@ -151,6 +169,7 @@ export function buildBrandCssVars(theme: PortalThemeContract): CSSProperties {
   const card = normalizeHex(theme.useDarkChrome ? mixHex(theme.primary, "#ffffff", 0.18) : mixHex(theme.primary, "#ffffff", 0.95), mixHex(theme.primary, "#ffffff", 0.95));
   const border = normalizeHex(theme.useDarkChrome ? mixHex(theme.primary, "#ffffff", 0.2) : mixHex(theme.primary, "#d9ccba", 0.8), mixHex(theme.primary, "#d9ccba", 0.8));
   const shadow = theme.shadow === "soft" ? "rgba(16, 24, 21, 0.16)" : "rgba(16, 24, 21, 0.24)";
+  const mutedInkHex = rgbaToHex(theme.mutedInk, mixHex(theme.ink, "#ffffff", 0.35));
 
   return {
     ["--font-display" as string]: '"Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif',
@@ -169,7 +188,7 @@ export function buildBrandCssVars(theme: PortalThemeContract): CSSProperties {
     ["--secondary" as string]: hexToHslTriplet(theme.accent),
     ["--secondary-foreground" as string]: theme.accentInk === "#fffaf2" ? "43 40% 95%" : "157 27% 14%",
     ["--muted" as string]: hexToHslTriplet(card),
-    ["--muted-foreground" as string]: "157 14% 30%",
+    ["--muted-foreground" as string]: hexToHslTriplet(mutedInkHex),
     ["--accent" as string]: hexToHslTriplet(theme.accent),
     ["--accent-foreground" as string]: theme.accentInk === "#fffaf2" ? "43 40% 95%" : "157 27% 14%",
     ["--destructive" as string]: "0 74% 52%",

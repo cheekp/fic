@@ -129,15 +129,15 @@ export default function SignupPlanPage() {
           <Compass className="h-3.5 w-3.5" />
           Plan
         </div>
-        <h1 className="luxe-title">Choose the launch model</h1>
-        <p className="luxe-subtitle text-foreground/90">Select the commercial route for {workspace?.merchant.displayName ?? draftDisplayName} based on rollout scope and support needs.</p>
+        <h1 className="luxe-title">Choose a plan</h1>
+        <p className="luxe-subtitle text-foreground/90">Select the starting plan for {workspace?.merchant.displayName ?? draftDisplayName}.</p>
       </section>
 
       <section>
         <Card className="onboarding-stage-card">
           <CardHeader>
             <CardTitle className="text-3xl">Plan selection</CardTitle>
-            <CardDescription className="text-foreground/90">Starter continues directly into owner access and billing. Larger rollouts move into a supported delivery path.</CardDescription>
+            <CardDescription className="text-foreground/90">Starter continues directly into owner access and billing. Assisted plans move into a supported route.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-4 lg:grid-cols-3">

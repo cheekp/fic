@@ -7,7 +7,6 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy, Eye, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { resolvePortalBrandTheme } from "@/lib/brand";
 import {
   awardVisit,
   createProgramme,
@@ -37,6 +36,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { northStarPortalTheme } from "@/types/portal-contracts";
 import type {
   MerchantWorkspaceSnapshot,
   ProgrammeTemplateOption,
@@ -149,7 +149,6 @@ export default function WorkspacePage() {
   const merchantId = Array.isArray(params.merchantId) ? params.merchantId[0] : params.merchantId;
   const section = resolveSection(searchParams.get("programmeSection"));
   const requestedProgrammeId = searchParams.get("programme") ?? undefined;
-  const setupIntent = searchParams.get("setup");
 
   const [workspace, setWorkspace] = useState<MerchantWorkspaceSnapshot | null>(null);
   const [templates, setTemplates] = useState<ProgrammeTemplateOption[]>([]);
@@ -189,13 +188,7 @@ export default function WorkspacePage() {
   const shopTypesQuery = useShopTypesQuery();
   const portalNavQuery = useWorkspacePortalNavigationQuery(merchantId, section, selectedProgrammeId);
   const portalNav = portalNavQuery.data ?? null;
-  const workspaceTheme = useMemo(
-    () => resolvePortalBrandTheme({
-      primaryColor: workspace?.brandProfile.primaryColor ?? portalNav?.theme?.primary,
-      accentColor: workspace?.brandProfile.accentColor ?? portalNav?.theme?.accent,
-    }),
-    [portalNav?.theme?.accent, portalNav?.theme?.primary, workspace?.brandProfile.accentColor, workspace?.brandProfile.primaryColor],
-  );
+  const workspaceTheme = northStarPortalTheme;
   const brandLogoUrl = workspace?.brandProfile.logoUrl
     ? withCacheBust(workspace.brandProfile.logoUrl, logoCacheBuster)
     : null;
@@ -316,12 +309,8 @@ export default function WorkspacePage() {
       return;
     }
 
-    if (setupIntent === "shop" && !workspace.setupChecklist.shopDetailsComplete) {
-      setIsShopSetupOpen(true);
-    }
-
     setIsSetupIntentHandled(true);
-  }, [isSetupIntentHandled, setupIntent, workspace]);
+  }, [isSetupIntentHandled, workspace]);
 
   useEffect(() => {
     if (portalNavQuery.error) {
@@ -542,9 +531,7 @@ export default function WorkspacePage() {
     }
   }
 
-  async function handleSaveShopDetails(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  async function submitShopDetails() {
     if (!workspace) {
       return;
     }
@@ -586,6 +573,11 @@ export default function WorkspacePage() {
     } finally {
       setIsSavingShopDetails(false);
     }
+  }
+
+  async function handleSaveShopDetails(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitShopDetails();
   }
 
   async function handleUploadLogo(event: FormEvent<HTMLFormElement>) {
@@ -681,12 +673,12 @@ export default function WorkspacePage() {
   const setupLaneSummary =
     contractNextAction?.summary
     ?? (!workspace.setupChecklist.shopDetailsComplete
-      ? "Add shop type, location, and logo to unlock programme creation."
-      : "Choose a template to unlock Configure and Customers.");
+      ? "Add the shop type, location, and logo before creating the first programme."
+      : "Choose the first programme template.");
   const setupLaneCtaLabel =
     contractNextAction?.ctaLabel
     ?? (setupLaneActionKey === "shop" ? "Open shop setup" : "Create programme");
-  const setupLaneTitle = setupLaneActionKey === "shop" ? "Step 5: complete shop setup" : "Step 6: choose programme template";
+  const setupLaneTitle = setupLaneActionKey === "shop" ? "Complete shop details" : "Choose a programme template";
   const setupLaneStatus = setupLaneTasks.filter((task) => task.isComplete).length;
   const onboardingCurrentStep =
     !workspace.setupChecklist.ownerAccessConfigured
@@ -741,12 +733,12 @@ export default function WorkspacePage() {
         title="Merchant portal"
         activeKey="operate"
         railItems={portalNav?.items ?? []}
-        theme={workspaceTheme}
+        theme={northStarPortalTheme}
         utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
       >
-        <div className="space-y-4">
+        <div className="setup-lane-shell">
           <OnboardingJourney
             roadmap={portalNav?.roadmap}
             currentStep={onboardingCurrentStep}
@@ -765,13 +757,24 @@ export default function WorkspacePage() {
             variant="compact"
           />
 
-          <Card id="setup-lane">
+          <section className="section-intro space-y-3">
+            <h1 className="luxe-title">{setupLaneTitle}</h1>
+            <p className="luxe-subtitle text-foreground/88">{setupLaneSummary}</p>
+          </section>
+
+          <Card id="setup-lane" className="setup-lane-card">
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <CardTitle>{setupLaneTitle}</CardTitle>
-                <Badge>{setupLaneStatus}/{setupLaneTasks.length} complete</Badge>
+                <CardTitle>{setupLaneActionKey === "shop" ? "Shop details" : "Programme template"}</CardTitle>
+                <Badge className="border-[rgba(200,169,106,0.24)] bg-[rgba(200,169,106,0.12)] text-[#6f592f]">
+                  Step {setupLaneActionKey === "shop" ? "5" : "6"} of 6
+                </Badge>
               </div>
-              <CardDescription>{setupLaneSummary}</CardDescription>
+              <CardDescription>
+                {setupLaneActionKey === "shop"
+                  ? "Enter the operating details used for join pages and wallet previews."
+                  : "Choose the first programme template to open Configure and Customers."}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -792,16 +795,118 @@ export default function WorkspacePage() {
               </div>
 
               {setupLaneActionKey === "shop" ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 p-4">
-                  <p className="text-sm text-foreground/80">Open setup blade to update shop type, location, and brand logo.</p>
-                  <Button onClick={() => setIsShopSetupOpen(true)}>{setupLaneCtaLabel}</Button>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <section className="setup-lane-section sm:col-span-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="shop-type-inline">Shop type</Label>
+                      <Select
+                        value={shopTypeKey}
+                        onValueChange={(value) => {
+                          setShopTypeKey(value);
+                          setIsShopDraftDirty(true);
+                        }}
+                      >
+                        <SelectTrigger id="shop-type-inline" className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base">
+                          <SelectValue placeholder="Choose shop type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {shopTypes.map((type) => (
+                            <SelectItem key={type.shopTypeKey} value={type.shopTypeKey}>
+                              {type.shopTypeLabel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </section>
+                  <section className="setup-lane-section">
+                    <div className="space-y-2">
+                      <Label htmlFor="shop-town-inline">Town or city</Label>
+                      <Input
+                        id="shop-town-inline"
+                        value={shopTownOrCity}
+                        onChange={(event) => {
+                          setShopTownOrCity(event.target.value);
+                          setIsShopDraftDirty(true);
+                        }}
+                        placeholder="Ipswich"
+                        className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                      />
+                    </div>
+                  </section>
+                  <section className="setup-lane-section">
+                    <div className="space-y-2">
+                      <Label htmlFor="shop-postcode-inline">Postcode</Label>
+                      <Input
+                        id="shop-postcode-inline"
+                        value={shopPostcode}
+                        onChange={(event) => {
+                          setShopPostcode(event.target.value);
+                          setIsShopDraftDirty(true);
+                        }}
+                        placeholder="IP4 2XP"
+                        className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
+                      />
+                    </div>
+                  </section>
+                  <section className="setup-lane-section sm:col-span-2">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Brand logo</p>
+                    <p className="mt-1 text-sm text-foreground/76">Upload a PNG logo for join pages and wallet previews.</p>
+                    <form className="mt-3 flex flex-wrap items-center gap-3" onSubmit={handleUploadLogo}>
+                      <Input
+                        type="file"
+                        accept="image/png"
+                        onChange={(event) => setBrandLogoFile(event.target.files?.[0] ?? null)}
+                        className="max-w-sm rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)]"
+                      />
+                      <Button type="submit" variant="outline" className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]" disabled={isUploadingLogo || !brandLogoFile}>
+                        {isUploadingLogo ? "Uploading..." : "Upload logo"}
+                      </Button>
+                    </form>
+                    {brandLogoUrl ? (
+                      <div className="mt-4 rounded-[1.2rem] border border-[rgba(15,27,42,0.1)] bg-white/70 p-4">
+                        <p className="mb-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Current logo</p>
+                        <Image
+                          src={brandLogoUrl}
+                          alt={`${workspace.merchant.displayName} logo`}
+                          width={Math.max(workspace.brandProfile.logoWidth || 96, 72)}
+                          height={Math.max(workspace.brandProfile.logoHeight || 96, 72)}
+                          className="h-auto max-h-16 w-auto rounded-md border border-border/70 bg-white/90 p-1"
+                          unoptimized
+                        />
+                      </div>
+                    ) : null}
+                  </section>
+                  <div className="sm:col-span-2">
+                    <Button
+                      type="button"
+                      className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
+                      onClick={() => {
+                        void submitShopDetails();
+                      }}
+                      disabled={isSavingShopDetails || isUploadingLogo || !shopTypeKey.trim() || !shopTownOrCity.trim() || !shopPostcode.trim()}
+                    >
+                      {isSavingShopDetails ? "Saving..." : "Save shop details"}
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-border/70 bg-background/80 p-4">
+                <div className="setup-lane-section space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-foreground/76">Shop details are complete. Choose the first programme to publish.</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
+                      onClick={() => setIsShopSetupOpen(true)}
+                    >
+                      Edit shop details
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="template">Template</Label>
                     <Select value={selectedTemplateKey} onValueChange={setSelectedTemplateKey}>
-                      <SelectTrigger id="template">
+                      <SelectTrigger id="template" className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base">
                         <SelectValue placeholder="Choose template" />
                       </SelectTrigger>
                       <SelectContent>
@@ -813,7 +918,7 @@ export default function WorkspacePage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button className="w-full sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
+                  <Button className="w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a] sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
                     {isMutating ? "Creating..." : setupLaneCtaLabel}
                   </Button>
                 </div>
@@ -822,10 +927,10 @@ export default function WorkspacePage() {
           </Card>
 
           <Dialog open={isShopSetupOpen} onOpenChange={setIsShopSetupOpen}>
-            <DialogContent className="max-h-[88vh] overflow-y-auto p-5 sm:max-w-2xl sm:p-6">
+            <DialogContent className="max-h-[88vh] overflow-y-auto border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.98)] p-5 sm:max-w-2xl sm:p-6">
               <DialogHeader>
                 <DialogTitle>Shop setup</DialogTitle>
-                <DialogDescription>Town/city and postcode are required before programme creation.</DialogDescription>
+                <DialogDescription>Update the shop details used for join pages and wallet previews.</DialogDescription>
               </DialogHeader>
 
               <form className="mt-2 grid gap-4 sm:grid-cols-2" onSubmit={handleSaveShopDetails}>
@@ -838,7 +943,7 @@ export default function WorkspacePage() {
                       setIsShopDraftDirty(true);
                     }}
                   >
-                    <SelectTrigger id="shop-type">
+                    <SelectTrigger id="shop-type" className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base">
                       <SelectValue placeholder="Choose shop type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -860,6 +965,7 @@ export default function WorkspacePage() {
                       setIsShopDraftDirty(true);
                     }}
                     placeholder="Bristol"
+                    className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
                   />
                 </div>
                 <div className="space-y-2">
@@ -872,11 +978,13 @@ export default function WorkspacePage() {
                       setIsShopDraftDirty(true);
                     }}
                     placeholder="BS1 4DJ"
+                    className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base"
                   />
                 </div>
                 <div className="sm:col-span-2">
                   <Button
                     type="submit"
+                    className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
                     disabled={isSavingShopDetails || isUploadingLogo || !shopTypeKey.trim() || !shopTownOrCity.trim() || !shopPostcode.trim()}
                   >
                     {isSavingShopDetails ? "Saving..." : "Save shop details"}
@@ -884,7 +992,7 @@ export default function WorkspacePage() {
                 </div>
               </form>
 
-              <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
+              <div className="mt-4 rounded-[1.4rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.92)] p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Brand logo</p>
                 <p className="mt-1 text-sm text-foreground/75">Upload a PNG logo for join pages and wallet previews.</p>
                 <form className="mt-3 flex flex-wrap items-center gap-3" onSubmit={handleUploadLogo}>
@@ -892,14 +1000,14 @@ export default function WorkspacePage() {
                     type="file"
                     accept="image/png"
                     onChange={(event) => setBrandLogoFile(event.target.files?.[0] ?? null)}
-                    className="max-w-sm"
+                    className="max-w-sm rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)]"
                   />
-                  <Button type="submit" variant="outline" disabled={isUploadingLogo || !brandLogoFile}>
+                  <Button type="submit" variant="outline" className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]" disabled={isUploadingLogo || !brandLogoFile}>
                     {isUploadingLogo ? "Uploading..." : "Upload logo"}
                   </Button>
                 </form>
                 {brandLogoUrl ? (
-                  <div className="mt-3 rounded-xl border border-border/70 bg-card/80 p-3">
+                  <div className="mt-3 rounded-[1.2rem] border border-[rgba(15,27,42,0.1)] bg-white/70 p-3">
                     <p className="mb-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Current logo preview</p>
                     <Image
                       src={brandLogoUrl}
@@ -916,7 +1024,7 @@ export default function WorkspacePage() {
           </Dialog>
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {message ? <p className="text-sm text-primary">{message}</p> : null}
+          {message ? <p className="text-sm text-foreground/74">{message}</p> : null}
         </div>
       </PortalShell>
     );

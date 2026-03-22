@@ -48,6 +48,17 @@ body {
     linear-gradient(180deg, color-mix(in srgb, var(--brand-canvas-start-hex) 14%, #f5f3ef 86%) 0%, #f5f3ef 54%, color-mix(in srgb, var(--brand-canvas-end-hex) 8%, #f5f3ef 92%) 100%);
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 252, 247, 0.96) inset;
+  -webkit-text-fill-color: #0f1b2a;
+  caret-color: #0f1b2a;
+  transition: background-color 9999s ease-out 0s;
+}
+
 main {
   @apply mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 sm:pt-10;
 }
@@ -226,4 +237,18 @@ main {
 .onboarding-step-toggle--complete {
   border-color: rgba(200, 169, 106, 0.26);
   background: rgba(200, 169, 106, 0.08);
+}
+
+.setup-lane-shell {
+  @apply mx-auto max-w-6xl space-y-5;
+}
+
+.setup-lane-card {
+  @apply rounded-[1.9rem] border bg-[rgba(255,251,245,0.92)] shadow-[0_24px_60px_-42px_rgba(15,27,42,0.26)];
+  border-color: rgba(15, 27, 42, 0.12);
+}
+
+.setup-lane-section {
+  @apply rounded-[1.4rem] border bg-[rgba(255,252,247,0.9)] p-5;
+  border-color: rgba(15, 27, 42, 0.1);
 }

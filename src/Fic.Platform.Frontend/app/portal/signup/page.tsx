@@ -107,7 +107,7 @@ export default function SignupPage() {
               Merchant setup
             </div>
             <h1 className="luxe-title">Create the merchant account</h1>
-            <p className="luxe-subtitle text-foreground/85">Enter the merchant name, owner name, and owner email. Plan, billing, and programme setup follow.</p>
+            <p className="luxe-subtitle text-foreground/85">Enter the shop name, owner name, and owner email to begin setup.</p>
           </section>
 
           <Card className="onboarding-stage-card">
@@ -115,7 +115,7 @@ export default function SignupPage() {
               <div>
                 <CardTitle className="text-[2rem] text-[#0f1b2a]">Merchant details</CardTitle>
                 <CardDescription className="mt-2 max-w-2xl text-[0.98rem] leading-7 text-[rgba(74,79,85,0.92)]">
-                  This information becomes the primary owner record for the account.
+                  This becomes the primary account record used through setup.
                 </CardDescription>
               </div>
             </CardHeader>

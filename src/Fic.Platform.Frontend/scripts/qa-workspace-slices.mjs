@@ -16,6 +16,10 @@ async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true });
 }
 
+function isDarkNavy(color) {
+  return /rgb\(\s*(1[0-9]|2[0-9])\s*,\s*(2[0-9]|3[0-9])\s*,\s*(3[0-9]|4[0-9])\s*\)/.test(color);
+}
+
 async function bootstrapMerchant(page) {
   const email = `owner${Date.now()}@shop.test`;
   const logoPath = path.resolve(process.cwd(), "../Fic.Platform.Web/wwwroot/wallet-assets/icon.png");
@@ -24,7 +28,16 @@ async function bootstrapMerchant(page) {
   await page.fill('input[id="displayName"]', "Jo's QA Coffee");
   await page.fill('input[id="ownerName"]', "Jo Owner");
   await page.fill('input[id="contactEmail"]', email);
-  await page.getByRole("button", { name: /Continue to plan/i }).click();
+  const continueToPlan = page.getByRole("button", { name: /Continue to plan/i });
+  await continueToPlan.waitFor({ state: "visible", timeout: 10000 });
+  const signupReadyAt = Date.now() + 20000;
+  while (!(await continueToPlan.isEnabled()) && Date.now() < signupReadyAt) {
+    await page.waitForTimeout(250);
+  }
+  if (!(await continueToPlan.isEnabled())) {
+    throw new Error("Workspace bootstrap signup submit stayed disabled after entering required fields.");
+  }
+  await continueToPlan.click();
 
   await page.waitForURL(/\/portal\/signup\/plan\//, { timeout: 30000 });
   await page.getByRole("button", { name: /Continue with Starter/i }).click();
@@ -37,7 +50,7 @@ async function bootstrapMerchant(page) {
     await confirmOwner.first().click();
     await page.waitForURL(/stage=billing/, { timeout: 10000 }).catch(() => {});
   }
-  const confirmBilling = page.getByRole("button", { name: /Confirm billing details|Billing confirmed/i });
+  const confirmBilling = page.getByRole("button", { name: /Confirm billing|Billing confirmed/i });
   if (await confirmBilling.count()) {
     await confirmBilling.first().click();
   }
@@ -52,24 +65,28 @@ async function bootstrapMerchant(page) {
   }
 
   await page.waitForLoadState("networkidle");
-  await page.getByText(/Setup tasks|Merchant workspace/i).first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+  await page.getByText(/Shop details|Programme template|Merchant workspace/i).first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
 
   const openShopSetup = page.getByRole("button", { name: /Open shop setup/i });
+  const editShopDetails = page.getByRole("button", { name: /Edit shop details/i });
   const createProgrammeButton = page.getByRole("button", { name: /Create programme/i });
+  const inlineShopSaveButton = page.getByRole("button", { name: /Save shop details/i });
 
   let attemptsRemaining = 5;
-  while (attemptsRemaining > 0 && (await openShopSetup.count()) === 0 && (await createProgrammeButton.count()) === 0) {
+  while (attemptsRemaining > 0 && (await openShopSetup.count()) === 0 && (await createProgrammeButton.count()) === 0 && (await inlineShopSaveButton.count()) === 0) {
     attemptsRemaining -= 1;
     await page.waitForTimeout(200);
   }
 
-  const needsShopSetup = (await openShopSetup.count()) > 0;
+  const needsShopSetup = (await inlineShopSaveButton.count()) > 0 || (await openShopSetup.count()) > 0;
   let shopDetailsSaved = !needsShopSetup;
 
   if (needsShopSetup) {
-    await openShopSetup.first().click();
+    if ((await openShopSetup.count()) > 0 && (await inlineShopSaveButton.count()) === 0) {
+      await openShopSetup.first().click();
+    }
 
-    const shopTypeTrigger = page.locator('button[id="shop-type"]');
+    const shopTypeTrigger = page.locator('button[id="shop-type"], button[id="shop-type-inline"]');
     if (await shopTypeTrigger.count()) {
       await shopTypeTrigger.first().click();
       const coffeeOption = page.getByRole("option", { name: /Coffee shop/i });
@@ -78,8 +95,8 @@ async function bootstrapMerchant(page) {
       }
     }
 
-    const town = page.locator('input[id="shop-town"]');
-    const postcode = page.locator('input[id="shop-postcode"]');
+    const town = page.locator('input[id="shop-town"], input[id="shop-town-inline"]');
+    const postcode = page.locator('input[id="shop-postcode"], input[id="shop-postcode-inline"]');
     await town.first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
     await postcode.first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
     if (await town.count()) {
@@ -129,6 +146,10 @@ async function bootstrapMerchant(page) {
     throw new Error("Shop details were not saved in bootstrap; workspace remains blocked in setup tasks.");
   }
 
+  if (await editShopDetails.count()) {
+    await page.keyboard.press("Escape").catch(() => {});
+  }
+
   return merchantId;
 }
 
@@ -159,6 +180,18 @@ async function runScenario(browser, viewport) {
       const clientError = page.getByText(/Application error: a client-side exception has occurred/i);
       if (await clientError.count()) {
         throw new Error(`Client exception rendered on ${route.name} route.`);
+      }
+      if (route.name === "operate") {
+        const heading = page.getByText(/Programme template|Coffee stamp card|Shop details/i).first();
+        await heading.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+        const primaryButton = page.getByRole("button", { name: /Create programme|Create demo customer join|Save shop details/i }).first();
+        if (await primaryButton.count()) {
+          const color = await primaryButton.evaluate((element) => getComputedStyle(element).backgroundColor);
+          if (!isDarkNavy(color)) {
+            result.findings.push(`Operate primary button drifted from North Star navy: ${color}`);
+            result.status = "warn";
+          }
+        }
       }
       const shot = path.join(scenarioDir, `${route.name}.png`);
       await page.screenshot({ path: shot, fullPage: true });

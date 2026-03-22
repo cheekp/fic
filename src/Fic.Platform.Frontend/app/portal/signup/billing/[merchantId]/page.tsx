@@ -203,43 +203,12 @@ export default function SignupBillingPage() {
           <Compass className="h-3.5 w-3.5" />
           {isOwnerStage ? "Owner access" : "Billing"}
         </div>
-        <h1 className="luxe-title">{isOwnerStage ? "Formalise account ownership" : "Activate the commercial plan"}</h1>
+        <h1 className="luxe-title">{isOwnerStage ? "Set owner password" : "Add billing details"}</h1>
         <p className="luxe-subtitle text-foreground/90">
           {isOwnerStage
-            ? `Plan selected: ${selectedPlan}. Set the owner login that will control the merchant account.`
-            : `Plan selected: ${selectedPlan}. Confirm billing details to activate the selected route.`}
+            ? `Plan selected: ${selectedPlan}. Create the login for the merchant account.`
+            : `Plan selected: ${selectedPlan}. Confirm payment details before entering the workspace.`}
         </p>
-      </section>
-
-      <section className="glass-panel p-3">
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Link
-            href={`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=owner`}
-            className={`onboarding-step-toggle ${
-              isOwnerStage
-                ? "onboarding-step-toggle--active text-foreground"
-                : ownerAccessConfirmed
-                  ? "onboarding-step-toggle--complete text-foreground/85"
-                  : "text-foreground/72"
-            }`}
-          >
-            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Step 3</p>
-            <p className="font-semibold">Owner access</p>
-          </Link>
-          <Link
-            href={`/portal/signup/billing/${merchantId}?plan=${selectedPlan}&stage=billing`}
-            className={`onboarding-step-toggle ${
-              isBillingStage
-                ? "onboarding-step-toggle--active text-foreground"
-                : billingConfirmed
-                  ? "onboarding-step-toggle--complete text-foreground/85"
-                  : "text-foreground/72"
-            } ${!ownerAccessConfirmed && !isBillingStage ? "pointer-events-none opacity-60" : ""}`}
-          >
-            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Step 4</p>
-            <p className="font-semibold">Billing</p>
-          </Link>
-        </div>
       </section>
 
       <section>
