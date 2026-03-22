@@ -69,7 +69,7 @@ async function bootstrapMerchant(page) {
 
   const openShopSetup = page.getByRole("button", { name: /Open shop setup/i });
   const editShopDetails = page.getByRole("button", { name: /Edit shop details/i });
-  const createProgrammeButton = page.getByRole("button", { name: /Create programme/i });
+  const createProgrammeButton = page.getByTestId("create-programme");
   const inlineShopSaveButton = page.getByRole("button", { name: /Save shop details/i });
 
   let attemptsRemaining = 5;
@@ -182,7 +182,7 @@ async function runScenario(browser, viewport) {
         throw new Error(`Client exception rendered on ${route.name} route.`);
       }
       if (route.name === "operate") {
-        const heading = page.getByText(/Programme template|Coffee stamp card|Shop details/i).first();
+        const heading = page.getByText(/Programme workspace|Coffee stamp card|Shop details/i).first();
         await heading.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
         const primaryButton = page.getByRole("button", { name: /Create programme|Create demo customer join|Save shop details/i }).first();
         if (await primaryButton.count()) {
@@ -190,6 +190,39 @@ async function runScenario(browser, viewport) {
           if (!isDarkNavy(color)) {
             result.findings.push(`Operate primary button drifted from North Star navy: ${color}`);
             result.status = "warn";
+          }
+        }
+
+        const selectedProgrammeCard = page.getByTestId("selected-programme-card");
+        if (!(await selectedProgrammeCard.count())) {
+          throw new Error("Selected programme branded card preview did not render on operate route.");
+        }
+
+        const templateOptions = page.getByTestId("template-option");
+        if (await templateOptions.count() > 1) {
+          const existingProgrammeCount = await page.getByTestId("programme-rail-item").count();
+          await templateOptions.nth(1).click();
+
+          const createProgramme = page.getByTestId("create-programme");
+          if (await createProgramme.isEnabled()) {
+            await createProgramme.click();
+            await page.waitForTimeout(500);
+
+            const afterCreateCount = await page.getByTestId("programme-rail-item").count();
+            if (afterCreateCount <= existingProgrammeCount) {
+              throw new Error("Creating an additional programme did not increase visible programme rail items.");
+            }
+          }
+        }
+
+        const programmeRailItems = page.getByTestId("programme-rail-item");
+        if (await programmeRailItems.count() > 1) {
+          const firstCurrent = await page.getByText(/Current/i).count();
+          await programmeRailItems.nth(1).click();
+          await page.waitForTimeout(350);
+          const currentAfterSwitch = await page.getByText(/Current/i).count();
+          if (currentAfterSwitch === 0 && firstCurrent === 0) {
+            throw new Error("Programme switch did not expose an active item in the programme rail.");
           }
         }
       }

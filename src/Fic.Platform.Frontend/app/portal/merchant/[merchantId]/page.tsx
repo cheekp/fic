@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Copy, Eye, ExternalLink } from "lucide-react";
+import { Copy, Eye, ExternalLink, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { resolvePortalBrandTheme } from "@/lib/brand";
 import {
@@ -30,6 +30,7 @@ import {
 } from "@/lib/queries";
 import { OnboardingJourney } from "@/components/layout/onboarding-journey";
 import { PortalShell } from "@/components/layout/portal-shell";
+import { LoyaltyCardPreview } from "@/components/programmes/loyalty-card-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +41,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { northStarPortalTheme } from "@/types/portal-contracts";
 import type {
   MerchantWorkspaceSnapshot,
+  ProgrammeSummarySnapshot,
   ProgrammeTemplateOption,
   ShopTypeOption,
   WalletCardSnapshot,
@@ -99,6 +101,39 @@ function formatDateLabel(value: string) {
   });
 }
 
+function formatProgrammeWindow(startsOn: string, endsOn: string) {
+  return `${formatDateLabel(startsOn)} to ${formatDateLabel(endsOn)}`;
+}
+
+function buildWorkspaceHref(merchantId: string, section: WorkspaceSection, programmeId?: string) {
+  const params = new URLSearchParams();
+  params.set("programmeSection", section);
+  if (programmeId) {
+    params.set("programme", programmeId);
+  }
+
+  return `/portal/merchant/${merchantId}?${params.toString()}`;
+}
+
+function resolveSelectedProgrammeSummary(
+  workspace: MerchantWorkspaceSnapshot,
+  selectedProgrammeId?: string | null,
+) {
+  if (!selectedProgrammeId) {
+    return workspace.programmes[0] ?? null;
+  }
+
+  return workspace.programmes.find((programme) => programme.programmeId === selectedProgrammeId) ?? null;
+}
+
+function buildProgrammePreviewProgress(summary: ProgrammeSummarySnapshot | null, cardsCount: number) {
+  if (!summary) {
+    return "No active programme";
+  }
+
+  return `${summary.rewardThreshold} visits · ${cardsCount} cards`;
+}
+
 function getCardStatusClass(card: WalletCardSnapshot) {
   if (card.canRedeem) {
     return "border-emerald-600/30 bg-emerald-600/10 text-emerald-900";
@@ -147,6 +182,7 @@ function getCardStatusFilter(card: WalletCardSnapshot): Exclude<CardStatusFilter
 export default function WorkspacePage() {
   const params = useParams<{ merchantId: string }>();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const merchantId = Array.isArray(params.merchantId) ? params.merchantId[0] : params.merchantId;
   const section = resolveSection(searchParams.get("programmeSection"));
   const requestedProgrammeId = searchParams.get("programme") ?? undefined;
@@ -184,6 +220,9 @@ export default function WorkspacePage() {
 
   const selectedProgramme = workspace?.selectedProgramme ?? null;
   const selectedProgrammeId = selectedProgramme?.programmeId;
+  const selectedProgrammeSummary = workspace
+    ? resolveSelectedProgrammeSummary(workspace, selectedProgrammeId)
+    : null;
   const sessionQuery = useSessionSummaryQuery();
   const workspaceQuery = useWorkspaceSnapshotQuery(merchantId, requestedProgrammeId);
   const shopTypesQuery = useShopTypesQuery();
@@ -199,6 +238,7 @@ export default function WorkspacePage() {
   const brandLogoUrl = workspace?.brandProfile.logoUrl
     ? withCacheBust(workspace.brandProfile.logoUrl, logoCacheBuster)
     : null;
+  const selectedTemplate = templates.find((template) => template.templateKey === selectedTemplateKey) ?? null;
 
   useEffect(() => {
     if (sessionQuery.isPending || workspaceQuery.isPending) {
@@ -336,6 +376,8 @@ export default function WorkspacePage() {
     setWorkspace(nextWorkspace);
     queryClient.setQueryData(queryKeys.workspace(merchantId, programmeId), nextWorkspace);
     queryClient.invalidateQueries({ queryKey: ["portal-nav", "workspace", merchantId] });
+    const nextProgrammeId = programmeId ?? nextWorkspace.selectedProgramme?.programmeId;
+    router.replace(buildWorkspaceHref(merchantId, section, nextProgrammeId), { scroll: false });
   }
 
   const canUpdateProgramme = useMemo(
@@ -387,6 +429,10 @@ export default function WorkspacePage() {
       setWorkspace(nextWorkspace);
       queryClient.setQueryData(queryKeys.workspace(merchantId, requestedProgrammeId), nextWorkspace);
       queryClient.invalidateQueries({ queryKey: ["portal-nav", "workspace", merchantId] });
+      router.replace(
+        buildWorkspaceHref(merchantId, section, nextWorkspace.selectedProgramme?.programmeId),
+        { scroll: false },
+      );
       publishSuccess("Programme created.");
     } catch (err) {
       publishError(err instanceof Error ? err.message : "Unable to create programme.");
@@ -707,6 +753,13 @@ export default function WorkspacePage() {
   const programmeUrl = selectedProgramme
     ? `?programmeSection=operate&programme=${selectedProgramme.programmeId}`
     : "?programmeSection=operate";
+  const programmePreviewProgress = buildProgrammePreviewProgress(selectedProgrammeSummary, workspace.selectedProgrammeCards.length);
+  const programmeDescriptor = selectedProgrammeSummary
+    ? `${selectedProgrammeSummary.cardTypeLabel} · ${selectedProgrammeSummary.deliveryTypeLabel}`
+    : "Choose a programme";
+  const programmeWindow = selectedProgramme
+    ? formatProgrammeWindow(selectedProgramme.startsOn, selectedProgramme.endsOn)
+    : "No current window";
   const filteredCards = workspace.selectedProgrammeCards
     .filter((card) => {
       const term = cardFilter.trim().toLowerCase();
@@ -920,23 +973,32 @@ export default function WorkspacePage() {
                       Edit shop details
                     </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="template">Template</Label>
-                    <Select value={selectedTemplateKey} onValueChange={setSelectedTemplateKey}>
-                      <SelectTrigger id="template" className="h-14 rounded-2xl border-[rgba(15,27,42,0.14)] bg-[rgba(255,252,247,0.96)] text-base">
-                        <SelectValue placeholder="Choose template" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map((template) => (
-                          <SelectItem key={template.templateKey} value={template.templateKey}>
-                            {template.templateLabel}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    {templates.map((template) => {
+                      const isSelected = template.templateKey === selectedTemplateKey;
+                      return (
+                        <button
+                          key={template.templateKey}
+                          type="button"
+                          onClick={() => setSelectedTemplateKey(template.templateKey)}
+                          className={`rounded-[1.35rem] border p-4 text-left transition ${
+                            isSelected
+                              ? "border-[rgba(200,169,106,0.38)] bg-[rgba(200,169,106,0.12)] shadow-[0_18px_36px_-30px_rgba(200,169,106,0.45)]"
+                              : "border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.92)] hover:border-[rgba(15,27,42,0.2)]"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">{template.templateLabel}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                            {template.cardTypeLabel} · {template.outputLabel}
+                          </p>
+                          <p className="mt-2 text-sm text-foreground/74">{template.headline}</p>
+                          <p className="mt-2 text-sm text-foreground/68">{template.rewardCopy}</p>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <Button className="w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a] sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
-                    {isMutating ? "Creating..." : setupLaneCtaLabel}
+                  <Button data-testid="create-programme" className="w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a] sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
+                    {isMutating ? "Creating..." : `Create ${selectedTemplate?.templateLabel ?? "programme"}`}
                   </Button>
                 </div>
               )}
@@ -1058,7 +1120,7 @@ export default function WorkspacePage() {
       showActiveBadge={false}
     >
       <div className="space-y-4">
-        <section className="workspace-hero section-intro space-y-3">
+        <section className="workspace-hero section-intro space-y-4">
           <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex items-center gap-2">
@@ -1077,8 +1139,8 @@ export default function WorkspacePage() {
                 ) : null}
               </div>
               <h1 className="luxe-title">{workspace.merchant.displayName}</h1>
-              <p className="max-w-3xl text-balance text-[1.08rem] leading-8 text-foreground/88 sm:text-[1.2rem]">
-                Operate daily loyalty, refine programme settings, and manage customer cards with a mobile-first control lane.
+              <p className="max-w-3xl text-balance text-[1.04rem] leading-8 text-foreground/88 sm:text-[1.14rem]">
+                Run multiple loyalty programmes, switch between live cards, and manage customer progress from one merchant control surface.
               </p>
             </div>
 
@@ -1121,38 +1183,221 @@ export default function WorkspacePage() {
           </div>
         </section>
 
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
+          <Card className="overflow-hidden">
+            <CardHeader className="space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">Programme workspace</Badge>
+                    {selectedProgrammeSummary ? (
+                      <Badge variant="outline">{selectedProgrammeSummary.outputLabel}</Badge>
+                    ) : null}
+                  </div>
+                  <CardTitle className="text-2xl sm:text-[2.1rem]">
+                    {selectedProgrammeSummary?.rewardHeadline ?? "Select a programme"}
+                  </CardTitle>
+                  <CardDescription className="max-w-2xl text-foreground/74">
+                    {selectedProgramme?.rewardCopy ?? "Choose a programme or create a new template to start issuing branded loyalty cards."}
+                  </CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProgramme?.joinCode ? (
+                    <Button asChild variant="outline">
+                      <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
+                        Open join
+                      </Link>
+                    </Button>
+                  ) : null}
+                  {selectedProgramme ? (
+                    <Button onClick={handleDemoJoin} disabled={isMutating}>
+                      Create demo join
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <span className="metric-chip">{programmeDescriptor}</span>
+                <span className="metric-chip">{programmeWindow}</span>
+                {selectedProgrammeSummary ? <span className="metric-chip">Join code: {selectedProgrammeSummary.joinCode}</span> : null}
+                {selectedProgrammeSummary ? <span className="metric-chip">{selectedProgrammeSummary.rewardsUnlocked} rewards unlocked</span> : null}
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-5">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,19rem)]">
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Programmes</p>
+                      <p className="mt-1 text-sm text-foreground/74">Switch the active programme or add a new card type.</p>
+                    </div>
+                    <Badge variant="outline">{workspace.programmes.length} live</Badge>
+                  </div>
+                  <div className="grid gap-3">
+                    {workspace.programmes.map((programme) => {
+                      const isActive = programme.programmeId === selectedProgrammeId;
+                      return (
+                        <Link
+                          key={programme.programmeId}
+                          href={buildWorkspaceHref(merchantId, section, programme.programmeId)}
+                          data-testid="programme-rail-item"
+                          className={`rounded-[1.35rem] border p-4 transition ${
+                            isActive
+                              ? "border-[color-mix(in_srgb,var(--portal-primary)_34%,white_66%)] bg-[color-mix(in_srgb,var(--portal-primary)_10%,white_90%)] shadow-[0_18px_40px_-32px_rgba(15,27,42,0.28)]"
+                              : "border-border/70 bg-background/70 hover:border-[color-mix(in_srgb,var(--portal-primary)_22%,white_78%)] hover:bg-background/90"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground">{programme.rewardHeadline}</p>
+                              <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                {programme.templateLabel} · {programme.cardTypeLabel}
+                              </p>
+                            </div>
+                            {isActive ? <Badge>Current</Badge> : null}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <span className="metric-chip">{programme.activeCards} cards</span>
+                            <span className="metric-chip">{programme.rewardsUnlocked} unlocked</span>
+                            <span className="metric-chip">{formatProgrammeWindow(programme.startsOn, programme.endsOn)}</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="rounded-[1.45rem] border border-border/70 bg-background/75 p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Plus className="h-4 w-4" />
+                    Add programme
+                  </div>
+                  <p className="mt-2 text-sm text-foreground/74">Create another loyalty card from a template and manage it alongside the current programme.</p>
+                  <div className="mt-4 grid gap-3">
+                    {templates.map((template) => {
+                      const isSelected = template.templateKey === selectedTemplateKey;
+                      return (
+                        <button
+                          key={template.templateKey}
+                          type="button"
+                          data-testid="template-option"
+                          onClick={() => setSelectedTemplateKey(template.templateKey)}
+                          className={`rounded-[1.2rem] border p-3 text-left transition ${
+                            isSelected
+                              ? "border-[rgba(200,169,106,0.34)] bg-[rgba(200,169,106,0.12)]"
+                              : "border-border/70 bg-white/70 hover:border-[rgba(15,27,42,0.16)]"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">{template.templateLabel}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                            {template.cardTypeLabel} · {template.outputLabel}
+                          </p>
+                          <p className="mt-2 text-sm text-foreground/72">{template.headline}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    data-testid="create-programme"
+                    className="mt-4 w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
+                    onClick={handleCreateProgramme}
+                    disabled={isMutating || !selectedTemplateKey}
+                  >
+                    {isMutating ? "Creating..." : `Create ${selectedTemplate?.cardTypeLabel ?? "programme"}`}
+                  </Button>
+                </section>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            <LoyaltyCardPreview
+              testId="selected-programme-card"
+              merchantName={workspace.merchant.displayName}
+              title={selectedProgrammeSummary?.rewardHeadline ?? "Loyalty card"}
+              subtitle={selectedProgramme?.rewardCopy ?? "Choose or create a programme to preview the current branded loyalty card."}
+              progressLabel={programmePreviewProgress}
+              metaLabel={selectedProgrammeSummary?.templateLabel ?? selectedTemplate?.templateLabel ?? "Template"}
+              logoUrl={brandLogoUrl}
+              logoWidth={workspace.brandProfile.logoWidth}
+              logoHeight={workspace.brandProfile.logoHeight}
+              primaryColor={workspace.brandProfile.primaryColor}
+              accentColor={workspace.brandProfile.accentColor}
+            />
+
+            <Card className="border-border/70 bg-background/85">
+              <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current output</p>
+                  <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Card type</p>
+                  <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.cardTypeLabel ?? selectedTemplate?.cardTypeLabel ?? "Select template"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Join path</p>
+                  <p className="mt-1 text-sm font-semibold">{selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Window</p>
+                  <p className="mt-1 text-sm font-semibold">{programmeWindow}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
         {section === "operate" ? (
           selectedProgramme ? (
             <Card>
               <CardHeader>
-                <CardTitle>{selectedProgramme.templateLabel}</CardTitle>
-                <CardDescription className="text-foreground/72">{selectedProgramme.rewardCopy}</CardDescription>
+                <CardTitle>Operate selected programme</CardTitle>
+                <CardDescription className="text-foreground/72">
+                  Run join, stamp visits, and keep the currently selected loyalty card live.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <span className="metric-chip">Join: {selectedProgramme.joinCode ? `/join/${selectedProgramme.joinCode}` : "Unavailable"}</span>
-                  <span className="metric-chip">Cards: {workspace.selectedProgrammeCards.length}</span>
-                </div>
+              <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20rem)]">
+                <section className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="metric-chip">Join: {selectedProgramme.joinCode ? `/join/${selectedProgramme.joinCode}` : "Unavailable"}</span>
+                    <span className="metric-chip">Cards: {workspace.selectedProgrammeCards.length}</span>
+                    <span className="metric-chip">Ready: {redeemableCardsCount}</span>
+                  </div>
 
-                <div className="flex flex-wrap gap-3">
-                  <Button onClick={handleDemoJoin} disabled={isMutating}>Create demo customer join</Button>
-                  {selectedProgramme.joinCode ? (
-                    <Button asChild variant="outline">
-                      <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">Open join link</Link>
+                  <form className="space-y-3" onSubmit={handleAwardVisit}>
+                    <Label htmlFor="scan-code">Scan card code</Label>
+                    <Input
+                      id="scan-code"
+                      value={scanCode}
+                      onChange={(event) => setScanCode(event.target.value)}
+                      placeholder="card-..."
+                    />
+                    <Button type="submit" disabled={isMutating || scanCode.trim().length === 0}>
+                      Award visit
                     </Button>
-                  ) : null}
-                </div>
+                  </form>
+                </section>
 
-                <form className="space-y-3" onSubmit={handleAwardVisit}>
-                  <Label htmlFor="scan-code">Scan card code</Label>
-                  <Input
-                    id="scan-code"
-                    value={scanCode}
-                    onChange={(event) => setScanCode(event.target.value)}
-                    placeholder="card-..."
-                  />
-                  <Button type="submit" disabled={isMutating || scanCode.trim().length === 0}>Award visit</Button>
-                </form>
+                <section className="rounded-[1.4rem] border border-border/70 bg-background/78 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Selected programme</p>
+                  <p className="mt-2 text-lg font-semibold">{selectedProgrammeSummary?.templateLabel}</p>
+                  <p className="mt-1 text-sm text-foreground/74">{selectedProgramme.rewardItemLabel} after {selectedProgramme.rewardThreshold} visits.</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button onClick={handleDemoJoin} disabled={isMutating}>
+                      Create demo join
+                    </Button>
+                    {selectedProgramme.joinCode ? (
+                      <Button asChild variant="outline">
+                        <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
+                          Open join link
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                </section>
               </CardContent>
             </Card>
           ) : (
@@ -1169,10 +1414,46 @@ export default function WorkspacePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Configure programme</CardTitle>
-                <CardDescription className="text-foreground/72">Set reward behaviour, campaign dates, and customer-facing copy.</CardDescription>
+                <CardDescription className="text-foreground/72">Set reward behaviour, dates, and the customer-facing copy on the selected loyalty card.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form className="space-y-4" onSubmit={handleUpdateProgramme}>
+                  <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
+                    <LoyaltyCardPreview
+                      merchantName={workspace.merchant.displayName}
+                      title={selectedProgrammeSummary?.rewardHeadline ?? selectedProgramme.templateLabel}
+                      subtitle={rewardCopy || selectedProgramme.rewardCopy}
+                      progressLabel={`${rewardThreshold || selectedProgramme.rewardThreshold} visits`}
+                      metaLabel={selectedProgramme.cardTypeLabel}
+                      logoUrl={brandLogoUrl}
+                      logoWidth={workspace.brandProfile.logoWidth}
+                      logoHeight={workspace.brandProfile.logoHeight}
+                      primaryColor={workspace.brandProfile.primaryColor}
+                      accentColor={workspace.brandProfile.accentColor}
+                    />
+                    <section className="rounded-[1.4rem] border border-border/70 bg-background/80 p-4">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Programme output</p>
+                      <div className="mt-3 grid gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Template</p>
+                          <p className="mt-1 text-sm font-semibold">{selectedProgramme.templateLabel}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Card type</p>
+                          <p className="mt-1 text-sm font-semibold">{selectedProgramme.cardTypeLabel}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Delivery</p>
+                          <p className="mt-1 text-sm font-semibold">{selectedProgramme.deliveryTypeLabel}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Window</p>
+                          <p className="mt-1 text-sm font-semibold">{formatProgrammeWindow(startsOn, endsOn)}</p>
+                        </div>
+                      </div>
+                    </section>
+                  </section>
+
                   <div className="grid gap-3 lg:grid-cols-2">
                     <section className="rounded-2xl border border-border/70 bg-background/85 p-4">
                       <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Reward rules</p>
@@ -1363,19 +1644,20 @@ export default function WorkspacePage() {
                             </td>
                             <td className="px-3 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-border/60 shadow-sm">
-                                  <div
-                                    className="absolute inset-0"
-                                    style={{
-                                      background: `linear-gradient(132deg, ${card.primaryColor}, ${card.accentColor})`,
-                                    }}
-                                  />
-                                  <div className="relative flex h-full flex-col justify-between p-1.5 text-[10px] leading-tight text-white">
-                                    <span className="truncate font-semibold">{workspace.merchant.displayName}</span>
-                                    <span className="truncate text-white/90">{card.rewardItemLabel}</span>
-                                    <span className="font-medium text-white/95">{card.currentCount}/{card.targetCount}</span>
-                                  </div>
-                                </div>
+                                <LoyaltyCardPreview
+                                  merchantName={workspace.merchant.displayName}
+                                  title={card.rewardItemLabel}
+                                  subtitle={card.rewardCopy}
+                                  progressLabel={`${card.currentCount}/${card.targetCount}`}
+                                  metaLabel={selectedProgrammeSummary?.cardTypeLabel ?? "Card"}
+                                  logoUrl={card.logoUrl || brandLogoUrl}
+                                  logoWidth={card.logoWidth}
+                                  logoHeight={card.logoHeight}
+                                  primaryColor={card.primaryColor}
+                                  accentColor={card.accentColor}
+                                  variant="compact"
+                                  className="w-28 shrink-0"
+                                />
                                 <div className="space-y-0.5">
                                   <p className="text-sm font-semibold">{card.cardCode}</p>
                                   <p className="text-xs text-muted-foreground">{card.rewardCopy}</p>
@@ -1472,19 +1754,20 @@ export default function WorkspacePage() {
 
                         <section className="rounded-2xl border border-border/70 bg-background/85 p-4">
                           <div className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
-                            <div className="relative h-24 overflow-hidden rounded-lg border border-border/60 shadow-sm">
-                              <div
-                                className="absolute inset-0"
-                                style={{
-                                  background: `linear-gradient(132deg, ${selectedCard.primaryColor}, ${selectedCard.accentColor})`,
-                                }}
-                              />
-                              <div className="relative flex h-full flex-col justify-between p-2 text-[11px] text-white">
-                                <span className="truncate font-semibold">{workspace.merchant.displayName}</span>
-                                <span className="truncate text-white/90">{selectedCard.rewardItemLabel}</span>
-                                <span className="font-semibold">{selectedCard.currentCount}/{selectedCard.targetCount}</span>
-                              </div>
-                            </div>
+                            <LoyaltyCardPreview
+                              merchantName={workspace.merchant.displayName}
+                              title={selectedCard.rewardItemLabel}
+                              subtitle={selectedCard.rewardCopy}
+                              progressLabel={`${selectedCard.currentCount}/${selectedCard.targetCount}`}
+                              metaLabel={selectedProgrammeSummary?.templateLabel ?? "Live"}
+                              logoUrl={selectedCard.logoUrl || brandLogoUrl}
+                              logoWidth={selectedCard.logoWidth}
+                              logoHeight={selectedCard.logoHeight}
+                              primaryColor={selectedCard.primaryColor}
+                              accentColor={selectedCard.accentColor}
+                              variant="compact"
+                              className="h-24"
+                            />
                             <div className="grid gap-2 sm:grid-cols-2">
                               <div>
                                 <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Status</p>

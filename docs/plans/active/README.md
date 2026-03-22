@@ -18,3 +18,4 @@ Current in-flight plans:
 - `F46-onboarding-entry-focus.md`
 - `F47-card-operations-detail-lane.md`
 - `F48-card-lifecycle-bulk-operations.md`
+- `F49-multi-programme-workspace-and-card-surface.md`
