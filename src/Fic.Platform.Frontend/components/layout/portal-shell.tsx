@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Menu } from "lucide-react";
 import { ReactNode, useMemo } from "react";
 import { Drawer } from "vaul";
+import { buildBrandCssVars } from "@/lib/brand";
 import type {
   PortalNavItemContract,
   PortalNavKey,
@@ -136,6 +137,7 @@ export function PortalShell({
     <section
       className="mx-auto w-full max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6"
       style={{
+        ...buildBrandCssVars(theme),
         color: theme.ink,
         ["--portal-primary" as string]: theme.primary,
         ["--portal-accent" as string]: theme.accent,

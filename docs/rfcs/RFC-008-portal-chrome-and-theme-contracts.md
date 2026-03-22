@@ -12,6 +12,7 @@ Adopt a reusable portal chrome system and explicit contracts:
 - `PortalSurface` primitives for repeatable hero/metric/card patterns
 - `PortalNavItemContract` and `PortalThemeContract` in frontend types
 - FIC default theme with optional merchant overrides and safe fallback behavior
+- Theme tokens are the single frontend seam for platform-default and merchant-derived branding; route components should consume the shared theme contract rather than hardcode palette values locally.
 
 The first implementation slice wires signup/plan/billing/workspace routes.
 

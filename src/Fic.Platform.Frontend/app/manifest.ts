@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FIC Merchant Workspace",
+    name: "FIC Loyalty Platform",
     short_name: "FIC",
-    description: "Premium merchant loyalty workspace powered by FIC.",
+    description: "Brand-led merchant loyalty setup and operations powered by FIC.",
     start_url: "/",
     display: "standalone",
     background_color: "#f4f2ec",

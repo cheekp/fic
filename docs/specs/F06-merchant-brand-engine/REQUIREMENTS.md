@@ -28,6 +28,7 @@ Upgrade the current logo-and-colour treatment into a merchant brand engine that 
 - The signup flow should suggest site colours from the uploaded logo so merchants are not forced to hand-tune the first draft of their brand theme.
 - The compiler must choose a layout variant automatically for at least three visual modes.
 - The compiler must return a readable ink colour, surface treatment, accent treatment, and stamp styling that work on both lighter and darker merchant palettes.
+- API-facing theme contracts that drive Next.js portal/workspace surfaces must expose the compiled merchant tokens instead of reducing the brand system to raw primary/accent colours.
 
 ### Merchant Shell Theming
 

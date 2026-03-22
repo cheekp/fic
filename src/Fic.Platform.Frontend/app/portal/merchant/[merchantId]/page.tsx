@@ -7,6 +7,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy, Eye, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { resolvePortalBrandTheme } from "@/lib/brand";
 import {
   awardVisit,
   createProgramme,
@@ -42,7 +43,6 @@ import type {
   ShopTypeOption,
   WalletCardSnapshot,
 } from "@/types/contracts";
-import { ficPortalTheme } from "@/types/portal-contracts";
 
 type WorkspaceSection = "operate" | "configure" | "customers";
 type CardStatusFilter = "all" | "ready" | "active" | "redeemed" | "scheduled" | "expired" | "suspended" | "archived";
@@ -189,6 +189,13 @@ export default function WorkspacePage() {
   const shopTypesQuery = useShopTypesQuery();
   const portalNavQuery = useWorkspacePortalNavigationQuery(merchantId, section, selectedProgrammeId);
   const portalNav = portalNavQuery.data ?? null;
+  const workspaceTheme = useMemo(
+    () => resolvePortalBrandTheme({
+      primaryColor: workspace?.brandProfile.primaryColor ?? portalNav?.theme?.primary,
+      accentColor: workspace?.brandProfile.accentColor ?? portalNav?.theme?.accent,
+    }),
+    [portalNav?.theme?.accent, portalNav?.theme?.primary, workspace?.brandProfile.accentColor, workspace?.brandProfile.primaryColor],
+  );
   const brandLogoUrl = workspace?.brandProfile.logoUrl
     ? withCacheBust(workspace.brandProfile.logoUrl, logoCacheBuster)
     : null;
@@ -612,7 +619,7 @@ export default function WorkspacePage() {
         title="Merchant portal"
         activeKey={portalNav?.activeKey ?? "operate"}
         railItems={portalNav?.items ?? []}
-        theme={portalNav?.theme ?? ficPortalTheme}
+        theme={workspaceTheme}
         utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
@@ -630,7 +637,7 @@ export default function WorkspacePage() {
         title="Merchant portal"
         activeKey={portalNav?.activeKey ?? "operate"}
         railItems={portalNav?.items ?? []}
-        theme={portalNav?.theme ?? ficPortalTheme}
+        theme={workspaceTheme}
         utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
@@ -734,7 +741,7 @@ export default function WorkspacePage() {
         title="Merchant portal"
         activeKey="operate"
         railItems={portalNav?.items ?? []}
-        theme={portalNav?.theme ?? ficPortalTheme}
+        theme={workspaceTheme}
         utilityLinks={portalNav?.utilityLinks}
         showRail={false}
         showActiveBadge={false}
@@ -920,7 +927,7 @@ export default function WorkspacePage() {
       title="Merchant portal"
       activeKey={portalNav?.activeKey ?? section}
       railItems={portalNav?.items ?? []}
-      theme={portalNav?.theme ?? ficPortalTheme}
+      theme={workspaceTheme}
       utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
@@ -932,14 +939,16 @@ export default function WorkspacePage() {
               <div className="flex items-center gap-2">
                 <Badge>Merchant workspace</Badge>
                 {brandLogoUrl ? (
-                  <Image
-                    src={brandLogoUrl}
-                    alt={`${workspace.merchant.displayName} logo`}
-                    width={Math.max(workspace.brandProfile.logoWidth || 56, 40)}
-                    height={Math.max(workspace.brandProfile.logoHeight || 56, 40)}
-                    className="h-8 w-auto rounded-md border border-border/60 bg-white/80 p-1"
-                    unoptimized
-                  />
+                  <span className="brand-logo-plate">
+                    <Image
+                      src={brandLogoUrl}
+                      alt={`${workspace.merchant.displayName} logo`}
+                      width={Math.max(workspace.brandProfile.logoWidth || 56, 40)}
+                      height={Math.max(workspace.brandProfile.logoHeight || 56, 40)}
+                      className="h-8 w-auto"
+                      unoptimized
+                    />
+                  </span>
                 ) : null}
               </div>
               <h1 className="luxe-title">{workspace.merchant.displayName}</h1>

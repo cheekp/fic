@@ -91,7 +91,7 @@ export function PublicPortalHeader() {
           </Drawer.Portal>
         </Drawer.Root>
         <Link href="/" className="text-sm font-semibold tracking-[0.01em] sm:text-base">
-          FIC merchant portal
+          FIC loyalty platform
         </Link>
       </div>
 

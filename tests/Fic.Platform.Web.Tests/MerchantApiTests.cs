@@ -289,6 +289,14 @@ public sealed class MerchantApiTests
         Assert.NotEmpty(contract.UtilityLinks);
         Assert.Contains(contract.UtilityLinks, link => link.Key == "blogs" && link.Href == "/blogs" && !link.IsExternal);
         Assert.Contains(contract.UtilityLinks, link => link.Key == "logout" && link.Href == "/account/logout" && link.IsExternal);
+        Assert.Equal("#1f3731", contract.Theme.Primary);
+        Assert.Equal("#f4c15d", contract.Theme.Accent);
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.CanvasStart));
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.CanvasEnd));
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.SurfaceStrong));
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.PrimaryButton));
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.LogoPlate));
+        Assert.Contains(contract.Theme.Variant, new[] { "bloom", "glow", "ribbon" });
         Assert.Null(contract.NextAction);
     }
 
@@ -351,6 +359,12 @@ public sealed class MerchantApiTests
         Assert.NotEmpty(contract.UtilityLinks);
         Assert.Contains(contract.UtilityLinks, link => link.Key == "blogs" && link.Href == "/blogs" && !link.IsExternal);
         Assert.Contains(contract.UtilityLinks, link => link.Key == "logout" && link.Href == "/account/logout" && link.IsExternal);
+        Assert.Equal("#1f3731", contract.Theme.Primary);
+        Assert.Equal("#f4c15d", contract.Theme.Accent);
+        Assert.True(contract.Theme.UseDarkChrome);
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.CanvasStart));
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.PrimaryButtonInk));
+        Assert.False(string.IsNullOrWhiteSpace(contract.Theme.Glow));
         Assert.NotNull(contract.NextAction);
         Assert.Equal("programme", contract.NextAction!.Key);
         Assert.Equal("Create programme", contract.NextAction.CtaLabel);

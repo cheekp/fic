@@ -15,6 +15,7 @@ Introduce a reusable Next.js portal chrome system with explicit theme/navigation
 - Desktop must render persistent rail navigation without burger dependency.
 - Portal nav entries must be defined via typed contract objects, not page-local hardcoded JSX fragments.
 - Theme tokens must be represented by a typed contract with FIC defaults and safe fallbacks.
+- The portal theme contract must carry compiled presentation tokens beyond primary/accent, including canvas, surface, line, button, glow, and logo-plate values needed to keep the Next.js shell aligned with the backend merchant brand engine.
 - Signup, plan, billing, and workspace routes must render within `PortalShell`.
 
 ## Operational Requirements
