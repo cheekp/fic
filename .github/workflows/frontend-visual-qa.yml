@@ -1,0 +1,117 @@
+name: Frontend Visual QA
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/frontend-visual-qa.yml"
+      - ".agents/skills/frontend-visual-qa/**"
+      - "docs/business/brand-guidlines.txt"
+      - "src/Fic.Platform.Frontend/**"
+      - "src/Fic.Platform.Web/**"
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-visual-qa:
+    name: frontend-visual-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/Fic.Platform.Frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: src/Fic.Platform.Frontend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: src/Fic.Platform.Frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Next.js
+        working-directory: src/Fic.Platform.Frontend
+        run: npm run build
+
+      - name: Start API
+        env:
+          ASPNETCORE_URLS: http://127.0.0.1:5276
+        run: |
+          dotnet run --project src/Fic.Platform.Web --no-launch-profile > /tmp/fic-api.log 2>&1 &
+          echo $! > /tmp/fic-api.pid
+
+      - name: Start Next.js
+        working-directory: src/Fic.Platform.Frontend
+        env:
+          NEXT_PUBLIC_FIC_API_BASE_URL: http://127.0.0.1:5276
+        run: |
+          npm run start -- --hostname 127.0.0.1 --port 3001 > /tmp/fic-next.log 2>&1 &
+          echo $! > /tmp/fic-next.pid
+
+      - name: Wait for services
+        run: |
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:5276/ >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3001/ >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:5276/ >/dev/null
+          curl -fsS http://127.0.0.1:3001/ >/dev/null
+
+      - name: Run signup visual QA
+        working-directory: src/Fic.Platform.Frontend
+        env:
+          FIC_QA_FRONTEND_BASE_URL: http://127.0.0.1:3001
+        run: npm run qa:signup-flow
+
+      - name: Run workspace visual QA
+        working-directory: src/Fic.Platform.Frontend
+        env:
+          FIC_QA_FRONTEND_BASE_URL: http://127.0.0.1:3001
+        run: npm run qa:workspace-slices
+
+      - name: Upload visual QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-visual-qa-artifacts
+          path: artifacts/nextjs-qa/
+          if-no-files-found: ignore
+
+      - name: Upload service logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-visual-qa-logs
+          path: |
+            /tmp/fic-api.log
+            /tmp/fic-next.log
+          if-no-files-found: ignore
+
+      - name: Stop services
+        if: always()
+        run: |
+          kill "$(cat /tmp/fic-api.pid)" >/dev/null 2>&1 || true
+          kill "$(cat /tmp/fic-next.pid)" >/dev/null 2>&1 || true

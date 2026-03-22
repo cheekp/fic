@@ -56,18 +56,18 @@ export function PublicPortalHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 mb-5 flex items-center justify-between rounded-2xl border border-border/70 bg-[rgb(255_250_240_/_0.88)] px-3 py-2.5 shadow-luxe backdrop-blur sm:px-4">
+    <header className="sticky top-0 z-40 mb-5 flex items-center justify-between rounded-2xl border border-[rgba(15,27,42,0.12)] bg-[rgba(245,243,239,0.92)] px-3 py-2.5 shadow-[0_18px_40px_-30px_rgba(15,27,42,0.4)] backdrop-blur sm:px-4">
       <div className="flex items-center gap-2">
         <Drawer.Root shouldScaleBackground={false}>
           <Drawer.Trigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9">
+            <Button variant="outline" size="icon" className="h-9 w-9 border-[rgba(15,27,42,0.16)] bg-transparent text-[#4a4f55] hover:bg-[rgba(15,27,42,0.04)]">
               <Menu className="h-4 w-4" />
               <span className="sr-only">Open site navigation</span>
             </Button>
           </Drawer.Trigger>
           <Drawer.Portal>
             <Drawer.Overlay className="fixed inset-0 z-40 bg-black/35" />
-            <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] rounded-t-2xl border border-border/80 bg-[rgb(255_250_240_/_0.96)] p-4">
+            <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] rounded-t-2xl border border-[rgba(15,27,42,0.12)] bg-[rgba(245,243,239,0.98)] p-4">
               <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border/80" />
               <div className="space-y-4">
                 <section className="space-y-2">
@@ -90,16 +90,16 @@ export function PublicPortalHeader() {
             </Drawer.Content>
           </Drawer.Portal>
         </Drawer.Root>
-        <Link href="/" className="text-sm font-semibold tracking-[0.01em] sm:text-base">
-          FIC loyalty platform
+        <Link href="/" className="text-sm font-semibold tracking-[0.01em] text-[#0f1b2a] sm:text-base">
+          North Star Customer Solutions
         </Link>
       </div>
 
       <div className="flex items-center gap-2">
-        <Button asChild variant="ghost" size="sm" className="h-9 px-3">
+        <Button asChild variant="ghost" size="sm" className="h-9 px-3 text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]">
           <a href={`${apiBaseUrl}/account/login`}>Log in</a>
         </Button>
-        <Button asChild size="sm" className="h-9 px-4">
+        <Button asChild size="sm" className="h-9 px-4 bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#1b2d40]">
           <Link href="/portal/signup">Sign up</Link>
         </Button>
       </div>
