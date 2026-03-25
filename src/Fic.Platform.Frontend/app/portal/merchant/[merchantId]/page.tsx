@@ -1430,20 +1430,20 @@ export default function WorkspacePage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <span className="metric-chip">{programmeDescriptor}</span>
-                <span className="metric-chip">{programmeWindow}</span>
-                {selectedProgrammeSummary ? <span className="metric-chip">{selectedProgrammeSummary.rewardsUnlocked} rewards unlocked</span> : null}
+              <div className="grid gap-2 text-sm text-foreground/72 sm:grid-cols-3">
+                <p>{programmeDescriptor}</p>
+                <p>{programmeWindow}</p>
+                <p>{selectedProgrammeSummary ? `${selectedProgrammeSummary.rewardsUnlocked} rewards unlocked` : "No active programme"}</p>
               </div>
             </CardHeader>
 
             <CardContent className="space-y-5">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,19rem)]">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20rem)]">
                 <section className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Programmes</p>
-                      <p className="mt-1 text-sm text-foreground/74">Switch the active programme or add a new card type.</p>
+                      <p className="mt-1 text-sm text-foreground/74">Switch the active programme.</p>
                     </div>
                     <Badge variant="outline">{workspace.programmes.length} live</Badge>
                   </div>
@@ -1472,94 +1472,88 @@ export default function WorkspacePage() {
                           </div>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <span className="metric-chip">{programme.activeCards} cards</span>
-                            <span className="metric-chip">{programme.rewardsUnlocked} unlocked</span>
                             <span className="metric-chip">{formatProgrammeWindow(programme.startsOn, programme.endsOn)}</span>
                           </div>
                         </Link>
                       );
                     })}
                   </div>
+                  <section className="rounded-[1.3rem] border border-border/70 bg-background/75 p-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <Plus className="h-4 w-4" />
+                      Add programme
+                    </div>
+                    <p className="mt-2 text-sm text-foreground/74">Choose a template for another card type.</p>
+                    <div className="mt-4 grid gap-2">
+                      {templates.map((template) => {
+                        const isSelected = template.templateKey === selectedTemplateKey;
+                        return (
+                          <button
+                            key={template.templateKey}
+                            type="button"
+                            data-testid="template-option"
+                            onClick={() => setSelectedTemplateKey(template.templateKey)}
+                            className={`rounded-[1rem] border p-3 text-left transition ${
+                              isSelected
+                                ? "border-[rgba(200,169,106,0.34)] bg-[rgba(200,169,106,0.12)]"
+                                : "border-border/70 bg-white/70 hover:border-[rgba(15,27,42,0.16)]"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">{template.templateLabel}</p>
+                                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                  {template.cardTypeLabel}
+                                </p>
+                              </div>
+                              {isSelected ? <Badge>Selected</Badge> : null}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      data-testid="create-programme"
+                      className="mt-4 w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
+                      onClick={handleCreateProgramme}
+                      disabled={isMutating || !selectedTemplateKey}
+                    >
+                      {isMutating ? "Creating..." : `Create ${selectedTemplate?.cardTypeLabel ?? "programme"}`}
+                    </Button>
+                  </section>
                 </section>
 
-                <section className="rounded-[1.45rem] border border-border/70 bg-background/75 p-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <Plus className="h-4 w-4" />
-                    Add programme
+                <section className="space-y-4">
+                  <LoyaltyCardPreview
+                    testId="selected-programme-card"
+                    merchantName={workspace.merchant.displayName}
+                    title={selectedProgrammeSummary?.rewardHeadline ?? "Loyalty card"}
+                    subtitle={selectedProgramme?.rewardCopy ?? "Choose or create a programme to preview the current branded loyalty card."}
+                    progressLabel={programmePreviewProgress}
+                    metaLabel={selectedProgrammeSummary?.templateLabel ?? selectedTemplate?.templateLabel ?? "Template"}
+                    logoUrl={brandLogoUrl}
+                    logoWidth={workspace.brandProfile.logoWidth}
+                    logoHeight={workspace.brandProfile.logoHeight}
+                    primaryColor={workspace.brandProfile.primaryColor}
+                    accentColor={workspace.brandProfile.accentColor}
+                  />
+
+                  <div className="rounded-[1.3rem] border border-border/70 bg-background/85 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current output</p>
+                        <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Join path</p>
+                        <p className="mt-1 text-sm font-semibold">{selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}</p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm text-foreground/74">Create another loyalty card from a template and manage it alongside the current programme.</p>
-                  <div className="mt-4 grid gap-3">
-                    {templates.map((template) => {
-                      const isSelected = template.templateKey === selectedTemplateKey;
-                      return (
-                        <button
-                          key={template.templateKey}
-                          type="button"
-                          data-testid="template-option"
-                          onClick={() => setSelectedTemplateKey(template.templateKey)}
-                          className={`rounded-[1.2rem] border p-3 text-left transition ${
-                            isSelected
-                              ? "border-[rgba(200,169,106,0.34)] bg-[rgba(200,169,106,0.12)]"
-                              : "border-border/70 bg-white/70 hover:border-[rgba(15,27,42,0.16)]"
-                          }`}
-                        >
-                          <p className="text-sm font-semibold">{template.templateLabel}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                            {template.cardTypeLabel} · {template.outputLabel}
-                          </p>
-                          <p className="mt-2 text-sm text-foreground/72">{template.headline}</p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <Button
-                    data-testid="create-programme"
-                    className="mt-4 w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
-                    onClick={handleCreateProgramme}
-                    disabled={isMutating || !selectedTemplateKey}
-                  >
-                    {isMutating ? "Creating..." : `Create ${selectedTemplate?.cardTypeLabel ?? "programme"}`}
-                  </Button>
                 </section>
               </div>
             </CardContent>
           </Card>
-
-          <div className="space-y-4">
-            <LoyaltyCardPreview
-              testId="selected-programme-card"
-              merchantName={workspace.merchant.displayName}
-              title={selectedProgrammeSummary?.rewardHeadline ?? "Loyalty card"}
-              subtitle={selectedProgramme?.rewardCopy ?? "Choose or create a programme to preview the current branded loyalty card."}
-              progressLabel={programmePreviewProgress}
-              metaLabel={selectedProgrammeSummary?.templateLabel ?? selectedTemplate?.templateLabel ?? "Template"}
-              logoUrl={brandLogoUrl}
-              logoWidth={workspace.brandProfile.logoWidth}
-              logoHeight={workspace.brandProfile.logoHeight}
-              primaryColor={workspace.brandProfile.primaryColor}
-              accentColor={workspace.brandProfile.accentColor}
-            />
-
-            <Card className="border-border/70 bg-background/85">
-              <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current output</p>
-                  <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Card type</p>
-                  <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.cardTypeLabel ?? selectedTemplate?.cardTypeLabel ?? "Select template"}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Join path</p>
-                  <p className="mt-1 text-sm font-semibold">{selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Window</p>
-                  <p className="mt-1 text-sm font-semibold">{programmeWindow}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </section>
 
         {section === "operate" ? (
