@@ -1459,53 +1459,36 @@ export default function WorkspacePage() {
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
+        <section>
           <Card className="overflow-hidden">
-            <CardHeader className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">Programme workspace</Badge>
-                    {selectedProgrammeSummary ? (
-                      <Badge variant="outline">{selectedProgrammeSummary.outputLabel}</Badge>
-                    ) : null}
-                  </div>
-                  <CardTitle className="text-2xl sm:text-[2.1rem]">
-                    {selectedProgrammeSummary?.rewardHeadline ?? "Select a programme"}
-                  </CardTitle>
-                  <CardDescription className="max-w-2xl text-foreground/74">
-                    {selectedProgramme?.rewardCopy ?? "Choose a programme or create a new template to start issuing branded loyalty cards."}
-                  </CardDescription>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
-                    onClick={() => setIsShopSetupOpen(true)}
-                  >
-                    Edit shop
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid gap-2 text-sm text-foreground/72 sm:grid-cols-3">
-                <p>{programmeDescriptor}</p>
-                <p>{programmeWindow}</p>
-                <p>{selectedProgrammeSummary ? `${selectedProgrammeSummary.rewardsUnlocked} rewards unlocked` : "No active programme"}</p>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-5">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,20rem)]">
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Programmes</p>
-                      <p className="mt-1 text-sm text-foreground/74">Switch the active programme.</p>
+            <CardContent className="space-y-6 p-6">
+              <div className="grid gap-6 xl:grid-cols-[minmax(19rem,24rem)_minmax(0,1fr)] xl:items-start">
+                <section className="space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Selected programme</p>
+                      <h2 className="font-display text-[2rem] leading-[0.96] text-foreground">
+                        {selectedProgrammeSummary?.rewardHeadline ?? "Select a programme"}
+                      </h2>
                     </div>
-                    <Badge variant="outline">{workspace.programmes.length} live</Badge>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
+                      onClick={() => setIsShopSetupOpen(true)}
+                    >
+                      Edit shop
+                    </Button>
                   </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <span className="metric-chip">{programmeDescriptor}</span>
+                    <span className="metric-chip">{programmeWindow}</span>
+                    <span className="metric-chip">
+                      {selectedProgrammeSummary ? `${selectedProgrammeSummary.rewardsUnlocked} rewards unlocked` : "No active programme"}
+                    </span>
+                  </div>
+
                   <div className="grid gap-3">
                     {workspace.programmes.map((programme) => {
                       const isActive = programme.programmeId === selectedProgrammeId;
@@ -1514,95 +1497,26 @@ export default function WorkspacePage() {
                           key={programme.programmeId}
                           href={buildWorkspaceHref(merchantId, section, programme.programmeId)}
                           data-testid="programme-rail-item"
-                          className={`rounded-[1.35rem] border p-4 transition ${
+                          className={cn(
+                            "rounded-[1.25rem] border px-4 py-3 transition",
                             isActive
-                              ? "border-[color-mix(in_srgb,var(--portal-primary)_34%,white_66%)] bg-[color-mix(in_srgb,var(--portal-primary)_10%,white_90%)] shadow-[0_18px_40px_-32px_rgba(15,27,42,0.28)]"
-                              : "border-border/70 bg-background/70 hover:border-[color-mix(in_srgb,var(--portal-primary)_22%,white_78%)] hover:bg-background/90"
-                          }`}
+                              ? "border-[color-mix(in_srgb,var(--portal-primary)_28%,white_72%)] bg-[color-mix(in_srgb,var(--portal-primary)_8%,white_92%)]"
+                              : "border-border/70 bg-background/55 hover:border-[color-mix(in_srgb,var(--portal-primary)_18%,white_82%)] hover:bg-background/80",
+                          )}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold text-foreground">{programme.rewardHeadline}</p>
+                              <p className="text-base font-semibold text-foreground">{programme.rewardHeadline}</p>
                               <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
                                 {programme.templateLabel} · {programme.cardTypeLabel}
                               </p>
                             </div>
                             {isActive ? <Badge>Current</Badge> : null}
                           </div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <span className="metric-chip">{programme.activeCards} cards</span>
-                            <span className="metric-chip">{formatProgrammeWindow(programme.startsOn, programme.endsOn)}</span>
-                          </div>
                         </Link>
                       );
                     })}
                   </div>
-                  <section className="rounded-[1.3rem] border border-border/70 bg-background/75 p-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold">
-                      <Plus className="h-4 w-4" />
-                      Add programme
-                    </div>
-                    <p className="mt-2 text-sm text-foreground/74">Choose a template for another card type.</p>
-                    <div className="mt-4 grid gap-2">
-                      {templates.map((template) => {
-                        const isSelected = template.templateKey === selectedTemplateKey;
-                        return (
-                          <div key={template.templateKey} className="space-y-2">
-                            <div
-                              data-testid="template-option"
-                              onClick={() => setSelectedTemplateKey(template.templateKey)}
-                              className={`block w-full cursor-pointer rounded-[1rem] text-left transition ${
-                                isSelected ? "ring-2 ring-[rgba(200,169,106,0.38)] ring-offset-2 ring-offset-[rgba(255,251,245,0.98)]" : ""
-                              }`}
-                            >
-                              <LoyaltyCardPreview
-                                merchantName={workspace.merchant.displayName}
-                                title={template.templateLabel}
-                                subtitle={template.headline}
-                                progressLabel={`${template.rewardThreshold} visits`}
-                                metaLabel={template.cardTypeLabel}
-                                logoUrl={brandLogoUrl}
-                                logoWidth={workspace.brandProfile.logoWidth}
-                                logoHeight={workspace.brandProfile.logoHeight}
-                                primaryColor={workspace.brandProfile.primaryColor}
-                                accentColor={workspace.brandProfile.accentColor}
-                                variant="compact"
-                                backTitle={template.outputLabel}
-                                backDetails={[
-                                  template.description,
-                                  `Reward: ${template.rewardCopy}`,
-                                  `Delivery: ${template.deliveryTypeLabel}`,
-                                ]}
-                                className="h-40"
-                              />
-                            </div>
-                            <div className="flex items-center justify-between gap-3">
-                              {isSelected ? <Badge>Selected</Badge> : <span className="text-xs text-foreground/58">Tap card to select</span>}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="rounded-full border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setPreviewTemplateKey(template.templateKey);
-                                }}
-                              >
-                                Preview
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <Button
-                      data-testid="create-programme"
-                      className="mt-4 w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
-                      onClick={handleCreateProgramme}
-                      disabled={isMutating || !selectedTemplateKey}
-                    >
-                      {isMutating ? "Creating..." : `Create ${selectedTemplate?.cardTypeLabel ?? "programme"}`}
-                    </Button>
-                  </section>
                 </section>
 
                 <section className="space-y-4">
@@ -1628,20 +1542,96 @@ export default function WorkspacePage() {
                     ]}
                   />
 
-                  <div className="rounded-[1.3rem] border border-border/70 bg-background/85 p-4">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current output</p>
-                        <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Join path</p>
-                        <p className="mt-1 text-sm font-semibold">{selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}</p>
-                      </div>
+                  <div className="grid gap-3 rounded-[1.3rem] border border-border/70 bg-background/70 p-4 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Output</p>
+                      <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Join path</p>
+                      <p className="mt-1 text-sm font-semibold">{selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}</p>
                     </div>
                   </div>
                 </section>
               </div>
+
+              <section className="rounded-[1.35rem] border border-border/70 bg-background/60 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Add programme</p>
+                    <p className="mt-1 text-sm text-foreground/72">Choose another card type to add alongside the current programme.</p>
+                  </div>
+                  <Button
+                    data-testid="create-programme"
+                    className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
+                    onClick={handleCreateProgramme}
+                    disabled={isMutating || !selectedTemplateKey}
+                  >
+                    {isMutating ? "Creating..." : `Create ${selectedTemplate?.cardTypeLabel ?? "programme"}`}
+                  </Button>
+                </div>
+
+                <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                  {templates.map((template) => {
+                    const isSelected = template.templateKey === selectedTemplateKey;
+                    return (
+                      <div key={template.templateKey} className="space-y-3">
+                        <div
+                          data-testid="template-option"
+                          onClick={() => setSelectedTemplateKey(template.templateKey)}
+                          className={cn(
+                            "block w-full cursor-pointer rounded-[1.2rem] transition",
+                            isSelected ? "ring-2 ring-[rgba(200,169,106,0.38)] ring-offset-2 ring-offset-[rgba(255,251,245,0.98)]" : "",
+                          )}
+                        >
+                          <LoyaltyCardPreview
+                            merchantName={workspace.merchant.displayName}
+                            title={template.templateLabel}
+                            subtitle={template.headline}
+                            progressLabel={`${template.rewardThreshold} visits`}
+                            metaLabel={template.cardTypeLabel}
+                            logoUrl={brandLogoUrl}
+                            logoWidth={workspace.brandProfile.logoWidth}
+                            logoHeight={workspace.brandProfile.logoHeight}
+                            primaryColor={workspace.brandProfile.primaryColor}
+                            accentColor={workspace.brandProfile.accentColor}
+                            variant="compact"
+                            backTitle={template.outputLabel}
+                            backDetails={[
+                              template.description,
+                              `Reward: ${template.rewardCopy}`,
+                              `Delivery: ${template.deliveryTypeLabel}`,
+                            ]}
+                            className="w-full"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">{template.templateLabel}</p>
+                            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              {template.outputLabel}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isSelected ? <Badge>Selected</Badge> : null}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="rounded-full border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setPreviewTemplateKey(template.templateKey);
+                              }}
+                            >
+                              Preview
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
             </CardContent>
           </Card>
         </section>
