@@ -191,6 +191,7 @@ export default function WorkspacePage() {
   const [templates, setTemplates] = useState<ProgrammeTemplateOption[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopTypeOption[]>(fallbackShopTypes);
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>("");
+  const [previewTemplateKey, setPreviewTemplateKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [isSavingShopDetails, setIsSavingShopDetails] = useState(false);
@@ -243,6 +244,7 @@ export default function WorkspacePage() {
     ? withCacheBust(workspace.brandProfile.logoUrl, logoCacheBuster)
     : null;
   const selectedTemplate = templates.find((template) => template.templateKey === selectedTemplateKey) ?? null;
+  const previewTemplate = templates.find((template) => template.templateKey === previewTemplateKey) ?? null;
 
   useEffect(() => {
     if (sessionQuery.isPending || workspaceQuery.isPending) {
@@ -1488,27 +1490,50 @@ export default function WorkspacePage() {
                       {templates.map((template) => {
                         const isSelected = template.templateKey === selectedTemplateKey;
                         return (
-                          <button
-                            key={template.templateKey}
-                            type="button"
-                            data-testid="template-option"
-                            onClick={() => setSelectedTemplateKey(template.templateKey)}
-                            className={`rounded-[1rem] border p-3 text-left transition ${
-                              isSelected
-                                ? "border-[rgba(200,169,106,0.34)] bg-[rgba(200,169,106,0.12)]"
-                                : "border-border/70 bg-white/70 hover:border-[rgba(15,27,42,0.16)]"
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold">{template.templateLabel}</p>
-                                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                  {template.cardTypeLabel}
-                                </p>
-                              </div>
-                              {isSelected ? <Badge>Selected</Badge> : null}
+                          <div key={template.templateKey} className="space-y-2">
+                            <div
+                              data-testid="template-option"
+                              onClick={() => setSelectedTemplateKey(template.templateKey)}
+                              className={`block w-full cursor-pointer rounded-[1rem] text-left transition ${
+                                isSelected ? "ring-2 ring-[rgba(200,169,106,0.38)] ring-offset-2 ring-offset-[rgba(255,251,245,0.98)]" : ""
+                              }`}
+                            >
+                              <LoyaltyCardPreview
+                                merchantName={workspace.merchant.displayName}
+                                title={template.templateLabel}
+                                subtitle={template.headline}
+                                progressLabel={`${template.rewardThreshold} visits`}
+                                metaLabel={template.cardTypeLabel}
+                                logoUrl={brandLogoUrl}
+                                logoWidth={workspace.brandProfile.logoWidth}
+                                logoHeight={workspace.brandProfile.logoHeight}
+                                primaryColor={workspace.brandProfile.primaryColor}
+                                accentColor={workspace.brandProfile.accentColor}
+                                variant="compact"
+                                backTitle={template.outputLabel}
+                                backDetails={[
+                                  template.description,
+                                  `Reward: ${template.rewardCopy}`,
+                                  `Delivery: ${template.deliveryTypeLabel}`,
+                                ]}
+                                className="h-40"
+                              />
                             </div>
-                          </button>
+                            <div className="flex items-center justify-between gap-3">
+                              {isSelected ? <Badge>Selected</Badge> : <span className="text-xs text-foreground/58">Tap card to select</span>}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="rounded-full border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setPreviewTemplateKey(template.templateKey);
+                                }}
+                              >
+                                Preview
+                              </Button>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -1536,6 +1561,14 @@ export default function WorkspacePage() {
                     logoHeight={workspace.brandProfile.logoHeight}
                     primaryColor={workspace.brandProfile.primaryColor}
                     accentColor={workspace.brandProfile.accentColor}
+                    expandable
+                    flippable
+                    backTitle={selectedProgrammeSummary?.templateLabel ?? "Programme detail"}
+                    backDetails={[
+                      `Output: ${selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}`,
+                      `Window: ${programmeWindow}`,
+                      `Join: ${selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}`,
+                    ]}
                   />
 
                   <div className="rounded-[1.3rem] border border-border/70 bg-background/85 p-4">
@@ -1555,6 +1588,44 @@ export default function WorkspacePage() {
             </CardContent>
           </Card>
         </section>
+
+        <Dialog open={Boolean(previewTemplate)} onOpenChange={(open) => {
+          if (!open) {
+            setPreviewTemplateKey(null);
+          }
+        }}>
+          <DialogContent className="border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.98)] p-4 sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{previewTemplate?.templateLabel ?? "Programme preview"}</DialogTitle>
+              <DialogDescription>
+                Preview the programme card surface before adding it to the merchant workspace.
+              </DialogDescription>
+            </DialogHeader>
+            {previewTemplate ? (
+              <div className="mx-auto w-full max-w-2xl py-2">
+                <LoyaltyCardPreview
+                  merchantName={workspace.merchant.displayName}
+                  title={previewTemplate.templateLabel}
+                  subtitle={previewTemplate.headline}
+                  progressLabel={`${previewTemplate.rewardThreshold} visits`}
+                  metaLabel={previewTemplate.cardTypeLabel}
+                  logoUrl={brandLogoUrl}
+                  logoWidth={workspace.brandProfile.logoWidth}
+                  logoHeight={workspace.brandProfile.logoHeight}
+                  primaryColor={workspace.brandProfile.primaryColor}
+                  accentColor={workspace.brandProfile.accentColor}
+                  flippable
+                  backTitle={previewTemplate.outputLabel}
+                  backDetails={[
+                    previewTemplate.description,
+                    `Reward: ${previewTemplate.rewardCopy}`,
+                    `Delivery: ${previewTemplate.deliveryTypeLabel}`,
+                  ]}
+                />
+              </div>
+            ) : null}
+          </DialogContent>
+        </Dialog>
 
         {section === "operate" ? (
           selectedProgramme ? (

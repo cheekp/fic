@@ -1,6 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { RotateCcw, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 type LoyaltyCardPreviewProps = {
@@ -17,9 +21,14 @@ type LoyaltyCardPreviewProps = {
   variant?: "hero" | "compact";
   className?: string;
   testId?: string;
+  interactive?: boolean;
+  expandable?: boolean;
+  flippable?: boolean;
+  backTitle?: string;
+  backDetails?: string[];
 };
 
-export function LoyaltyCardPreview({
+function CardSurface({
   merchantName,
   title,
   subtitle,
@@ -30,25 +39,12 @@ export function LoyaltyCardPreview({
   logoHeight = 72,
   primaryColor,
   accentColor,
-  variant = "hero",
-  className,
-  testId,
-}: LoyaltyCardPreviewProps) {
+  variant,
+}: Omit<LoyaltyCardPreviewProps, "className" | "testId" | "interactive" | "backTitle" | "backDetails">) {
   const isCompact = variant === "compact";
 
   return (
-    <div
-      data-testid={testId}
-      className={cn(
-        "group relative isolate overflow-hidden rounded-[1.7rem] border text-white shadow-[0_28px_72px_-44px_rgba(7,15,28,0.82)]",
-        isCompact ? "h-28 w-full rounded-[1.2rem]" : "min-h-[18rem] w-full rounded-[2rem]",
-        className,
-      )}
-      style={{
-        borderColor: "rgba(255,255,255,0.14)",
-        background: `linear-gradient(138deg, ${primaryColor} 0%, color-mix(in srgb, ${primaryColor} 72%, #08111d 28%) 48%, ${accentColor} 100%)`,
-      }}
-    >
+    <>
       <div
         className="absolute inset-0 opacity-90"
         style={{
@@ -123,6 +119,194 @@ export function LoyaltyCardPreview({
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+function CardBack({
+  merchantName,
+  backTitle,
+  backDetails,
+  accentColor,
+}: {
+  merchantName: string;
+  backTitle: string;
+  backDetails: string[];
+  accentColor: string;
+}) {
+  return (
+    <div className="absolute inset-0 overflow-hidden rounded-[inherit] bg-[linear-gradient(180deg,rgba(9,17,29,0.98),rgba(15,27,42,0.94))]">
+      <div
+        className="absolute inset-0 opacity-60"
+        style={{
+          background: `radial-gradient(circle at top right, color-mix(in srgb, ${accentColor} 28%, white 72%), transparent 30%)`,
+        }}
+      />
+      <div className="relative flex h-full flex-col justify-between p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/58">{merchantName}</p>
+            <h3 className="mt-2 font-display text-[1.6rem] leading-none text-white">{backTitle}</h3>
+          </div>
+          <Sparkles className="h-5 w-5 text-white/72" />
+        </div>
+        <div className="space-y-2.5">
+          {backDetails.map((detail) => (
+            <div key={detail} className="rounded-xl border border-white/10 bg-white/6 px-3 py-2 text-sm text-white/86 backdrop-blur">
+              {detail}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
+  );
+}
+
+export function LoyaltyCardPreview({
+  merchantName,
+  title,
+  subtitle,
+  progressLabel,
+  metaLabel,
+  logoUrl,
+  logoWidth = 72,
+  logoHeight = 72,
+  primaryColor,
+  accentColor,
+  variant = "hero",
+  className,
+  testId,
+  interactive = false,
+  expandable,
+  flippable,
+  backTitle,
+  backDetails = [],
+}: LoyaltyCardPreviewProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const isCompact = variant === "compact";
+  const isExpandable = expandable ?? interactive;
+  const isFlippable = flippable ?? interactive;
+  const sharedClassName = cn(
+    "group relative isolate overflow-hidden border text-white shadow-[0_28px_72px_-44px_rgba(7,15,28,0.82)]",
+    isCompact ? "h-28 w-full rounded-[1.2rem]" : "min-h-[18rem] w-full rounded-[2rem]",
+    className,
+  );
+
+  const card = (
+    <motion.div
+      data-testid={testId}
+      className={sharedClassName}
+      style={{
+        borderColor: "rgba(255,255,255,0.14)",
+        background: `linear-gradient(138deg, ${primaryColor} 0%, color-mix(in srgb, ${primaryColor} 72%, #08111d 28%) 48%, ${accentColor} 100%)`,
+        transformStyle: "preserve-3d",
+      }}
+      whileHover={isExpandable || isFlippable ? { y: -4, scale: 1.01 } : undefined}
+      transition={{ duration: 0.22, ease: [0.22, 0.9, 0.2, 1] }}
+    >
+      <AnimatePresence initial={false} mode="wait">
+        {!isFlipped ? (
+          <motion.div
+            key="front"
+            className="absolute inset-0"
+            initial={{ rotateY: -90, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            exit={{ rotateY: 90, opacity: 0 }}
+            transition={{ duration: 0.32 }}
+          >
+            <CardSurface
+              merchantName={merchantName}
+              title={title}
+              subtitle={subtitle}
+              progressLabel={progressLabel}
+              metaLabel={metaLabel}
+              logoUrl={logoUrl}
+              logoWidth={logoWidth}
+              logoHeight={logoHeight}
+              primaryColor={primaryColor}
+              accentColor={accentColor}
+              variant={variant}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="back"
+            className="absolute inset-0"
+            initial={{ rotateY: -90, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            exit={{ rotateY: 90, opacity: 0 }}
+            transition={{ duration: 0.32 }}
+          >
+            <CardBack
+              merchantName={merchantName}
+              backTitle={backTitle ?? title}
+              backDetails={backDetails.length > 0 ? backDetails : [subtitle, progressLabel]}
+              accentColor={accentColor}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {isFlippable ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsFlipped((current) => !current);
+          }}
+          className="absolute bottom-3 right-3 z-20 inline-flex items-center gap-1 rounded-full border border-white/18 bg-white/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white/88 backdrop-blur"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Flip
+        </button>
+      ) : null}
+    </motion.div>
+  );
+
+  if (!isExpandable) {
+    return card;
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <div
+          role="button"
+          tabIndex={0}
+          className="block w-full cursor-pointer text-left"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.currentTarget.click();
+            }
+          }}
+        >
+          {card}
+        </div>
+      </DialogTrigger>
+      <DialogContent className="border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.98)] p-4 sm:max-w-3xl">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        <div className="mx-auto w-full max-w-2xl py-3">
+          <LoyaltyCardPreview
+            merchantName={merchantName}
+            title={title}
+            subtitle={subtitle}
+            progressLabel={progressLabel}
+            metaLabel={metaLabel}
+            logoUrl={logoUrl}
+            logoWidth={logoWidth}
+            logoHeight={logoHeight}
+            primaryColor={primaryColor}
+            accentColor={accentColor}
+            variant="hero"
+            flippable={isFlippable}
+            expandable={false}
+            backTitle={backTitle}
+            backDetails={backDetails}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
