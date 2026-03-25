@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Copy, Eye, ExternalLink, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { resolvePortalBrandTheme } from "@/lib/brand";
+import { cn } from "@/lib/utils";
 import {
   awardVisit,
   createProgramme,
@@ -1101,33 +1102,89 @@ export default function WorkspacePage() {
                       Edit shop details
                     </Button>
                   </div>
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    {templates.map((template) => {
-                      const isSelected = template.templateKey === selectedTemplateKey;
-                      return (
-                        <button
-                          key={template.templateKey}
-                          type="button"
-                          onClick={() => setSelectedTemplateKey(template.templateKey)}
-                          className={`rounded-[1.35rem] border p-4 text-left transition ${
-                            isSelected
-                              ? "border-[rgba(200,169,106,0.38)] bg-[rgba(200,169,106,0.12)] shadow-[0_18px_36px_-30px_rgba(200,169,106,0.45)]"
-                              : "border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.92)] hover:border-[rgba(15,27,42,0.2)]"
-                          }`}
-                        >
-                          <p className="text-sm font-semibold">{template.templateLabel}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                            {template.cardTypeLabel} · {template.outputLabel}
-                          </p>
-                          <p className="mt-2 text-sm text-foreground/74">{template.headline}</p>
-                          <p className="mt-2 text-sm text-foreground/68">{template.rewardCopy}</p>
-                        </button>
-                      );
-                    })}
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.9fr)]">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {templates.map((template) => {
+                        const isSelected = template.templateKey === selectedTemplateKey;
+                        return (
+                          <div key={template.templateKey} className="space-y-3">
+                            <button
+                              type="button"
+                              data-testid="template-option"
+                              onClick={() => setSelectedTemplateKey(template.templateKey)}
+                              className={cn(
+                                "block w-full rounded-[1.4rem] text-left transition",
+                                isSelected
+                                  ? "ring-2 ring-[rgba(200,169,106,0.42)] ring-offset-2 ring-offset-[rgba(255,251,245,0.98)]"
+                                  : "",
+                              )}
+                            >
+                              <LoyaltyCardPreview
+                                merchantName={workspace.merchant.displayName}
+                                title={template.templateLabel}
+                                subtitle={template.headline}
+                                progressLabel={`${template.rewardThreshold} visits`}
+                                metaLabel={template.cardTypeLabel}
+                                logoUrl={brandLogoUrl}
+                                logoWidth={workspace.brandProfile.logoWidth}
+                                logoHeight={workspace.brandProfile.logoHeight}
+                                primaryColor={workspace.brandProfile.primaryColor}
+                                accentColor={workspace.brandProfile.accentColor}
+                                variant="compact"
+                                className="w-full"
+                              />
+                            </button>
+                            <div className="flex items-center justify-between gap-3 px-1">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-foreground">{template.templateLabel}</p>
+                                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                  {template.outputLabel} · {template.deliveryTypeLabel}
+                                </p>
+                              </div>
+                              {isSelected ? <Badge>Selected</Badge> : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <section className="rounded-[1.4rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.84)] p-5 shadow-[0_20px_50px_-42px_rgba(15,27,42,0.3)]">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Selected programme card</p>
+                      {selectedTemplate ? (
+                        <>
+                          <div className="mt-4">
+                            <LoyaltyCardPreview
+                              merchantName={workspace.merchant.displayName}
+                              title={selectedTemplate.templateLabel}
+                              subtitle={selectedTemplate.headline}
+                              progressLabel={`${selectedTemplate.rewardThreshold} visits`}
+                              metaLabel={selectedTemplate.cardTypeLabel}
+                              logoUrl={brandLogoUrl}
+                              logoWidth={workspace.brandProfile.logoWidth}
+                              logoHeight={workspace.brandProfile.logoHeight}
+                              primaryColor={workspace.brandProfile.primaryColor}
+                              accentColor={workspace.brandProfile.accentColor}
+                              expandable
+                              flippable
+                              backTitle={selectedTemplate.outputLabel}
+                              backDetails={[
+                                selectedTemplate.description,
+                                `Reward: ${selectedTemplate.rewardCopy}`,
+                                `Delivery: ${selectedTemplate.deliveryTypeLabel}`,
+                              ]}
+                            />
+                          </div>
+                          <div className="mt-4 space-y-2 text-sm text-foreground/76">
+                            <p>{selectedTemplate.rewardCopy}</p>
+                            <p className="text-foreground/62">{selectedTemplate.description}</p>
+                          </div>
+                        </>
+                      ) : null}
+                      <Button data-testid="create-programme" className="mt-5 w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
+                        {isMutating ? "Creating..." : `Create ${selectedTemplate?.templateLabel ?? "programme"}`}
+                      </Button>
+                    </section>
                   </div>
-                  <Button data-testid="create-programme" className="w-full rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a] sm:w-auto" onClick={handleCreateProgramme} disabled={isMutating || !selectedTemplateKey}>
-                    {isMutating ? "Creating..." : `Create ${selectedTemplate?.templateLabel ?? "programme"}`}
-                  </Button>
                 </div>
               )}
             </CardContent>

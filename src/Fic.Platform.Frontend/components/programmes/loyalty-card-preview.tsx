@@ -46,42 +46,44 @@ function CardSurface({
   return (
     <>
       <div
-        className="absolute inset-0 opacity-90"
+        className="absolute inset-0 opacity-95"
         style={{
-          background: `radial-gradient(circle at 12% 18%, color-mix(in srgb, ${accentColor} 38%, white 62%) 0%, transparent 28%), radial-gradient(circle at 82% 88%, color-mix(in srgb, ${primaryColor} 74%, black 26%) 0%, transparent 38%)`,
+          background: `radial-gradient(circle at 16% 18%, color-mix(in srgb, ${accentColor} 34%, white 66%) 0%, transparent 24%), radial-gradient(circle at 82% 84%, color-mix(in srgb, ${primaryColor} 78%, black 22%) 0%, transparent 34%), linear-gradient(145deg, color-mix(in srgb, ${primaryColor} 80%, #08111d 20%) 0%, color-mix(in srgb, ${primaryColor} 62%, black 38%) 46%, color-mix(in srgb, ${accentColor} 42%, #121a1f 58%) 100%)`,
         }}
       />
       <div
-        className="absolute -left-[12%] top-[14%] h-[78%] w-[78%] rounded-full opacity-75"
+        className="absolute -left-[10%] top-[10%] h-[70%] w-[74%] rounded-full opacity-70"
         style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 72%, white 28%) 0%, transparent 74%)`,
-          filter: "blur(12px)",
+          background: `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 70%, white 30%) 0%, transparent 70%)`,
+          filter: "blur(18px)",
         }}
       />
       <div
-        className="absolute -right-[8%] top-0 h-full w-[46%] opacity-75"
+        className="absolute -right-[4%] top-0 h-full w-[42%] opacity-80"
         style={{
-          background: "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02) 42%, rgba(255,255,255,0.08) 100%)",
-          transform: "skewX(-18deg)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.03) 32%, rgba(255,255,255,0.12) 100%)",
+          transform: "skewX(-22deg)",
         }}
       />
-      <div className="absolute inset-[1px] rounded-[inherit] border border-white/8" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.22),transparent_28%),linear-gradient(180deg,transparent,rgba(3,8,16,0.34))]" />
+      <div className="absolute inset-x-[7%] top-[7%] h-[34%] rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.02))] opacity-70 blur-[2px]" />
+      <div className="absolute inset-[1px] rounded-[inherit] border border-white/10" />
+      <div className="absolute inset-0 rounded-[inherit] shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-20px_48px_rgba(3,8,16,0.28)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),transparent_26%),linear-gradient(180deg,transparent,rgba(3,8,16,0.34))]" />
 
-      <div className={cn("relative z-10 flex h-full flex-col justify-between", isCompact ? "p-3.5" : "p-5 sm:p-6")}>
+      <div className={cn("relative z-10 flex h-full flex-col justify-between", isCompact ? "p-4" : "p-6 sm:p-7")}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className={cn("uppercase tracking-[0.2em] text-white/74", isCompact ? "text-[9px]" : "text-[11px]")}>
+            <p className={cn("uppercase tracking-[0.22em] text-white/72", isCompact ? "text-[9px]" : "text-[11px]")}>
               {merchantName}
             </p>
-            <h3 className={cn("mt-2 max-w-[16ch] font-display leading-none text-white", isCompact ? "text-base" : "text-[2rem]")}>
+            <h3 className={cn("mt-3 max-w-[13ch] font-display leading-[0.94] text-white", isCompact ? "text-[1.18rem]" : "text-[2.25rem]")}>
               {title}
             </h3>
           </div>
           {logoUrl ? (
             <span className={cn(
-              "flex shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/12 backdrop-blur",
-              isCompact ? "h-10 w-10" : "h-14 w-14",
+              "flex shrink-0 items-center justify-center overflow-hidden rounded-[1.15rem] border border-white/18 bg-white/10 backdrop-blur",
+              isCompact ? "h-11 w-11" : "h-14 w-14",
             )}>
               <Image
                 src={logoUrl}
@@ -95,22 +97,22 @@ function CardSurface({
           ) : null}
         </div>
 
-        <div className="grid gap-2">
-          <p className={cn("max-w-[30ch] text-white/84", isCompact ? "text-[10px] leading-4" : "text-sm leading-6")}>
+        <div className="grid gap-3">
+          <p className={cn("max-w-[28ch] text-white/82", isCompact ? "text-[10px] leading-[1.45]" : "text-sm leading-6")}>
             {subtitle}
           </p>
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className={cn("uppercase tracking-[0.18em] text-white/58", isCompact ? "text-[8px]" : "text-[10px]")}>
+              <p className={cn("uppercase tracking-[0.18em] text-white/56", isCompact ? "text-[8px]" : "text-[10px]")}>
                 Live progress
               </p>
-              <p className={cn("mt-1 font-semibold text-white", isCompact ? "text-sm" : "text-xl")}>
+              <p className={cn("mt-1 font-semibold text-white", isCompact ? "text-[0.95rem]" : "text-[1.4rem]")}>
                 {progressLabel}
               </p>
             </div>
             {metaLabel ? (
               <span className={cn(
-                "rounded-full border border-white/18 bg-white/10 px-2.5 py-1 font-medium text-white/86 backdrop-blur",
+                "rounded-full border border-white/16 bg-white/9 px-3 py-1.5 font-medium text-white/86 backdrop-blur",
                 isCompact ? "text-[9px]" : "text-xs",
               )}>
                 {metaLabel}
@@ -187,8 +189,8 @@ export function LoyaltyCardPreview({
   const isExpandable = expandable ?? interactive;
   const isFlippable = flippable ?? interactive;
   const sharedClassName = cn(
-    "group relative isolate overflow-hidden border text-white shadow-[0_28px_72px_-44px_rgba(7,15,28,0.82)]",
-    isCompact ? "h-28 w-full rounded-[1.2rem]" : "min-h-[18rem] w-full rounded-[2rem]",
+    "group relative isolate w-full overflow-hidden border text-white shadow-[0_30px_80px_-42px_rgba(7,15,28,0.78)]",
+    isCompact ? "aspect-[1.58/1] rounded-[1.45rem]" : "aspect-[1.58/1] rounded-[2rem]",
     className,
   );
 
@@ -285,9 +287,9 @@ export function LoyaltyCardPreview({
           {card}
         </div>
       </DialogTrigger>
-      <DialogContent className="border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.98)] p-4 sm:max-w-3xl">
+      <DialogContent className="border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.98)] p-4 shadow-[0_32px_90px_-44px_rgba(15,27,42,0.46)] sm:max-w-4xl">
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        <div className="mx-auto w-full max-w-2xl py-3">
+        <div className="mx-auto w-full max-w-3xl py-3">
           <LoyaltyCardPreview
             merchantName={merchantName}
             title={title}
