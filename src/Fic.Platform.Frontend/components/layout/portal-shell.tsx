@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { Menu } from "lucide-react";
@@ -35,6 +36,9 @@ type PortalShellProps = {
   showRail?: boolean;
   showActiveBadge?: boolean;
   headerMode?: "workspace" | "onboarding";
+  brandTitle?: string;
+  brandSubtitle?: string;
+  brandLogoUrl?: string | null;
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_FIC_API_BASE_URL ?? "http://localhost:5276";
@@ -118,6 +122,9 @@ export function PortalShell({
   showRail = false,
   showActiveBadge = true,
   headerMode = "workspace",
+  brandTitle,
+  brandSubtitle,
+  brandLogoUrl,
 }: PortalShellProps) {
   const prefersReducedMotion = useReducedMotion();
   const activeItem = useMemo(
@@ -159,6 +166,8 @@ export function PortalShell({
   const sectionLabelClass = theme.useDarkChrome
     ? "text-[10px] uppercase tracking-[0.18em] text-[#f5f3ef]/54"
     : "text-[10px] uppercase tracking-[0.18em] text-[#4a4f55]/72";
+  const effectiveBrandTitle = brandTitle ?? "North Star Customer Solutions";
+  const effectiveBrandSubtitle = brandSubtitle ?? "Loyalty. Membership. Customer strategy.";
 
   return (
     <section
@@ -221,11 +230,24 @@ export function PortalShell({
             </Dialog>
           ) : null}
           <Link href="/" className="flex items-center gap-3">
-            <span className={brandMarkClass}>NS</span>
+            {brandLogoUrl ? (
+              <span className={brandMarkClass}>
+                <Image
+                  src={brandLogoUrl}
+                  alt={`${effectiveBrandTitle} logo`}
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-full object-contain"
+                  unoptimized
+                />
+              </span>
+            ) : (
+              <span className={brandMarkClass}>NS</span>
+            )}
             <span className="flex flex-col">
               <span className={sectionLabelClass}>{title}</span>
-              <span className={brandTitleClass}>North Star Customer Solutions</span>
-              <span className={brandSubtitleClass}>Loyalty. Membership. Customer strategy.</span>
+              <span className={brandTitleClass}>{effectiveBrandTitle}</span>
+              <span className={brandSubtitleClass}>{effectiveBrandSubtitle}</span>
             </span>
           </Link>
           {showActiveBadge && activeItem ? <Badge variant="outline" className="hidden sm:inline-flex">{activeItem.label}</Badge> : null}

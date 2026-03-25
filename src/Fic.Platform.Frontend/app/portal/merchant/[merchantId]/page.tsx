@@ -192,7 +192,6 @@ export default function WorkspacePage() {
   const [templates, setTemplates] = useState<ProgrammeTemplateOption[]>([]);
   const [shopTypes, setShopTypes] = useState<ShopTypeOption[]>(fallbackShopTypes);
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>("");
-  const [previewTemplateKey, setPreviewTemplateKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [isSavingShopDetails, setIsSavingShopDetails] = useState(false);
@@ -245,7 +244,6 @@ export default function WorkspacePage() {
     ? withCacheBust(workspace.brandProfile.logoUrl, logoCacheBuster)
     : null;
   const selectedTemplate = templates.find((template) => template.templateKey === selectedTemplateKey) ?? null;
-  const previewTemplate = templates.find((template) => template.templateKey === previewTemplateKey) ?? null;
 
   useEffect(() => {
     if (sessionQuery.isPending || workspaceQuery.isPending) {
@@ -862,38 +860,38 @@ export default function WorkspacePage() {
           </section>
 
           <Card id="setup-lane" className="setup-lane-card">
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <CardTitle>{setupLaneActionKey === "shop" ? "Shop details" : "Programme template"}</CardTitle>
-                <Badge className="border-[rgba(200,169,106,0.24)] bg-[rgba(200,169,106,0.12)] text-[#6f592f]">
-                  Step {setupLaneActionKey === "shop" ? "5" : "6"} of 6
-                </Badge>
-              </div>
-              <CardDescription>
-                {setupLaneActionKey === "shop"
-                  ? "Enter the operating details used for join pages and wallet previews."
-                  : "Choose the first programme template to open Configure and Customers."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {setupLaneTasks.map((task) => (
-                  <span
-                    key={task.key}
-                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs ${
-                      task.isComplete
-                        ? "border-primary/35 bg-primary/10 text-foreground"
-                        : task.isBlocked
-                          ? "border-border/70 bg-background text-muted-foreground"
-                          : "border-secondary/45 bg-secondary/10 text-foreground"
-                    }`}
-                  >
-                    {task.label}: {task.isComplete ? "Complete" : task.isBlocked ? "Blocked" : "Required"}
-                  </span>
-                ))}
-              </div>
-
+            <CardContent className="space-y-4 p-6 sm:p-7">
               {setupLaneActionKey === "shop" ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <CardTitle>Shop details</CardTitle>
+                      <CardDescription className="mt-1">
+                        Enter the operating details used for join pages and wallet previews.
+                      </CardDescription>
+                    </div>
+                    <Badge className="border-[rgba(200,169,106,0.24)] bg-[rgba(200,169,106,0.12)] text-[#6f592f]">
+                      Step 5 of 6
+                    </Badge>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {setupLaneTasks.map((task) => (
+                      <span
+                        key={task.key}
+                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs ${
+                          task.isComplete
+                            ? "border-primary/35 bg-primary/10 text-foreground"
+                            : task.isBlocked
+                              ? "border-border/70 bg-background text-muted-foreground"
+                              : "border-secondary/45 bg-secondary/10 text-foreground"
+                        }`}
+                      >
+                        {task.label}: {task.isComplete ? "Complete" : task.isBlocked ? "Blocked" : "Required"}
+                      </span>
+                    ))}
+                  </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <section className="setup-lane-section sm:col-span-2">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -1089,19 +1087,36 @@ export default function WorkspacePage() {
                     </Button>
                   </div>
                 </div>
+                </>
               ) : (
-                <div className="setup-lane-section space-y-4">
+                <div className="space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-foreground/76">Shop details are complete. Choose the first programme to publish.</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
-                      onClick={() => setIsShopSetupOpen(true)}
-                    >
-                      Edit shop details
-                    </Button>
+                    <div>
+                      <CardTitle>Choose the first programme card</CardTitle>
+                      <CardDescription className="mt-1">
+                        Select one card type to publish first. You can add more later.
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
+                        onClick={() => setIsShopSetupOpen(true)}
+                      >
+                        Edit shop details
+                      </Button>
+                      <Button
+                        data-testid="create-programme"
+                        className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
+                        onClick={handleCreateProgramme}
+                        disabled={isMutating || !selectedTemplateKey}
+                      >
+                        {isMutating ? "Creating..." : `Create ${selectedTemplate?.templateLabel ?? "programme"}`}
+                      </Button>
+                    </div>
                   </div>
+
                   <div className="grid gap-5 sm:grid-cols-2">
                     {templates.map((template) => {
                       const isSelected = template.templateKey === selectedTemplateKey;
@@ -1140,31 +1155,11 @@ export default function WorkspacePage() {
                               </p>
                               <p className="mt-3 text-sm text-foreground/76">{template.rewardCopy}</p>
                             </div>
-                            {isSelected ? <Badge>Selected</Badge> : null}
+                            {isSelected ? <Badge>Selected</Badge> : <span className="text-xs text-foreground/52">Select</span>}
                           </div>
                         </button>
                       );
                     })}
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-4 rounded-[1.3rem] border border-[rgba(15,27,42,0.1)] bg-[rgba(255,252,247,0.82)] px-4 py-4">
-                    <div className="min-w-0">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Selected template</p>
-                      <p className="mt-1 text-base font-semibold text-foreground">
-                        {selectedTemplate?.templateLabel ?? "Choose a card type"}
-                      </p>
-                      {selectedTemplate ? (
-                        <p className="mt-1 text-sm text-foreground/72">{selectedTemplate.rewardCopy}</p>
-                      ) : null}
-                    </div>
-                    <Button
-                      data-testid="create-programme"
-                      className="rounded-full bg-[#0f1b2a] text-[#f5f3ef] hover:bg-[#18283a]"
-                      onClick={handleCreateProgramme}
-                      disabled={isMutating || !selectedTemplateKey}
-                    >
-                      {isMutating ? "Creating..." : `Create ${selectedTemplate?.templateLabel ?? "programme"}`}
-                    </Button>
                   </div>
                 </div>
               )}
@@ -1372,14 +1367,17 @@ export default function WorkspacePage() {
       activeKey={portalNav?.activeKey ?? section}
       railItems={portalNav?.items ?? []}
       theme={workspaceTheme}
+      brandTitle={workspace.merchant.displayName}
+      brandSubtitle={workspace.merchant.townOrCity ? `${workspace.merchant.townOrCity} loyalty workspace` : "Loyalty programme workspace"}
+      brandLogoUrl={brandLogoUrl}
       utilityLinks={portalNav?.utilityLinks}
       showRail={false}
       showActiveBadge={false}
     >
       <div className="space-y-4">
-        <section className="workspace-hero section-intro space-y-4">
+        <section className="workspace-hero section-intro space-y-3">
           <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1 space-y-2">
+            <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex items-center gap-2">
                 <Badge>Merchant workspace</Badge>
                 {brandLogoUrl ? (
@@ -1395,9 +1393,9 @@ export default function WorkspacePage() {
                   </span>
                 ) : null}
               </div>
-              <h1 className="luxe-title">{workspace.merchant.displayName}</h1>
-              <p className="max-w-3xl text-balance text-[1.04rem] leading-8 text-foreground/88 sm:text-[1.14rem]">
-                Run multiple loyalty programmes, switch between live cards, and manage customer progress from one merchant control surface.
+              <h1 className="font-display text-[2.55rem] leading-[0.94] tracking-tight sm:text-[3.25rem]">{workspace.merchant.displayName}</h1>
+              <p className="max-w-2xl text-[1rem] leading-7 text-foreground/78 sm:text-[1.06rem]">
+                Switch programmes, publish cards, and manage customer activity.
               </p>
             </div>
 
@@ -1420,7 +1418,7 @@ export default function WorkspacePage() {
             </nav>
           </div>
 
-          <div className="relative z-10 grid gap-2.5 sm:grid-cols-4">
+          <div className="relative z-10 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
             <div className="workspace-metric-tile">
               <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Location</p>
               <p className="mt-1 text-sm font-semibold">{workspace.merchant.townOrCity || "Town pending"}</p>
@@ -1539,8 +1537,8 @@ export default function WorkspacePage() {
               <section className="rounded-[1.35rem] border border-border/70 bg-background/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Add programme</p>
-                    <p className="mt-1 text-sm text-foreground/72">Choose another card type to add alongside the current programme.</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Add another card type</p>
+                    <p className="mt-1 text-sm text-foreground/72">Choose the next programme to add.</p>
                   </div>
                   <Button
                     data-testid="create-programme"
@@ -1556,12 +1554,21 @@ export default function WorkspacePage() {
                   {templates.map((template) => {
                     const isSelected = template.templateKey === selectedTemplateKey;
                     return (
-                      <div key={template.templateKey} className="space-y-3">
+                      <button
+                        key={template.templateKey}
+                        type="button"
+                        className={cn(
+                          "rounded-[1.3rem] border p-3 text-left transition",
+                          isSelected
+                            ? "border-[rgba(200,169,106,0.38)] bg-[rgba(255,251,245,0.96)] shadow-[0_18px_42px_-34px_rgba(200,169,106,0.38)]"
+                            : "border-border/70 bg-background/72 hover:bg-background/92",
+                        )}
+                        onClick={() => setSelectedTemplateKey(template.templateKey)}
+                      >
                         <div
                           data-testid="template-option"
-                          onClick={() => setSelectedTemplateKey(template.templateKey)}
                           className={cn(
-                            "block w-full cursor-pointer rounded-[1.2rem] transition",
+                            "block w-full rounded-[1.2rem] transition",
                             isSelected ? "ring-2 ring-[rgba(200,169,106,0.38)] ring-offset-2 ring-offset-[rgba(255,251,245,0.98)]" : "",
                           )}
                         >
@@ -1586,29 +1593,14 @@ export default function WorkspacePage() {
                             className="w-full"
                           />
                         </div>
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="mt-3 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground">{template.templateLabel}</p>
-                            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                              {template.outputLabel}
-                            </p>
+                            <p className="mt-1 text-sm text-foreground/68">{template.rewardCopy}</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {isSelected ? <Badge>Selected</Badge> : null}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="rounded-full border-[rgba(15,27,42,0.14)] bg-transparent text-[#0f1b2a] hover:bg-[rgba(15,27,42,0.04)]"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setPreviewTemplateKey(template.templateKey);
-                              }}
-                            >
-                              Preview
-                            </Button>
-                          </div>
+                          {isSelected ? <Badge>Selected</Badge> : <span className="text-xs text-foreground/52">Select</span>}
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -1616,44 +1608,6 @@ export default function WorkspacePage() {
             </CardContent>
           </Card>
         </section>
-
-        <Dialog open={Boolean(previewTemplate)} onOpenChange={(open) => {
-          if (!open) {
-            setPreviewTemplateKey(null);
-          }
-        }}>
-          <DialogContent className="border-[rgba(15,27,42,0.12)] bg-[rgba(255,251,245,0.98)] p-4 sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{previewTemplate?.templateLabel ?? "Programme preview"}</DialogTitle>
-              <DialogDescription>
-                Preview the programme card surface before adding it to the merchant workspace.
-              </DialogDescription>
-            </DialogHeader>
-            {previewTemplate ? (
-              <div className="mx-auto w-full max-w-2xl py-2">
-                <LoyaltyCardPreview
-                  merchantName={workspace.merchant.displayName}
-                  title={previewTemplate.templateLabel}
-                  subtitle={previewTemplate.headline}
-                  progressLabel={`${previewTemplate.rewardThreshold} visits`}
-                  metaLabel={previewTemplate.cardTypeLabel}
-                  logoUrl={brandLogoUrl}
-                  logoWidth={workspace.brandProfile.logoWidth}
-                  logoHeight={workspace.brandProfile.logoHeight}
-                  primaryColor={workspace.brandProfile.primaryColor}
-                  accentColor={workspace.brandProfile.accentColor}
-                  flippable
-                  backTitle={previewTemplate.outputLabel}
-                  backDetails={[
-                    previewTemplate.description,
-                    `Reward: ${previewTemplate.rewardCopy}`,
-                    `Delivery: ${previewTemplate.deliveryTypeLabel}`,
-                  ]}
-                />
-              </div>
-            ) : null}
-          </DialogContent>
-        </Dialog>
 
         {section === "operate" ? (
           selectedProgramme ? (
