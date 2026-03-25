@@ -133,28 +133,16 @@ export function resolvePortalBrandTheme(brand?: BrandInput | null): PortalThemeC
 
   const primary = normalizeHex(brand.primaryColor, ficPortalTheme.primary);
   const accent = normalizeHex(brand.accentColor, ficPortalTheme.accent);
-  const surfaceBase = mixHex(primary, "#fffaf2", 0.88);
+  const surfaceBase = mixHex("#fffaf2", primary, 0.08);
+  const surfaceHighlight = mixHex("#fffdf9", accent, 0.06);
   const ink = pickReadableInk(surfaceBase, "#14211d", "#f8f4ea");
-  const primaryLuminance = relativeLuminance(primary);
-  const useDarkChrome = primaryLuminance < 0.26;
-  const surface = useDarkChrome
-    ? `color-mix(in srgb, ${primary} 82%, #09111d 18%)`
-    : `color-mix(in srgb, ${surfaceBase} 82%, white 18%)`;
-  const surfaceStrong = useDarkChrome
-    ? `color-mix(in srgb, ${primary} 72%, #0b1320 28%)`
-    : `color-mix(in srgb, ${surfaceBase} 92%, white 8%)`;
-  const line = useDarkChrome
-    ? "rgba(255, 255, 255, 0.14)"
-    : pickReadableInk(surfaceBase, "rgba(20, 33, 29, 0.1)", "rgba(255, 255, 255, 0.14)");
-  const mutedInk = useDarkChrome
-    ? "rgba(248, 244, 234, 0.74)"
-    : pickReadableInk(surfaceBase, "rgba(20, 33, 29, 0.74)", "rgba(248, 244, 234, 0.78)");
-  const logoPlate = useDarkChrome
-    ? `color-mix(in srgb, ${accent} 18%, rgba(255,255,255,0.08) 82%)`
-    : `color-mix(in srgb, ${accent} 12%, white 88%)`;
-  const logoPlateBorder = useDarkChrome
-    ? `color-mix(in srgb, ${accent} 26%, white 74%)`
-    : `color-mix(in srgb, ${primary} 12%, white 88%)`;
+  const useDarkChrome = false;
+  const surface = `color-mix(in srgb, ${surfaceBase} 88%, white 12%)`;
+  const surfaceStrong = `color-mix(in srgb, ${surfaceHighlight} 94%, white 6%)`;
+  const line = "rgba(20, 33, 29, 0.1)";
+  const mutedInk = "rgba(20, 33, 29, 0.72)";
+  const logoPlate = `color-mix(in srgb, ${accent} 14%, white 86%)`;
+  const logoPlateBorder = `color-mix(in srgb, ${primary} 10%, white 90%)`;
 
   return {
     primary,
@@ -164,18 +152,18 @@ export function resolvePortalBrandTheme(brand?: BrandInput | null): PortalThemeC
     ink,
     mutedInk,
     line,
-    canvasStart: mixHex(primary, "#fff9ef", 0.9),
-    canvasEnd: mixHex(accent, "#f4ede1", 0.78),
+    canvasStart: mixHex("#fff9ef", primary, 0.04),
+    canvasEnd: mixHex("#f4ede1", accent, 0.1),
     primaryButton: primary,
     primaryButtonInk: pickReadableInk(primary, "#f8f4ea", "#14211d"),
-    accentSoft: `color-mix(in srgb, ${accent} 18%, transparent 82%)`,
+    accentSoft: `color-mix(in srgb, ${accent} 14%, transparent 86%)`,
     accentInk: pickReadableInk(accent, "#14211d", "#fffaf2"),
     logoPlate,
     logoPlateBorder,
     stampFilled: accent,
     stampEmpty: `color-mix(in srgb, ${primary} 8%, transparent 92%)`,
     stampInk: pickReadableInk(accent, "#14211d", "#fffaf2"),
-    glow: `color-mix(in srgb, ${accent} 16%, transparent 84%)`,
+    glow: `color-mix(in srgb, ${accent} 12%, transparent 88%)`,
     variant: "bloom",
     useDarkChrome,
     radius: "rounded",
