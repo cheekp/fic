@@ -82,18 +82,18 @@ main {
 
 .metric-chip {
   @apply inline-flex items-center rounded-full border px-3.5 py-1.5 text-[12px] font-medium;
-  border-color: color-mix(in srgb, var(--brand-primary-hex) 18%, white 82%);
-  background: color-mix(in srgb, var(--brand-surface-strong) 84%, white 16%);
-  color: color-mix(in srgb, var(--brand-ink-hex) 88%, white 12%);
+  border-color: color-mix(in srgb, var(--brand-primary-hex) 12%, #d9d3c8 88%);
+  background: color-mix(in srgb, white 94%, var(--brand-surface-strong) 6%);
+  color: color-mix(in srgb, var(--brand-ink-hex) 88%, #ffffff 12%);
 }
 
 .workspace-hero {
   @apply relative overflow-hidden rounded-3xl border p-4 shadow-luxe sm:p-5;
-  border-color: color-mix(in srgb, var(--brand-primary-hex) 22%, white 78%);
-  background-color: color-mix(in srgb, var(--brand-surface-strong) 88%, white 12%);
+  border-color: color-mix(in srgb, var(--brand-primary-hex) 14%, #ddd5c7 86%);
+  background-color: color-mix(in srgb, white 92%, var(--brand-surface-strong) 8%);
   background-image:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--brand-accent-hex) 24%, transparent 76%), transparent 32%),
-    linear-gradient(145deg, color-mix(in srgb, var(--brand-hero-start) 94%, white 6%) 0%, color-mix(in srgb, var(--brand-hero-end) 88%, white 12%) 100%);
+    radial-gradient(circle at top right, color-mix(in srgb, var(--brand-accent-hex) 18%, transparent 82%), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, white 96%, var(--brand-hero-start) 4%) 0%, color-mix(in srgb, white 92%, var(--brand-hero-end) 8%) 100%);
 }
 
 .workspace-hero::after {
@@ -104,7 +104,7 @@ main {
   width: 14rem;
   height: 14rem;
   border-radius: 9999px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--brand-accent-hex) 34%, white 66%), transparent 65%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-accent-hex) 20%, white 80%), transparent 70%);
   pointer-events: none;
 }
 
@@ -137,8 +137,8 @@ main {
 
 .workspace-metric-tile {
   @apply rounded-2xl border p-2.5 sm:p-3;
-  border-color: color-mix(in srgb, var(--brand-primary-hex) 16%, white 84%);
-  background: color-mix(in srgb, var(--brand-surface-strong) 72%, white 28%);
+  border-color: color-mix(in srgb, var(--brand-primary-hex) 12%, #ddd5c7 88%);
+  background: color-mix(in srgb, white 92%, var(--brand-surface-strong) 8%);
 }
 
 .public-editorial-shell {

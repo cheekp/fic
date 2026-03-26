@@ -161,11 +161,11 @@ export function PortalShell({
     ? "text-sm font-semibold tracking-[0.01em] text-[#f5f3ef] sm:text-base"
     : "text-sm font-semibold tracking-[0.01em] text-[#0f1b2a] sm:text-base";
   const brandSubtitleClass = theme.useDarkChrome
-    ? "hidden text-[11px] uppercase tracking-[0.2em] text-[#f5f3ef]/62 sm:block"
-    : "hidden text-[11px] uppercase tracking-[0.2em] text-[#4a4f55] sm:block";
+    ? "hidden text-[11px] tracking-[0.12em] text-[#f5f3ef]/62 sm:block"
+    : "hidden text-[11px] tracking-[0.12em] text-[#4a4f55] sm:block";
   const sectionLabelClass = theme.useDarkChrome
-    ? "text-[10px] uppercase tracking-[0.18em] text-[#f5f3ef]/54"
-    : "text-[10px] uppercase tracking-[0.18em] text-[#4a4f55]/72";
+    ? "text-[10px] uppercase tracking-[0.16em] text-[#f5f3ef]/48"
+    : "text-[10px] uppercase tracking-[0.16em] text-[#4a4f55]/62";
   const effectiveBrandTitle = brandTitle ?? "North Star Customer Solutions";
   const effectiveBrandSubtitle = brandSubtitle ?? "Loyalty. Membership. Customer strategy.";
 

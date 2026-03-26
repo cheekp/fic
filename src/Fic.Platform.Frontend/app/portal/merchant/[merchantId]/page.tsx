@@ -1368,7 +1368,7 @@ export default function WorkspacePage() {
       railItems={portalNav?.items ?? []}
       theme={workspaceTheme}
       brandTitle={workspace.merchant.displayName}
-      brandSubtitle={workspace.merchant.townOrCity ? `${workspace.merchant.townOrCity} loyalty workspace` : "Loyalty programme workspace"}
+      brandSubtitle={workspace.merchant.townOrCity || "Merchant workspace"}
       brandLogoUrl={brandLogoUrl}
       utilityLinks={portalNav?.utilityLinks}
       showRail={false}
@@ -1393,9 +1393,9 @@ export default function WorkspacePage() {
                   </span>
                 ) : null}
               </div>
-              <h1 className="font-display text-[2.55rem] leading-[0.94] tracking-tight sm:text-[3.25rem]">{workspace.merchant.displayName}</h1>
-              <p className="max-w-2xl text-[1rem] leading-7 text-foreground/78 sm:text-[1.06rem]">
-                Switch programmes, publish cards, and manage customer activity.
+              <h1 className="font-display text-[2.35rem] leading-[0.96] tracking-tight sm:text-[2.9rem]">{workspace.merchant.displayName}</h1>
+              <p className="max-w-2xl text-[0.98rem] leading-7 text-foreground/74 sm:text-[1.03rem]">
+                Run loyalty cards, update shop branding, and manage customer activity from one merchant workspace.
               </p>
             </div>
 
@@ -1441,14 +1441,17 @@ export default function WorkspacePage() {
         <section>
           <Card className="overflow-hidden">
             <CardContent className="space-y-6 p-6">
-              <div className="grid gap-6 xl:grid-cols-[minmax(19rem,24rem)_minmax(0,1fr)] xl:items-start">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(23rem,1.1fr)] xl:items-start">
                 <section className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-2">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Selected programme</p>
-                      <h2 className="font-display text-[2rem] leading-[0.96] text-foreground">
+                      <h2 className="font-display text-[2rem] leading-[0.98] text-foreground">
                         {selectedProgrammeSummary?.rewardHeadline ?? "Select a programme"}
                       </h2>
+                      <p className="max-w-xl text-sm leading-6 text-foreground/72">
+                        {selectedProgramme?.rewardCopy ?? "Choose an active programme or create a new card type to keep this merchant live."}
+                      </p>
                     </div>
                     <Button
                       type="button"
@@ -1468,33 +1471,17 @@ export default function WorkspacePage() {
                     </span>
                   </div>
 
-                  <div className="grid gap-3">
-                    {workspace.programmes.map((programme) => {
-                      const isActive = programme.programmeId === selectedProgrammeId;
-                      return (
-                        <Link
-                          key={programme.programmeId}
-                          href={buildWorkspaceHref(merchantId, section, programme.programmeId)}
-                          data-testid="programme-rail-item"
-                          className={cn(
-                            "rounded-[1.25rem] border px-4 py-3 transition",
-                            isActive
-                              ? "border-[color-mix(in_srgb,var(--portal-primary)_28%,white_72%)] bg-[color-mix(in_srgb,var(--portal-primary)_8%,white_92%)]"
-                              : "border-border/70 bg-background/55 hover:border-[color-mix(in_srgb,var(--portal-primary)_18%,white_82%)] hover:bg-background/80",
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="text-base font-semibold text-foreground">{programme.rewardHeadline}</p>
-                              <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                {programme.templateLabel} · {programme.cardTypeLabel}
-                              </p>
-                            </div>
-                            {isActive ? <Badge>Current</Badge> : null}
-                          </div>
-                        </Link>
-                      );
-                    })}
+                  <div className="rounded-[1.3rem] border border-border/70 bg-background/70 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Output</p>
+                        <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Join path</p>
+                        <p className="mt-1 text-sm font-semibold">{selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}</p>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
@@ -1520,25 +1507,52 @@ export default function WorkspacePage() {
                       `Join: ${selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}`,
                     ]}
                   />
-
-                  <div className="grid gap-3 rounded-[1.3rem] border border-border/70 bg-background/70 p-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Output</p>
-                      <p className="mt-1 text-sm font-semibold">{selectedProgrammeSummary?.outputLabel ?? "Wallet loyalty card"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Join path</p>
-                      <p className="mt-1 text-sm font-semibold">{selectedProgramme?.joinCode ? `/join/${selectedProgramme.joinCode}` : "Not published"}</p>
-                    </div>
-                  </div>
                 </section>
               </div>
+
+              <section className="space-y-3">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Programmes</p>
+                    <p className="mt-1 text-sm text-foreground/72">Switch the active loyalty card for this merchant.</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {workspace.programmes.map((programme) => {
+                    const isActive = programme.programmeId === selectedProgrammeId;
+                    return (
+                      <Link
+                        key={programme.programmeId}
+                        href={buildWorkspaceHref(merchantId, section, programme.programmeId)}
+                        data-testid="programme-rail-item"
+                        className={cn(
+                          "rounded-[1.3rem] border px-4 py-3 transition",
+                          isActive
+                            ? "border-[color-mix(in_srgb,var(--portal-primary)_22%,white_78%)] bg-[color-mix(in_srgb,var(--portal-primary)_6%,white_94%)]"
+                            : "border-border/70 bg-background/55 hover:border-[color-mix(in_srgb,var(--portal-primary)_16%,white_84%)] hover:bg-background/88",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-base font-semibold text-foreground">{programme.rewardHeadline}</p>
+                            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              {programme.templateLabel} · {programme.cardTypeLabel}
+                            </p>
+                          </div>
+                          {isActive ? <Badge>Current</Badge> : null}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
 
               <section className="rounded-[1.35rem] border border-border/70 bg-background/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Add another card type</p>
-                    <p className="mt-1 text-sm text-foreground/72">Choose the next programme to add.</p>
+                    <p className="mt-1 text-sm text-foreground/72">Add a second card without disturbing the current programme.</p>
                   </div>
                   <Button
                     data-testid="create-programme"
@@ -1575,7 +1589,7 @@ export default function WorkspacePage() {
                           <LoyaltyCardPreview
                             merchantName={workspace.merchant.displayName}
                             title={template.templateLabel}
-                            subtitle={template.headline}
+                            subtitle={template.rewardCopy}
                             progressLabel={`${template.rewardThreshold} visits`}
                             metaLabel={template.cardTypeLabel}
                             logoUrl={brandLogoUrl}
@@ -1596,7 +1610,10 @@ export default function WorkspacePage() {
                         <div className="mt-3 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground">{template.templateLabel}</p>
-                            <p className="mt-1 text-sm text-foreground/68">{template.rewardCopy}</p>
+                            <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              {template.cardTypeLabel} · {template.deliveryTypeLabel}
+                            </p>
+                            <p className="mt-2 text-sm text-foreground/68">{template.rewardCopy}</p>
                           </div>
                           {isSelected ? <Badge>Selected</Badge> : <span className="text-xs text-foreground/52">Select</span>}
                         </div>
