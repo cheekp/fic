@@ -1636,39 +1636,42 @@ export default function WorkspacePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <section className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="metric-chip">Join: {selectedProgramme.joinCode ? `/join/${selectedProgramme.joinCode}` : "Unavailable"}</span>
-                    <span className="metric-chip">Cards: {workspace.selectedProgrammeCards.length}</span>
-                    <span className="metric-chip">Ready: {redeemableCardsCount}</span>
-                  </div>
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                  <section className="space-y-4 rounded-[1.35rem] border border-border/70 bg-background/65 p-4">
+                    <div className="flex flex-wrap gap-2">
+                      <span className="metric-chip">Join: {selectedProgramme.joinCode ? `/join/${selectedProgramme.joinCode}` : "Unavailable"}</span>
+                      <span className="metric-chip">Cards: {workspace.selectedProgrammeCards.length}</span>
+                      <span className="metric-chip">Ready: {redeemableCardsCount}</span>
+                    </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <Button onClick={handleDemoJoin} disabled={isMutating}>
+                    <form className="space-y-3" onSubmit={handleAwardVisit}>
+                      <Label htmlFor="scan-code">Scan card code</Label>
+                      <Input
+                        id="scan-code"
+                        value={scanCode}
+                        onChange={(event) => setScanCode(event.target.value)}
+                        placeholder="card-..."
+                      />
+                      <Button type="submit" disabled={isMutating || scanCode.trim().length === 0}>
+                        Award visit
+                      </Button>
+                    </form>
+                  </section>
+
+                  <section className="space-y-3 rounded-[1.35rem] border border-border/70 bg-background/65 p-4">
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Actions</p>
+                    <Button onClick={handleDemoJoin} disabled={isMutating} className="w-full">
                       Create demo join
                     </Button>
                     {selectedProgramme.joinCode ? (
-                      <Button asChild variant="outline">
+                      <Button asChild variant="outline" className="w-full">
                         <Link href={`/join/${selectedProgramme.joinCode}`} target="_blank" rel="noreferrer">
                           Open join link
                         </Link>
                       </Button>
                     ) : null}
-                  </div>
-
-                  <form className="space-y-3" onSubmit={handleAwardVisit}>
-                    <Label htmlFor="scan-code">Scan card code</Label>
-                    <Input
-                      id="scan-code"
-                      value={scanCode}
-                      onChange={(event) => setScanCode(event.target.value)}
-                      placeholder="card-..."
-                    />
-                    <Button type="submit" disabled={isMutating || scanCode.trim().length === 0}>
-                      Award visit
-                    </Button>
-                  </form>
-                </section>
+                  </section>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -1702,7 +1705,7 @@ export default function WorkspacePage() {
                       primaryColor={workspace.brandProfile.primaryColor}
                       accentColor={workspace.brandProfile.accentColor}
                     />
-                    <section className="rounded-[1.4rem] border border-border/70 bg-background/80 p-4">
+                    <section className="rounded-[1.4rem] border border-border/70 bg-background/70 p-4">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Programme output</p>
                       <div className="mt-3 grid gap-3">
                         <div>
@@ -1725,10 +1728,10 @@ export default function WorkspacePage() {
                     </section>
                   </section>
 
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    <section className="rounded-2xl border border-border/70 bg-background/85 p-4">
-                      <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Reward rules</p>
-                      <div className="mt-3 grid gap-3">
+                  <section className="rounded-[1.4rem] border border-border/70 bg-background/65 p-4">
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="space-y-3">
+                        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Reward rules</p>
                         <div className="space-y-2">
                           <Label htmlFor="reward-item">Reward item</Label>
                           <Input id="reward-item" value={rewardItemLabel} onChange={(event) => setRewardItemLabel(event.target.value)} />
@@ -1743,12 +1746,14 @@ export default function WorkspacePage() {
                             onChange={(event) => setRewardThreshold(event.target.value)}
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="reward-copy">Customer copy</Label>
+                          <Input id="reward-copy" value={rewardCopy} onChange={(event) => setRewardCopy(event.target.value)} />
+                        </div>
                       </div>
-                    </section>
 
-                    <section className="rounded-2xl border border-border/70 bg-background/85 p-4">
-                      <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Campaign dates</p>
-                      <div className="mt-3 grid gap-3">
+                      <div className="space-y-3">
+                        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Campaign dates</p>
                         <div className="space-y-2">
                           <Label htmlFor="starts-on">Starts on</Label>
                           <Input id="starts-on" type="date" value={startsOn} onChange={(event) => setStartsOn(event.target.value)} />
@@ -1758,18 +1763,10 @@ export default function WorkspacePage() {
                           <Input id="ends-on" type="date" value={endsOn} onChange={(event) => setEndsOn(event.target.value)} />
                         </div>
                       </div>
-                    </section>
-                  </div>
-
-                  <section className="rounded-2xl border border-border/70 bg-background/85 p-4">
-                    <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Customer copy</p>
-                    <div className="mt-3 space-y-2">
-                      <Label htmlFor="reward-copy">Reward copy</Label>
-                      <Input id="reward-copy" value={rewardCopy} onChange={(event) => setRewardCopy(event.target.value)} />
                     </div>
                   </section>
 
-                  <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/85 p-3">
+                  <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/65 p-3">
                     <p className="text-xs text-foreground/70">Changes apply to the currently selected programme.</p>
                     <Button type="submit" disabled={isMutating || !canUpdateProgramme}>
                       Save programme
@@ -1797,7 +1794,7 @@ export default function WorkspacePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <section className="rounded-2xl border border-border/70 bg-background/80 p-3">
+                <section className="rounded-[1.35rem] border border-border/70 bg-background/65 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline">{workspace.selectedProgrammeCards.length} cards</Badge>
@@ -1838,7 +1835,7 @@ export default function WorkspacePage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-card/70 p-2.5">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Badge variant="outline">{selectedCardsCount} selected</Badge>
                     <Button
                       type="button"

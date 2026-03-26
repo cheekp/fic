@@ -166,6 +166,7 @@ export function PortalShell({
   const sectionLabelClass = theme.useDarkChrome
     ? "text-[10px] uppercase tracking-[0.16em] text-[#f5f3ef]/48"
     : "text-[10px] uppercase tracking-[0.16em] text-[#4a4f55]/62";
+  const hasCustomBrandIdentity = Boolean(brandTitle || brandSubtitle || brandLogoUrl);
   const effectiveBrandTitle = brandTitle ?? "North Star Customer Solutions";
   const effectiveBrandSubtitle = brandSubtitle ?? "Loyalty. Membership. Customer strategy.";
 
@@ -245,7 +246,7 @@ export function PortalShell({
               <span className={brandMarkClass}>NS</span>
             )}
             <span className="flex flex-col">
-              <span className={sectionLabelClass}>{title}</span>
+              <span className={sectionLabelClass}>{hasCustomBrandIdentity ? "Portal" : title}</span>
               <span className={brandTitleClass}>{effectiveBrandTitle}</span>
               <span className={brandSubtitleClass}>{effectiveBrandSubtitle}</span>
             </span>
