@@ -73,6 +73,19 @@ If engineering intent conflicts with the business plan, the conflict must be rai
 7. Add targeted automated tests for domain/state-heavy behavior when the slice introduces meaningful logic.
 8. Prove the slice with the validator before handing it off.
 9. Move the plan record when the slice status changes, and update harness or runbooks if the working method has changed.
+10. Open the PR with enough review evidence that hotspots can be checked without rediscovering context.
+
+## PR Evidence Expectations
+
+- High-churn visual surfaces need explicit review evidence.
+  - homepage, signup flow, portal shell, public header, and merchant workspace routes have been repeat hotspots
+  - when those surfaces change, run the frontend visual QA flow and include desktop/mobile evidence in the PR
+- API-owned contract changes must land as one reviewable unit.
+  - update the shared contract, backend mapping, frontend consumer, and API proof in the same PR unless there is an explicit compatibility seam
+- Keep hotspot slices narrow.
+  - prefer one major high-volatility surface per PR plus supporting files
+  - if a PR mixes layout restructuring, copy polish, and contract changes, explain why the wider scope is necessary
+- If a visual baseline, CSS budget, or other guardrail moves, call it out directly in the PR summary instead of making the reviewer infer it from diff size.
 
 ## Plan Vs Spec
 
