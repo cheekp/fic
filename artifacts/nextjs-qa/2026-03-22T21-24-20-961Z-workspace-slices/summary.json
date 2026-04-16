@@ -1,0 +1,26 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-22T21:24:58.345Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "error",
+      "findings": [
+        "Selected programme branded card preview did not render on operate route."
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T21-24-20-961Z-workspace-slices/mobile/failure.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "error",
+      "findings": [
+        "Selected programme branded card preview did not render on operate route."
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T21-24-20-961Z-workspace-slices/desktop/failure.png"
+      ]
+    }
+  ]
+}

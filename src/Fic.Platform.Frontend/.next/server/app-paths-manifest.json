@@ -1,0 +1,16 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/manifest.webmanifest/route": "app/manifest.webmanifest/route.js",
+  "/account/page": "app/account/page.js",
+  "/billing/page": "app/billing/page.js",
+  "/join/[joinCode]/page": "app/join/[joinCode]/page.js",
+  "/blogs/page": "app/blogs/page.js",
+  "/consultancy/page": "app/consultancy/page.js",
+  "/portal/signup/page": "app/portal/signup/page.js",
+  "/offline/page": "app/offline/page.js",
+  "/portal/signup/plan/[merchantId]/page": "app/portal/signup/plan/[merchantId]/page.js",
+  "/portal/merchant/[merchantId]/page": "app/portal/merchant/[merchantId]/page.js",
+  "/portal/signup/billing/[merchantId]/page": "app/portal/signup/billing/[merchantId]/page.js",
+  "/training/page": "app/training/page.js",
+  "/page": "app/page.js"
+}

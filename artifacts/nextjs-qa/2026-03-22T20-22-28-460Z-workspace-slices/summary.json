@@ -1,0 +1,26 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-22T20:23:12.996Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "error",
+      "findings": [
+        "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /Continue to plan/i })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none shadow-luxe hover:brightness-95 px-7 text-base h-14 w-full rounded-full border border-[rgba(200,169,106,0.34)] bg-[#0f1b2a] text-[#f5f3ef] shadow-[0_18px_38px_-24px_rgba(15,27,42,0.78)] enabled:hover:bg-[#18283a] disabled:opacity-50\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    58 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-22-28-460Z-workspace-slices/mobile/failure.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "error",
+      "findings": [
+        "Client exception rendered on operate route."
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-22-28-460Z-workspace-slices/desktop/failure.png"
+      ]
+    }
+  ]
+}

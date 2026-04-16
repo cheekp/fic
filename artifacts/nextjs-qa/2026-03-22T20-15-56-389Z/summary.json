@@ -1,0 +1,30 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-22T20:16:03.578Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "ok",
+      "findings": [],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/mobile/00-home.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/mobile/01-signup.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/mobile/02-plan.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/mobile/03-billing.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/mobile/04-workspace.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "ok",
+      "findings": [],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/desktop/00-home.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/desktop/01-signup.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/desktop/02-plan.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/desktop/03-billing.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-15-56-389Z/desktop/04-workspace.png"
+      ]
+    }
+  ]
+}

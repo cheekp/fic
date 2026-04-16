@@ -1,0 +1,26 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-25T23:13:22.811Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "error",
+      "findings": [
+        "Workspace bootstrap signup submit stayed disabled after entering required fields."
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T23-12-40-456Z-workspace-slices/mobile/failure.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "error",
+      "findings": [
+        "Workspace bootstrap signup submit stayed disabled after entering required fields."
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T23-12-40-456Z-workspace-slices/desktop/failure.png"
+      ]
+    }
+  ]
+}

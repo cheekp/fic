@@ -1,0 +1,26 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-25T12:54:18.346Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "ok",
+      "findings": [],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-53-53-823Z-workspace-slices/mobile/operate.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-53-53-823Z-workspace-slices/mobile/configure.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-53-53-823Z-workspace-slices/mobile/customers.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "ok",
+      "findings": [],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-53-53-823Z-workspace-slices/desktop/operate.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-53-53-823Z-workspace-slices/desktop/configure.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-53-53-823Z-workspace-slices/desktop/customers.png"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-25T22:50:17.373Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "error",
+      "findings": [
+        "Workspace bootstrap signup submit stayed disabled after entering required fields."
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T22-49-32-552Z-workspace-slices/mobile/failure.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "error",
+      "findings": [
+        "Selected programme branded card preview did not render on operate route."
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T22-49-32-552Z-workspace-slices/desktop/failure.png"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "viewport": "mobile",
+    "screen": "00-home.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(390x1659) current(390x2679)"
+  },
+  {
+    "viewport": "mobile",
+    "screen": "01-signup.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(390x1185) current(390x1065)"
+  },
+  {
+    "viewport": "mobile",
+    "screen": "02-plan.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(390x2565) current(390x1837)"
+  },
+  {
+    "viewport": "mobile",
+    "screen": "03-billing.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(390x2443) current(390x1215)"
+  },
+  {
+    "viewport": "mobile",
+    "screen": "04-workspace.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(390x2105) current(390x2182)"
+  },
+  {
+    "viewport": "desktop",
+    "screen": "00-home.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(1440x1182) current(1440x1359)"
+  },
+  {
+    "viewport": "desktop",
+    "screen": "01-signup.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(1440x1147) current(1440x1029)"
+  },
+  {
+    "viewport": "desktop",
+    "screen": "02-plan.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(1440x1455) current(1440x1145)"
+  },
+  {
+    "viewport": "desktop",
+    "screen": "03-billing.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(1440x1707) current(1440x1175)"
+  },
+  {
+    "viewport": "desktop",
+    "screen": "04-workspace.png",
+    "status": "failed",
+    "reason": "dimension mismatch baseline(1440x1616) current(1440x1626)"
+  }
+]

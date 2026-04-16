@@ -1,0 +1,26 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-25T12:36:14.987Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "error",
+      "findings": [
+        "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3301/portal/signup\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3301/portal/signup\", waiting until \"networkidle\"\u001b[22m\n"
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-36-14-174Z-workspace-slices/mobile/failure.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "error",
+      "findings": [
+        "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3301/portal/signup\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3301/portal/signup\", waiting until \"networkidle\"\u001b[22m\n"
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-25T12-36-14-174Z-workspace-slices/desktop/failure.png"
+      ]
+    }
+  ]
+}

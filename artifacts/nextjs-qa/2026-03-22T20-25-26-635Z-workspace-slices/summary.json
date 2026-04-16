@@ -1,0 +1,30 @@
+{
+  "frontendBaseUrl": "http://localhost:3301",
+  "generatedAtUtc": "2026-03-22T20:25:47.831Z",
+  "results": [
+    {
+      "viewport": "mobile",
+      "status": "warn",
+      "findings": [
+        "Operate primary button drifted from North Star navy: rgb(31, 55, 49)"
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-25-26-635Z-workspace-slices/mobile/operate.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-25-26-635Z-workspace-slices/mobile/configure.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-25-26-635Z-workspace-slices/mobile/customers.png"
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "status": "warn",
+      "findings": [
+        "Operate primary button drifted from North Star navy: rgb(31, 55, 49)"
+      ],
+      "screenshots": [
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-25-26-635Z-workspace-slices/desktop/operate.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-25-26-635Z-workspace-slices/desktop/configure.png",
+        "/Users/paulcheek/dev/fic/artifacts/nextjs-qa/2026-03-22T20-25-26-635Z-workspace-slices/desktop/customers.png"
+      ]
+    }
+  ]
+}
